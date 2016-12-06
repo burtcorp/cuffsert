@@ -1,3 +1,4 @@
 .bundle/
 vendor/
 cuffsert-*.gem
+.byebug_history
