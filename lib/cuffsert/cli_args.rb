@@ -1,6 +1,8 @@
 require 'optparse'
 
 # TODO:
+# - parameters and tags should be hashes not arrays
+# - stackname is an override
 # - add usage message
 # - selector is required
 
