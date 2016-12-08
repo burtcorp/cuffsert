@@ -17,6 +17,7 @@ module CuffSert
       @stackname = metadata[:stackname] || @stackname
       @parameters.merge!(metadata[:parameters] || {})
       @tags.merge!(metadata[:tags] || {})
+      self
     end
 
     def stackname

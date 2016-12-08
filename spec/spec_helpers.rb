@@ -1,5 +1,35 @@
-configure do |rspec|
+RSpec.configure do |rspec|
   rspec.shared_context_metadata_behavior = :apply_to_host_groups
+end
+
+shared_context 'yaml configs' do
+  let :config_yaml do
+    data = <<EOF
+Format: v1
+Tags:
+ - Name: tlevel
+   Value: top
+Parameters:
+ - Name: plevel
+   Value: top
+Variants:
+ level1_a:
+   Tags:
+     - Name: tlevel
+       Value: level1_a
+ level1_b:
+   DefaultPath: level2_a
+   Variants:
+     level2_a:
+       Parameters:
+         - Name: plevel
+           Value: level2_a
+     level2_b:
+       Parameters:
+         - Name: plevel
+           Value: level2_b
+EOF
+  end
 end
 
 shared_context 'stack states' do

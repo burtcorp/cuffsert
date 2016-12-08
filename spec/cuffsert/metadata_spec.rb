@@ -1,33 +1,6 @@
 require 'cuffsert/metadata'
+require 'spec_helpers'
 require 'tempfile'
-
- def cuffsert_yaml
-  data = <<EOF
-Format: v1
-Tags:
-  - Name: tlevel
-    Value: top
-Parameters:
-  - Name: plevel
-    Value: top
-Variants:
-  level1_a:
-    Tags:
-      - Name: tlevel
-        Value: level1_a
-  level1_b:
-    DefaultPath: level2_a
-    Variants:
-      level2_a:
-        Parameters:
-          - Name: plevel
-            Value: level2_a
-      level2_b:
-        Parameters:
-          - Name: plevel
-            Value: level2_b
-EOF
-end
 
 describe CuffSert::StackConfig do
   context 'update_from merges' do
@@ -52,9 +25,10 @@ describe CuffSert::StackConfig do
 end
 
 describe CuffSert do
+  include_context 'yaml configs'
   context '#load_config' do
     subject do
-      io = StringIO.new(cuffsert_yaml)
+      io = StringIO.new(config_yaml)
       CuffSert.load_config(io)
     end
 
@@ -78,7 +52,7 @@ describe CuffSert do
 
   context '#meta_for_path' do
     let :config do
-      CuffSert.load_config(StringIO.new(cuffsert_yaml))
+      CuffSert.load_config(StringIO.new(config_yaml))
     end
 
     it 'finds default on ""' do
