@@ -33,6 +33,9 @@ EOF
 end
 
 shared_context 'stack states' do
+  let(:stack_id) { 'ze-id' }
+  let(:stack_name) { 'ze-stack' }
+
   let :stack_complete do
     {
       'Stacks' => [{

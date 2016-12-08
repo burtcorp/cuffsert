@@ -2,10 +2,8 @@ require 'cuffsert/rxcfclient'
 require 'spec_helpers'
 
 describe CuffSert::RxCFClient do
-  include_shared 'stacks states'
+  include_context 'stack states'
 
-  let(:stack_id) { 'ze-id' }
-  let(:stack_name) { 'ze-stack' }
   let(:example_stack) { {} }
 
   let :r1_done do
