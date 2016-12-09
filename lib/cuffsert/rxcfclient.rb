@@ -13,9 +13,11 @@ module CuffSert
       @cf = aws_cf
     end
 
-    def find_stack_blocking(stack)
-      name = stack['StackName']
-      @cf.describe_stacks(stack_name: name)
+    def find_stack_blocking(meta)
+      name = meta.stackname
+      stacks = @cf.describe_stacks(stack_name: name)['Stacks']
+      return nil if stacks.empty?
+      stacks[0]
     end
 
     def create_stack(stack)

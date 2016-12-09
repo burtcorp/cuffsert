@@ -58,6 +58,31 @@ describe CuffSert::RxCFClient do
     {'StackEvents' => [r1_done, r2_rolled_back] }
   end
 
+  context '#find_stack_blocking' do
+    let :aws_mock do
+      mock = double(:aws_mock)
+      expect(mock).to receive(:describe_stacks)
+        .with(:stack_name => stack_name)
+        .and_return(stack_complete)
+      mock
+    end
+
+    let :meta do
+      meta = CuffSert::StackConfig.new
+      meta.stackname = stack_name
+      meta
+    end
+
+    subject do
+      described_class.new(aws_mock)
+    end
+
+    it 'looks for stacks by name' do
+      result = subject.find_stack_blocking(meta)
+      expect(result['StackName']).to eq(stack_name)
+    end
+  end
+
   context 'create succesful' do
     let :aws_mock do
       mock = double(:aws_mock)
