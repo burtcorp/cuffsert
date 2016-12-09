@@ -3,8 +3,6 @@ require 'optparse'
 # TODO:
 # - parameters and tags should be hashes not arrays
 # - stackname is an override
-# - add usage message
-# - selector is required
 
 module CuffSert
   STACKNAME_RE = /^[A-Za-z0-9_-]+$/
@@ -17,7 +15,10 @@ module CuffSert
       }
     }
     parser = OptionParser.new do |opts|
-      opts.on('--metadata path', '-m path') do |path|
+      opts.banner = 'Upsert a CloudFormation template, reading creation options and metadata from a yaml file. Currently, parameter values, stack name and stack tags are read from metadata file.'
+      opts.separator('')
+      opts.separator('Usage: cuffsert --selector production/us stack.json')
+      opts.on('--metadata path', '-m path', 'Yaml file to read stack metadata from') do |path|
         path = '/dev/stdin' if path == '-'
         unless File.exist?(path)
           raise "--metadata #{path} does not exist"
@@ -25,18 +26,18 @@ module CuffSert
         args[:metadata] = path
       end
 
-      opts.on('--selector selector', '-s selector') do |selector|
+      opts.on('--selector selector', '-s selector', 'Dash or slash-separated variant names used to navigate the metadata') do |selector|
         args[:selector] = selector.split(/[-,\/]/)
       end
 
-      opts.on('--name stackname', '-n name') do |stackname|
+      opts.on('--name stackname', '-n name', 'Alternative stackname (default is to construct the name from the selector') do |stackname|
         unless stackname =~ STACKNAME_RE
           raise "--name #{stackname} is expected to be #{STACKNAME_RE.inspect}"
         end
         args[:overrides][:stackname] = stackname
       end
 
-      opts.on('--parameter kv', '-p kv') do |kv|
+      opts.on('--parameter kv', '-p kv', 'Set the value of a particular parameter, overriding any file metadata') do |kv|
         key, val = kv.split(/=/, 2)
         if val.nil?
           raise "--parameter #{kv} should be key=value"
@@ -44,12 +45,16 @@ module CuffSert
         args[:overrides][:parameters] << {key => val}
       end
 
-      opts.on('--tag kv', '-t kv') do |kv|
+      opts.on('--tag kv', '-t kv', 'Set a stack tag, overriding any file metadata') do |kv|
         key, val = kv.split(/=/, 2)
         if val.nil?
           raise "--tag #{kv} should be key=value"
         end
         args[:overrides][:tags] << {key => val}
+      end
+
+      opts.on('--help', '-h', 'Produce this message') do
+        abort(opts.to_s)
       end
     end
     args[:stack_path] = parser.parse(argv)
