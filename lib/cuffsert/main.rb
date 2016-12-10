@@ -30,7 +30,7 @@ end
 
 def self.execute(meta, client: RxCFClient.new)
   sources = []
-  found = client.find_stack_blocking(meta['stackname'])
+  found = client.find_stack_blocking(meta.stackname)
 
   if found && found['StackStatus'] == 'ROLLBACK_COMPLETE'
     sources << client.delete_stack(meta)

@@ -1,3 +1,4 @@
+require 'cuffsert/metadata'
 require 'cuffsert/rxcfclient'
 require 'spec_helpers'
 
@@ -63,7 +64,7 @@ describe CuffSert::RxCFClient do
       mock = double(:aws_mock)
       expect(mock).to receive(:describe_stacks)
         .with(:stack_name => stack_name)
-        .and_return(stack_complete)
+        .and_return(stack_complete_describe)
       mock
     end
 
@@ -87,7 +88,7 @@ describe CuffSert::RxCFClient do
     let :aws_mock do
       mock = double(:aws_mock)
       expect(mock).to receive(:create_stack)
-        .and_return(stack_in_progress)
+        .and_return(stack_in_progress_describe)
       expect(mock).to receive(:describe_stack_events)
         .at_least(3).times
         .and_return(
@@ -98,8 +99,8 @@ describe CuffSert::RxCFClient do
       expect(mock).to receive(:describe_stacks)
         .at_least(:twice)
         .and_return(
-          stack_in_progress,
-          stack_complete
+          stack_in_progress_describe,
+          stack_complete_describe
         )
       mock
     end
@@ -120,7 +121,7 @@ describe CuffSert::RxCFClient do
     let :aws_mock do
       mock = double(:aws_mock)
       expect(mock).to receive(:create_stack)
-        .and_return(stack_in_progress)
+        .and_return(stack_in_progress_describe)
       expect(mock).to receive(:describe_stack_events)
         .at_least(:twice)
         .and_return(
@@ -128,7 +129,7 @@ describe CuffSert::RxCFClient do
           stack_rolled_back_events
         )
       expect(mock).to receive(:describe_stacks)
-        .and_return(stack_rolled_back)
+        .and_return(stack_rolled_back_describe)
       mock
     end
 

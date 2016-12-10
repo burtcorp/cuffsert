@@ -38,32 +38,38 @@ shared_context 'stack states' do
 
   let :stack_complete do
     {
-      'Stacks' => [{
-        'StackId' => stack_id,
-        'StackName' => stack_name,
-        'StackStatus' => 'CREATE_COMPLETE',
-      }]
+      'StackId' => stack_id,
+      'StackName' => stack_name,
+      'StackStatus' => 'CREATE_COMPLETE',
     }
   end
 
   let :stack_in_progress do
     {
-      'Stacks' => [{
-        'StackId' => stack_id,
-        'StackName' => stack_name,
-        'StackStatus' => 'CREATE_IN_PROGRESS',
-      }]
+      'StackId' => stack_id,
+      'StackName' => stack_name,
+      'StackStatus' => 'CREATE_IN_PROGRESS',
     }
   end
 
   let :stack_rolled_back do
     {
-      'Stacks' => [{
-        'StackId' => stack_id,
-        'StackName' => stack_name,
-        'StackStatus' => 'ROLLBACK_COMPLETE',
-      }]
+      'StackId' => stack_id,
+      'StackName' => stack_name,
+      'StackStatus' => 'ROLLBACK_COMPLETE',
     }
+  end
+
+  let :stack_complete_describe do
+    {'Stacks' => [stack_complete]}
+  end
+
+  let :stack_in_progress_describe do
+    {'Stacks' => [stack_in_progress]}
+  end
+
+  let :stack_rolled_back_describe do
+    {'Stacks' => [stack_rolled_back]}
   end
 end
 

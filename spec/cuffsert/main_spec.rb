@@ -68,6 +68,7 @@ describe 'CuffSert#execute' do
   let :meta do
     config = CuffSert::StackConfig.new
     config.stackname = 'ze-stack'
+    config
   end
 
   it 'creates stacks unknown to cf' do
