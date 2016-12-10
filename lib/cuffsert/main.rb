@@ -28,9 +28,19 @@ def self.validate_and_urlify(stack_path)
   stack_url
 end
 
+INPROGRESS_STATES = %[
+  CREATE_IN_PROGRESS
+  UPDATE_IN_PROGRESS
+  DELETE_IN_PROGRESS
+]
+
 def self.execute(meta, client: RxCFClient.new)
   sources = []
   found = client.find_stack_blocking(meta.stackname)
+
+  if found && INPROGRESS_STATES.include?(found['StackStatus'])
+    raise 'Stack operation already in progress'
+  end
 
   if found && found['StackStatus'] == 'ROLLBACK_COMPLETE'
     sources << client.delete_stack(meta)
