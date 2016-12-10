@@ -1,3 +1,4 @@
+require 'cuffsert/cfstates'
 require 'cuffsert/cli_args'
 require 'cuffsert/metadata'
 require 'rx'
@@ -19,12 +20,6 @@ module CuffSert
     end
     stack_url
   end
-
-  INPROGRESS_STATES = %[
-    CREATE_IN_PROGRESS
-    UPDATE_IN_PROGRESS
-    DELETE_IN_PROGRESS
-  ]
 
   def self.execute(meta, client: RxCFClient.new)
     sources = []

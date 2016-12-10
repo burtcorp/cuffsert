@@ -1,4 +1,5 @@
 require 'aws-sdk'
+require 'cuffsert/cfstates'
 require 'rx'
 
 # TODO:
@@ -41,12 +42,6 @@ module CuffSert
     end
 
     private
-
-    FINAL_STATES = Set.new([
-      'CREATE_COMPLETE',
-      'CREATE_FAILED',
-      'ROLLBACK_COMPLETE',
-    ])
 
     def stack_finished?(state)
       FINAL_STATES.include?(state['StackStatus'])
