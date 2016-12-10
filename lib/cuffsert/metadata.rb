@@ -48,6 +48,13 @@ module CuffSert
     self.meta_for_path(new_meta, path, target)
   end
 
+  def self.build_meta(cli_args)
+    io = open(cli_args[:metadata_path])
+    config = CuffSert.load_config(io)
+    meta = CuffSert.meta_for_path(config, cli_args[:selector])
+    meta.update_from(cli_args[:overrides])
+  end
+
   private_class_method
 
   def self.symbolize_keys(hash)
