@@ -1,3 +1,4 @@
+require 'cuffsert/cfarguments'
 require 'cuffsert/main'
 require 'spec_helpers'
 require 'tempfile'
@@ -67,8 +68,10 @@ describe 'CuffSert#execute' do
 
   it 'creates stacks unknown to cf' do
     allow(cfmock).to receive(:find_stack_blocking)
+      .with(meta)
       .and_return(nil)
     expect(cfmock).to receive(:create_stack)
+      .with(CuffSert.as_create_stack_args(meta))
     CuffSert.execute(meta, :client => cfmock)
   end
 
@@ -76,7 +79,9 @@ describe 'CuffSert#execute' do
     allow(cfmock).to receive(:find_stack_blocking)
       .and_return(stack_rolled_back)
     expect(cfmock).to receive(:delete_stack)
+      .with(CuffSert.as_delete_stack_args(meta))
     expect(cfmock).to receive(:create_stack)
+      .with(CuffSert.as_create_stack_args(meta))
     CuffSert.execute(meta, :client => cfmock)
   end
 
@@ -84,6 +89,7 @@ describe 'CuffSert#execute' do
     allow(cfmock).to receive(:find_stack_blocking)
       .and_return(stack_complete)
     expect(cfmock).to receive(:update_stack)
+      .with(CuffSert.as_update_stack_args(meta))
     CuffSert.execute(meta, :client => cfmock)
   end
 

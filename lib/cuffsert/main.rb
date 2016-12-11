@@ -26,21 +26,24 @@ module CuffSert
 
   def self.execute(meta, client: RxCFClient.new)
     sources = []
-    found = client.find_stack_blocking(meta.stackname)
+    found = client.find_stack_blocking(meta)
 
     if found && INPROGRESS_STATES.include?(found['StackStatus'])
       raise 'Stack operation already in progress'
     end
 
     if found && found['StackStatus'] == 'ROLLBACK_COMPLETE'
-      sources << client.delete_stack(meta)
+      cfargs = CuffSert.as_delete_stack_args(meta)
+      sources << client.delete_stack(cfargs)
       found = nil
     end
 
     if found
-      sources << client.update_stack(meta)
+      cfargs = CuffSert.as_update_stack_args(meta)
+      sources << client.update_stack(cfargs)
     else
-      sources << client.create_stack(meta)
+      cfargs = CuffSert.as_create_stack_args(meta)
+      sources << client.create_stack(cfargs)
     end
     Rx::Observable.concat(*sources)
   end
