@@ -2,6 +2,11 @@ RSpec.configure do |rspec|
   rspec.shared_context_metadata_behavior = :apply_to_host_groups
 end
 
+shared_context 'basic parameters' do
+  let(:stack_id) { 'ze-id' }
+  let(:stack_name) { 'ze-stack' }
+end
+
 shared_context 'yaml configs' do
   let :config_yaml do
     data = <<EOF
@@ -32,9 +37,31 @@ EOF
   end
 end
 
+shared_context 'metadata' do
+  include_context 'basic parameters'
+
+  let(:s3url) { 's3://foo/bar' }
+  let :meta do
+    meta = CuffSert::StackConfig.new
+    meta.selected_path = [stack_name.split(/-/)]
+    meta.tags = {'k1' => 'v1', 'k2' => 'v2'}
+    meta.stack_uri = URI.parse(s3url)
+    meta
+  end
+end
+
+shared_context 'templates' do
+  let(:template_json) { '{}' }
+  let :template_body do
+    body = Tempfile.new('template_body')
+    body.write(template_json)
+    body.rewind
+    body
+  end
+end
+
 shared_context 'stack states' do
-  let(:stack_id) { 'ze-id' }
-  let(:stack_name) { 'ze-stack' }
+  include_context 'basic parameters'
 
   let :stack_complete do
     {
