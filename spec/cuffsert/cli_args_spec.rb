@@ -20,7 +20,7 @@ describe 'CuffSert#parse_cli_args' do
 
   it 'accepts --tag' do
     result = CuffSert.parse_cli_args(['--tag=foo=bar'])[:overrides]
-    expect(result).to include(:tags => [{'foo' => 'bar'}])
+    expect(result).to include(:tags => {'foo' => 'bar'})
   end
 
   it 'throws meaningfully on unparseable tag' do
@@ -29,9 +29,21 @@ describe 'CuffSert#parse_cli_args' do
     }.to raise_error(/--tag.*asdf/)
   end
 
+  it 'throws meaningfully on duplicate tag' do
+    expect {
+      CuffSert.parse_cli_args(['-t', 'foo=bar', '-t', 'foo=baz'])
+    }.to raise_error(/duplicate.*foo/)
+  end
+
   it 'accepts --parameter' do
     result = CuffSert.parse_cli_args(['-p' 'foo=bar'])[:overrides]
-    expect(result).to include(:parameters => [{'foo' => 'bar'}])
+    expect(result).to include(:parameters => {'foo' => 'bar'})
+  end
+
+  it 'throws meaningfully on duplicate parameter' do
+    expect {
+      CuffSert.parse_cli_args(['-p', 'foo=bar', '-p', 'foo=baz'])
+    }.to raise_error(/duplicate.*foo/)
   end
 
   it 'accepts --name' do

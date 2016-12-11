@@ -1,17 +1,13 @@
 require 'optparse'
 
-# TODO:
-# - parameters and tags should be hashes not arrays
-# - stackname is an override
-
 module CuffSert
   STACKNAME_RE = /^[A-Za-z0-9_-]+$/
 
   def self.parse_cli_args(argv)
     args = {
       :overrides => {
-        :parameters => [],
-        :tags => [],
+        :parameters => {},
+        :tags => {},
       }
     }
     parser = OptionParser.new do |opts|
@@ -42,7 +38,10 @@ module CuffSert
         if val.nil?
           raise "--parameter #{kv} should be key=value"
         end
-        args[:overrides][:parameters] << {key => val}
+        if args[:overrides][:parameters].include?(key)
+          raise "cli args include duplicate parameter #{key}"
+        end
+        args[:overrides][:parameters][key] = val
       end
 
       opts.on('--tag kv', '-t kv', 'Set a stack tag, overriding any file metadata') do |kv|
@@ -50,7 +49,10 @@ module CuffSert
         if val.nil?
           raise "--tag #{kv} should be key=value"
         end
-        args[:overrides][:tags] << {key => val}
+        if args[:overrides][:tags].include?(key)
+          raise "cli args include duplicate tag #{key}"
+        end
+        args[:overrides][:tags][key] = val
       end
 
       opts.on('--help', '-h', 'Produce this message') do

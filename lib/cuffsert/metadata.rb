@@ -49,7 +49,7 @@ module CuffSert
   end
 
   def self.build_meta(cli_args)
-    io = open(cli_args[:metadata_path])
+    io = open(cli_args[:metadata])
     config = CuffSert.load_config(io)
     meta = CuffSert.meta_for_path(config, cli_args[:selector])
     meta.update_from(cli_args[:overrides])

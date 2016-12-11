@@ -6,6 +6,8 @@ require 'uri'
 
 # TODO:
 # - Stop using file: that we anyway need to special-case in cfarguments
+# - default value for meta.metadata when stack_path is local file
+# - validate_and_urlify belongs in metadata.rb
 
 module CuffSert
   def self.validate_and_urlify(stack_path)
@@ -50,8 +52,12 @@ module CuffSert
 
   def self.run(argv)
     cli_args = CuffSert.parse_cli_args(argv)
-    meta = CuffSert.build_metadata(cli_args)
-    meta[:stack_uri] = CuffSert.validate_and_urlify(meta[:stack_path])
+    meta = CuffSert.build_meta(cli_args)
+    if cli_args[:stack_path].nil? || cli_args[:stack_path].size != 1
+      raise 'Requires exactly one stack path'
+    end
+    stack_path = cli_args[:stack_path][0]
+    meta.stack_uri = CuffSert.validate_and_urlify(stack_path)
     events = CuffSert.execute(meta)
     # present events
   end

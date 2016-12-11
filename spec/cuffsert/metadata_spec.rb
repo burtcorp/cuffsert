@@ -89,4 +89,31 @@ describe CuffSert do
       expect(result.stackname).to eq('level1_b-level2_b')
     end
   end
+
+  describe '#build_meta' do
+    include_context 'yaml configs'
+
+    let :cli_args do
+      args = {
+        :metadata => config_file.path,
+        :selector => ['level1_a'],
+        :overrides => {
+          :stackname => 'customname',
+          :tags => {'another' => 'tag'}
+        },
+      }
+    end
+
+    subject do
+      CuffSert.build_meta(cli_args)
+    end
+
+    it 'reads metadata file and allows overrides' do
+      expect(subject.stackname).to eq('customname')
+      expect(subject.tags).to include(
+        'tlevel' => 'level1_a',
+        'another' => 'tag'
+      )
+    end
+  end
 end

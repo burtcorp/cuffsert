@@ -31,33 +31,6 @@ describe 'CuffSert#validate_and_urlify' do
   end
 end
 
-describe 'CuffSert#build_metadata' do
-  include_context 'yaml configs'
-
-  let :cli_args do
-    args = {
-      :metadata_path => config_file.path,
-      :selector => ['level1_a'],
-      :overrides => {
-        :stackname => 'customname',
-        :tags => {'another' => 'tag'}
-      },
-    }
-  end
-
-  subject do
-    CuffSert.build_meta(cli_args)
-  end
-
-  it 'reads metadata file and allows overrides' do
-    expect(subject.stackname).to eq('customname')
-    expect(subject.tags).to include(
-      'tlevel' => 'level1_a',
-      'another' => 'tag'
-    )
-  end
-end
-
 describe 'CuffSert#execute' do
   include_context 'stack states'
   include_context 'metadata'
@@ -99,5 +72,15 @@ describe 'CuffSert#execute' do
     expect {
       CuffSert.execute(meta, :client => cfmock)
     }.to raise_error(/in progress/)
+  end
+end
+
+describe 'CuffSert#main' do
+  include_context 'yaml configs'
+  include_context 'templates'
+
+  it 'works' do
+    expect(CuffSert).to receive(:execute)
+    CuffSert.run(['--metadata', config_file.path, '--selector', 'level1_a', template_body.path])
   end
 end
