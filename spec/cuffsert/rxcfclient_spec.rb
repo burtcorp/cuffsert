@@ -3,10 +3,13 @@ require 'cuffsert/rxcfclient'
 require 'spec_helpers'
 
 describe CuffSert::RxCFClient do
+  include_context 'metadata'
   include_context 'stack states'
   include_context 'stack events'
 
-  let(:example_stack) { {} }
+  let :cfargs do
+    {}
+  end
 
   context '#find_stack_blocking' do
     let :aws_mock do
@@ -17,20 +20,9 @@ describe CuffSert::RxCFClient do
       mock
     end
 
-    let :meta do
-      meta = CuffSert::StackConfig.new
-      meta.stackname = stack_name
-      meta
-    end
+    subject { described_class.new(aws_mock).find_stack_blocking(meta) }
 
-    subject do
-      described_class.new(aws_mock)
-    end
-
-    it 'looks for stacks by name' do
-      result = subject.find_stack_blocking(meta)
-      expect(result['StackName']).to eq(stack_name)
-    end
+    it { should include('StackName' => stack_name) }
   end
 
   context 'create succesful' do
@@ -59,7 +51,7 @@ describe CuffSert::RxCFClient do
     end
 
     it 'produces an event stream' do
-      events = subject.create_stack(example_stack)
+      events = subject.create_stack(cfargs)
       observe_expect(events).to eq(
         [r1_done, r2_progress, r2_done]
       )
@@ -87,7 +79,7 @@ describe CuffSert::RxCFClient do
     end
 
     it 'produces an event stream' do
-      events = subject.create_stack(example_stack)
+      events = subject.create_stack(cfargs)
       observe_expect(events).to eq(
         [r1_done, r2_progress, r2_rolled_back]
       )
