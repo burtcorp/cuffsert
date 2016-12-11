@@ -33,20 +33,19 @@ end
 describe 'CuffSert#build_metadata' do
   include_context 'yaml configs'
 
-  subject do
-    meta = Tempfile.new('metadata')
-    meta.write(config_yaml)
-    meta.close
+  let :cli_args do
     args = {
-      :metadata_path => meta.path,
+      :metadata_path => config_file.path,
       :selector => ['level1_a'],
       :overrides => {
         :stackname => 'customname',
         :tags => {'another' => 'tag'}
       },
     }
-    # require 'byebug' ; byebug
-    CuffSert.build_meta(args)
+  end
+
+  subject do
+    CuffSert.build_meta(cli_args)
   end
 
   it 'reads metadata file and allows overrides' do
@@ -60,15 +59,10 @@ end
 
 describe 'CuffSert#execute' do
   include_context 'stack states'
+  include_context 'metadata'
 
   let :cfmock do
     double(:cfclient)
-  end
-
-  let :meta do
-    config = CuffSert::StackConfig.new
-    config.stackname = 'ze-stack'
-    config
   end
 
   it 'creates stacks unknown to cf' do

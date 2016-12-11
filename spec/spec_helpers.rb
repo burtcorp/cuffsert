@@ -35,6 +35,13 @@ Variants:
            Value: level2_b
 EOF
   end
+
+  let :config_file do
+    config = Tempfile.new('metadata')
+    config.write(config_yaml)
+    config.close
+    config
+  end
 end
 
 shared_context 'metadata' do
@@ -97,6 +104,60 @@ shared_context 'stack states' do
 
   let :stack_rolled_back_describe do
     {'Stacks' => [stack_rolled_back]}
+  end
+end
+
+shared_context 'stack events' do
+  let :r1_done do
+    {
+      'EventId' => 'r1_done',
+      'StackId' => stack_id,
+      'LogicalResourceId' => 'resource1_id',
+      'ResourceStatus' => 'CREATE_COMPLETE',
+      'Timestamp' => '2013-08-23T01:02:28.025Z',
+    }
+  end
+
+  let :r2_progress do
+    {
+      'EventId' => 'r2_progress',
+      'StackId' => stack_id,
+      'LogicalResourceId' => 'resource2_id',
+      'ResourceStatus' => 'CREATE_IN_PROGRESS',
+      'Timestamp' => '2013-08-23T01:02:28.025Z',
+    }
+  end
+
+  let :r2_done do
+    {
+      'EventId' => 'r2_done',
+      'StackId' => stack_id,
+      'LogicalResourceId' => 'resource2_id',
+      'ResourceStatus' => 'CREATE_COMPLETE',
+      'Timestamp' => '2013-08-23T01:02:38.534Z',
+    }
+  end
+
+  let :r2_rolled_back do
+    {
+      'EventId' => 'r2_rolled_back',
+      'StackId' => stack_id,
+      'LogicalResourceId' => 'resource2_id',
+      'ResourceStatus' => 'DELETE_COMPLETE',
+      'Timestamp' => '2013-08-23T01:02:38.534Z',
+    }
+  end
+
+  let :stack_in_progress_events do
+    { 'StackEvents' => [r1_done, r2_progress] }
+  end
+
+  let :stack_complete_events do
+    { 'StackEvents' => [r1_done, r2_done] }
+  end
+
+  let :stack_rolled_back_events do
+    {'StackEvents' => [r1_done, r2_rolled_back] }
   end
 end
 
