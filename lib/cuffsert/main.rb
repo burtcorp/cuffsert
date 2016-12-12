@@ -1,12 +1,15 @@
+require 'cuffsert/cfarguments'
 require 'cuffsert/cfstates'
 require 'cuffsert/cli_args'
 require 'cuffsert/metadata'
+require 'cuffsert/rxcfclient'
 require 'rx'
 require 'uri'
 
 # TODO:
 # - Stop using file: that we anyway need to special-case in cfarguments
 # - default value for meta.metadata when stack_path is local file
+# - selector and metadata are mandatory and need guards accordingly
 # - validate_and_urlify belongs in metadata.rb
 
 module CuffSert

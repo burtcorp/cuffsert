@@ -12,7 +12,7 @@ module CuffSert
   def self.as_cloudformation_args(meta)
     cfargs = {
       :stack_name => meta.stackname,
-      :capabilities => %[
+      :capabilities => %w[
         CAPABILITY_IAM
         CAPABILITY_NAMED_IAM
       ],

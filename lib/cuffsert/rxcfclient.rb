@@ -10,15 +10,15 @@ require 'rx'
 
 module CuffSert
   class RxCFClient
-    def initialize(aws_cf)
+    def initialize(aws_cf = Aws::CloudFormation::Client.new)
       @cf = aws_cf
     end
 
     def find_stack_blocking(meta)
       name = meta.stackname
-      stacks = @cf.describe_stacks(stack_name: name)['Stacks']
-      return nil if stacks.empty?
-      stacks[0]
+      @cf.describe_stacks(stack_name: name)['Stacks'][0]
+    rescue Aws::CloudFormation::Errors::ValidationError
+      nil
     end
 
     def create_stack(cfargs)

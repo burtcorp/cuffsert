@@ -12,17 +12,38 @@ describe CuffSert::RxCFClient do
   end
 
   context '#find_stack_blocking' do
-    let :aws_mock do
-      mock = double(:aws_mock)
-      expect(mock).to receive(:describe_stacks)
-        .with(:stack_name => stack_name)
-        .and_return(stack_complete_describe)
-      mock
+    context 'finds a stack' do
+      let :aws_mock do
+        mock = double(:aws_mock)
+        expect(mock).to receive(:describe_stacks)
+          .with(:stack_name => stack_name)
+          .and_return(stack_complete_describe)
+        mock
+      end
+
+      subject { described_class.new(aws_mock).find_stack_blocking(meta) }
+
+      it { should include('StackName' => stack_name) }
     end
 
-    subject { described_class.new(aws_mock).find_stack_blocking(meta) }
+    let :aws_validation_error do
+      Aws::CloudFormation::Errors::ValidationError.new(
+        nil, 'Stack with id production does not exist'
+      )
+    end
 
-    it { should include('StackName' => stack_name) }
+    context 'finds nothing' do
+      let :aws_mock do
+        mock = double(:aws_mock)
+        expect(mock).to receive(:describe_stacks)
+          .and_raise(aws_validation_error)
+        mock
+      end
+
+      subject { described_class.new(aws_mock).find_stack_blocking(meta) }
+
+      it { should be(nil) }
+    end
   end
 
   context 'create succesful' do
