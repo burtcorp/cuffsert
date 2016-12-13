@@ -81,7 +81,7 @@ describe CuffSert::RxCFClient do
     end
   end
 
-  context 'create failed' do
+  context 'create failed with rollback' do
     let :aws_mock do
       mock = double(:aws_mock)
       expect(mock).to receive(:create_stack)
