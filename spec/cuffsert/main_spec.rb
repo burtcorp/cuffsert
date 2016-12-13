@@ -1,5 +1,6 @@
 require 'cuffsert/cfarguments'
 require 'cuffsert/main'
+require 'rx'
 require 'spec_helpers'
 require 'tempfile'
 
@@ -81,6 +82,7 @@ describe 'CuffSert#main' do
 
   it 'works' do
     expect(CuffSert).to receive(:execute)
+      .and_return(Rx::Observable.from_array([]))
     CuffSert.run(['--metadata', config_file.path, '--selector', 'level1_a', template_body.path])
   end
 end

@@ -2,6 +2,7 @@ require 'cuffsert/cfarguments'
 require 'cuffsert/cfstates'
 require 'cuffsert/cli_args'
 require 'cuffsert/metadata'
+require 'cuffsert/presenters'
 require 'cuffsert/rxcfclient'
 require 'rx'
 require 'uri'
@@ -63,6 +64,6 @@ module CuffSert
     stack_path = cli_args[:stack_path][0]
     meta.stack_uri = CuffSert.validate_and_urlify(stack_path)
     events = CuffSert.execute(meta)
-    # present events
+    RawPresenter.new(events)
   end
 end
