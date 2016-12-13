@@ -11,6 +11,8 @@ describe CuffSert::RxCFClient do
     {}
   end
 
+  let(:create_reply) { {'StackId' => stack_id} }
+
   context '#find_stack_blocking' do
     context 'finds a stack' do
       let :aws_mock do
@@ -50,11 +52,11 @@ describe CuffSert::RxCFClient do
     let :aws_mock do
       mock = double(:aws_mock)
       expect(mock).to receive(:create_stack)
-        .and_return(stack_in_progress_describe)
+        .and_return(create_reply)
       expect(mock).to receive(:describe_stack_events)
-        .at_least(3).times
+        .with(:stack_name => stack_id)
+        .at_least(:twice)
         .and_return(
-          stack_in_progress_events,
           stack_in_progress_events,
           stack_complete_events
         )
@@ -83,7 +85,7 @@ describe CuffSert::RxCFClient do
     let :aws_mock do
       mock = double(:aws_mock)
       expect(mock).to receive(:create_stack)
-        .and_return(stack_in_progress_describe)
+        .and_return(create_reply)
       expect(mock).to receive(:describe_stack_events)
         .at_least(:twice)
         .and_return(
@@ -91,7 +93,11 @@ describe CuffSert::RxCFClient do
           stack_rolled_back_events
         )
       expect(mock).to receive(:describe_stacks)
-        .and_return(stack_rolled_back_describe)
+        .at_least(:twice)
+        .and_return(
+          stack_in_progress_describe,
+          stack_rolled_back_describe
+        )
       mock
     end
 

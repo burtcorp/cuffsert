@@ -24,8 +24,8 @@ module CuffSert
     def create_stack(cfargs)
       eventid_cache = Set.new
       Rx::Observable.create do |observer|
-        state = @cf.create_stack(cfargs)['Stacks'][0]
-        stack_events(state) do |event|
+        stack_id = @cf.create_stack(cfargs)['StackId']
+        stack_events(stack_id) do |event|
           observer.on_next(event)
         end
         observer.on_completed
@@ -47,14 +47,13 @@ module CuffSert
       FINAL_STATES.include?(state['StackStatus'])
     end
 
-    def stack_events(state)
-      name = state['StackName']
+    def stack_events(stack_id)
       loop do
-        for event in @cf.describe_stack_events(stack_name: name)['StackEvents']
+        for event in @cf.describe_stack_events(stack_name: stack_id)['StackEvents']
           yield event
         end
+        state = @cf.describe_stacks(stack_name: stack_id)['Stacks'][0]
         break if stack_finished?(state)
-        state = @cf.describe_stacks(stack_name: name)['Stacks'][0]
       end
     end
   end
