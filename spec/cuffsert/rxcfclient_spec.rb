@@ -11,7 +11,7 @@ describe CuffSert::RxCFClient do
     {}
   end
 
-  let(:create_reply) { {'StackId' => stack_id} }
+  let(:create_reply) { {:stack_id => stack_id} }
 
   context '#find_stack_blocking' do
     context 'finds a stack' do
@@ -25,7 +25,7 @@ describe CuffSert::RxCFClient do
 
       subject { described_class.new(aws_mock).find_stack_blocking(meta) }
 
-      it { should include('StackName' => stack_name) }
+      it { should include(:stack_name => stack_name) }
     end
 
     let :aws_validation_error do

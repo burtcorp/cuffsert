@@ -11,6 +11,7 @@ require 'uri'
 # - default value for meta.metadata when stack_path is local file
 # - selector and metadata are mandatory and need guards accordingly
 # - validate_and_urlify belongs in metadata.rb
+# - execute should use helpers and not know details of statuses
 
 module CuffSert
   def self.validate_and_urlify(stack_path)
@@ -33,11 +34,11 @@ module CuffSert
     sources = []
     found = client.find_stack_blocking(meta)
 
-    if found && INPROGRESS_STATES.include?(found['StackStatus'])
+    if found && INPROGRESS_STATES.include?(found[:stack_status])
       raise 'Stack operation already in progress'
     end
 
-    if found && found['StackStatus'] == 'ROLLBACK_COMPLETE'
+    if found && found[:stack_status] == 'ROLLBACK_COMPLETE'
       cfargs = CuffSert.as_delete_stack_args(meta)
       sources << client.delete_stack(cfargs)
       found = nil

@@ -72,92 +72,92 @@ shared_context 'stack states' do
 
   let :stack_complete do
     {
-      'StackId' => stack_id,
-      'StackName' => stack_name,
-      'StackStatus' => 'CREATE_COMPLETE',
+      :stack_id => stack_id,
+      :stack_name => stack_name,
+      :stack_status => 'CREATE_COMPLETE',
     }
   end
 
   let :stack_in_progress do
     {
-      'StackId' => stack_id,
-      'StackName' => stack_name,
-      'StackStatus' => 'CREATE_IN_PROGRESS',
+      :stack_id => stack_id,
+      :stack_name => stack_name,
+      :stack_status => 'CREATE_IN_PROGRESS',
     }
   end
 
   let :stack_rolled_back do
     {
-      'StackId' => stack_id,
-      'StackName' => stack_name,
-      'StackStatus' => 'ROLLBACK_COMPLETE',
+      :stack_id => stack_id,
+      :stack_name => stack_name,
+      :stack_status => 'ROLLBACK_COMPLETE',
     }
   end
 
   let :stack_complete_describe do
-    {'Stacks' => [stack_complete]}
+    {:stacks => [stack_complete]}
   end
 
   let :stack_in_progress_describe do
-    {'Stacks' => [stack_in_progress]}
+    {:stacks => [stack_in_progress]}
   end
 
   let :stack_rolled_back_describe do
-    {'Stacks' => [stack_rolled_back]}
+    {:stacks => [stack_rolled_back]}
   end
 end
 
 shared_context 'stack events' do
   let :r1_done do
     {
-      'EventId' => 'r1_done',
-      'StackId' => stack_id,
-      'LogicalResourceId' => 'resource1_id',
-      'ResourceStatus' => 'CREATE_COMPLETE',
-      'Timestamp' => '2013-08-23T01:02:28.025Z',
+      :event_id => 'r1_done',
+      :stack_id => stack_id,
+      :logical_resource_id => 'resource1_id',
+      :resource_status => 'CREATE_COMPLETE',
+      :timestamp => '2013-08-23T01:02:28.025Z',
     }
   end
 
   let :r2_progress do
     {
-      'EventId' => 'r2_progress',
-      'StackId' => stack_id,
-      'LogicalResourceId' => 'resource2_id',
-      'ResourceStatus' => 'CREATE_IN_PROGRESS',
-      'Timestamp' => '2013-08-23T01:02:28.025Z',
+      :event_id => 'r2_progress',
+      :stack_id => stack_id,
+      :logical_resource_id => 'resource2_id',
+      :resource_status => 'CREATE_IN_PROGRESS',
+      :timestamp => '2013-08-23T01:02:28.025Z',
     }
   end
 
   let :r2_done do
     {
-      'EventId' => 'r2_done',
-      'StackId' => stack_id,
-      'LogicalResourceId' => 'resource2_id',
-      'ResourceStatus' => 'CREATE_COMPLETE',
-      'Timestamp' => '2013-08-23T01:02:38.534Z',
+      :event_id => 'r2_done',
+      :stack_id => stack_id,
+      :logical_resource_id => 'resource2_id',
+      :resource_status => 'CREATE_COMPLETE',
+      :timestamp => '2013-08-23T01:02:38.534Z',
     }
   end
 
   let :r2_rolled_back do
     {
-      'EventId' => 'r2_rolled_back',
-      'StackId' => stack_id,
-      'LogicalResourceId' => 'resource2_id',
-      'ResourceStatus' => 'DELETE_COMPLETE',
-      'Timestamp' => '2013-08-23T01:02:38.534Z',
+      :event_id => 'r2_rolled_back',
+      :stack_id => stack_id,
+      :logical_resource_id => 'resource2_id',
+      :resource_status => 'DELETE_COMPLETE',
+      :timestamp => '2013-08-23T01:02:38.534Z',
     }
   end
 
   let :stack_in_progress_events do
-    { 'StackEvents' => [r1_done, r2_progress] }
+    { :stack_events => [r1_done, r2_progress] }
   end
 
   let :stack_complete_events do
-    { 'StackEvents' => [r1_done, r2_done] }
+    { :stack_events => [r1_done, r2_done] }
   end
 
   let :stack_rolled_back_events do
-    {'StackEvents' => [r1_done, r2_rolled_back] }
+    {:stack_events => [r1_done, r2_rolled_back] }
   end
 end
 
