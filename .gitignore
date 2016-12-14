@@ -1,4 +1,5 @@
 .bundle/
 vendor/
+coverage/
 cuffsert-*.gem
 .byebug_history

@@ -40,6 +40,12 @@ describe 'CuffSert#parse_cli_args' do
     expect(result).to include(:parameters => {'foo' => 'bar'})
   end
 
+  it 'throws meaningfully on unparseable parameter' do
+    expect {
+      CuffSert.parse_cli_args(['-p', 'asdf'])
+    }.to raise_error(/--parameter.*asdf/)
+  end
+
   it 'throws meaningfully on duplicate parameter' do
     expect {
       CuffSert.parse_cli_args(['-p', 'foo=bar', '-p', 'foo=baz'])
@@ -61,5 +67,30 @@ describe 'CuffSert#parse_cli_args' do
     file = Tempfile.new('stack')
     result = CuffSert.parse_cli_args([file.path])
     expect(result).to include(:stack_path => [file.path])
+  end
+
+  context '--help exit code' do
+    original_stderr = $stderr
+    before { $stderr = File.open(File::NULL, "w") }
+    after { $stderr = original_stderr }
+
+    subject do
+      begin
+        CuffSert.parse_cli_args(['-h'])
+      rescue SystemExit => e
+        e.status
+      end
+    end
+
+    it { should eq(1) }
+  end
+
+  it '--help prints usage' do
+    expect do
+      begin
+        CuffSert.parse_cli_args(['-h'])
+      rescue SystemExit
+      end
+    end.to output(/Usage:/).to_stderr
   end
 end
