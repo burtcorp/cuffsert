@@ -31,6 +31,16 @@ module CuffSert
     stack_uri
   end
 
+  def self.need_confirmation(meta, change_set)
+    return false if meta.dangerous_ok
+    change_set[:changes].any? do |change|
+      change[:action] == 'Delete' || (
+        change[:action] == 'Modify' &&
+        ['True', 'Conditional'].include?(change[:replacement])
+      )
+    end
+  end
+
   def self.execute(meta, client: RxCFClient.new)
     sources = []
     found = client.find_stack_blocking(meta)

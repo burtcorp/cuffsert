@@ -71,6 +71,61 @@ shared_context 'templates' do
   end
 end
 
+shared_context 'changesets' do
+  let(:change_set_id) { 'ze-change-set-id' }
+
+  let :stack_update_change_set do
+    { :id => change_set_id, :stack_id => 'ze-stack' }
+  end
+
+  let :r1_modify do
+    {
+      :action => 'Modify',
+      :replacement => 'True',
+      :logical_resource_id => 'resource1_id',
+    }
+  end
+
+  let :r2_add do
+    {
+      :action => 'Add',
+      :replacement => 'False',
+      :logical_resource_id => 'resource2_id',
+    }
+  end
+
+  let :r3_delete do
+    {
+      :action => 'Delete',
+      :replacement => 'False',
+      :logical_resource_id => 'resource3_id',
+    }
+  end
+
+  let :change_set_changes do
+    []
+  end
+
+  let :change_set_in_progress do
+    {
+      :change_set_id => change_set_id,
+      :stack_id => stack_id,
+      :stack_name => stack_name,
+      :status => 'CREATE_IN_PROGRESS',
+    }
+  end
+
+  let :change_set_ready do
+    {
+      :change_set_id => change_set_id,
+      :stack_id => stack_id,
+      :stack_name => stack_name,
+      :status => 'CREATE_COMPLETE',
+      :changes => change_set_changes,
+    }
+  end
+end
+
 shared_context 'stack states' do
   include_context 'basic parameters'
 
