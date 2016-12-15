@@ -10,7 +10,7 @@ describe 'CuffSert#validate_and_urlify' do
 
   it 'urlifies and normalizes files' do
     stack = Tempfile.new('stack')
-    path = Dir.tmpdir + '/..' + stack.path
+    path = '/..' + stack.path
     result = CuffSert.validate_and_urlify(path)
     expect(result).to eq(URI.parse("file://#{stack.path}"))
   end
