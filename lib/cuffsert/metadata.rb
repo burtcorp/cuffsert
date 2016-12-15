@@ -2,9 +2,12 @@ require 'yaml'
 
 module CuffSert
   class StackConfig
-    attr_accessor :stackname, :selected_path, :parameters, :tags, :stack_uri
+    attr_accessor :stackname, :selected_path, :dangerous_ok, :stack_uri
+    attr_accessor :parameters, :tags
+
     def initialize
       @selected_path = []
+      @dangerous_ok = false
       @parameters = {}
       @tags = {}
     end

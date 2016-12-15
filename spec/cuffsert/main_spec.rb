@@ -32,6 +32,62 @@ describe 'CuffSert#validate_and_urlify' do
   end
 end
 
+describe 'CuffSert#need_confirmation' do
+  include_context 'metadata'
+  include_context 'changesets'
+
+  let :local_meta do
+    meta.dangerous_ok = false
+    meta
+  end
+
+  subject do
+    CuffSert.need_confirmation(local_meta, change_set_ready)
+  end
+
+  context 'with adds' do
+    let(:change_set_changes) { [r2_add] }
+    it { should be(false) }
+  end
+
+  context 'with non-replace modify' do
+    let(:change_set_changes) { [r1_modify.merge(:replacement => 'False')] }
+    it { should be(false) }
+  end
+
+  context 'with conditional replace' do
+    let(:change_set_changes) { [r1_modify.merge(:replacement => 'Conditional')] }
+    it { should be(true) }
+  end
+
+  context 'with known replacement' do
+    let(:change_set_changes) { [r1_modify.merge(:replacement => 'True')] }
+    it { should be(true) }
+  end
+
+  context 'with delete' do
+    let(:change_set_changes) { [r3_delete] }
+    it { should be(true) }
+  end
+
+  context 'given dangerous_ok' do
+    let :local_meta do
+      meta.dangerous_ok = true
+      meta
+    end
+
+    context 'with known replacement' do
+      let(:change_set_changes) { [r1_modify.merge(:replacement => 'True')] }
+      it { should be(false) }
+    end
+
+    context 'with delete' do
+      let(:change_set_changes) { [r3_delete] }
+      it { should be(false) }
+    end
+  end
+end
+
 describe 'CuffSert#execute' do
   include_context 'stack states'
   include_context 'metadata'
