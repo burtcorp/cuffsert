@@ -6,12 +6,11 @@ describe CuffSert::RxCFClient do
   include_context 'metadata'
   include_context 'stack states'
   include_context 'stack events'
+  include_context 'changesets'
 
   let :cfargs do
     {}
   end
-
-  let(:create_reply) { {:stack_id => stack_id} }
 
   describe '#find_stack_blocking' do
     context 'finds a stack' do
@@ -49,6 +48,8 @@ describe CuffSert::RxCFClient do
   end
 
   describe '#create_stack' do
+    let(:create_reply) { {:stack_id => stack_id} }
+
     let :aws_mock do
       mock = double(:aws_mock)
       expect(mock).to receive(:create_stack)
@@ -99,5 +100,53 @@ describe CuffSert::RxCFClient do
 
       it { observe_expect(subject).to eq([r1_done, r2_progress, r2_rolled_back]) }
     end
+  end
+
+  describe '#prepare update' do
+    let :aws_mock do
+      mock = double(:aws_mock)
+      expect(mock).to receive(:create_change_set)
+        .and_return(stack_update_change_set)
+      expect(mock).to receive(:describe_change_set)
+        .at_least(:twice)
+        .with(:change_set_name => change_set_id)
+        .and_return(
+          change_set_in_progress,
+          change_set_ready
+        )
+      mock
+    end
+
+    subject { described_class.new(aws_mock).prepare_update(cfargs) }
+
+    it { observe_expect(subject).to include(change_set_ready) }
+  end
+
+  describe '#update stack' do
+    let :aws_mock do
+      mock = double(:aws_mock)
+
+      expect(mock).to receive(:execute_change_set)
+        .with(include(:change_set_name => change_set_id))
+        .and_return(nil)
+      expect(mock).to receive(:describe_stack_events)
+        .with(:stack_name => stack_id)
+        .at_least(:twice)
+        .and_return(
+          stack_in_progress_events,
+          stack_complete_events
+        )
+      expect(mock).to receive(:describe_stacks)
+        .at_least(:twice)
+        .and_return(
+          stack_in_progress_describe,
+          stack_complete_describe
+        )
+      mock
+    end
+
+    subject { described_class.new(aws_mock).update_stack(stack_id, change_set_id) }
+
+    it { observe_expect(subject).to eq([r1_done, r2_progress, r2_done]) }
   end
 end

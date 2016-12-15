@@ -35,7 +35,30 @@ module CuffSert
       end
     end
 
-    def update_stack(cfargs)
+    def prepare_update(cfargs)
+      Rx::Observable.create do |observer|
+        change_set_id = @cf.create_change_set(cfargs)[:id]
+        loop do
+          change_set = @cf.describe_change_set(change_set_name: change_set_id)
+          observer.on_next(change_set)
+          break if FINAL_STATES.include?(change_set[:status])
+        end
+        observer.on_completed
+      end
+    end
+
+    def update_stack(stack_id, change_set_id)
+      eventid_cache = Set.new
+      Rx::Observable.create do |observer|
+        @cf.execute_change_set(change_set_name: change_set_id)
+        stack_events(stack_id) do |event|
+          observer.on_next(event)
+        end
+        observer.on_completed
+      end
+      .select do |event|
+        eventid_cache.add?(event[:event_id])
+      end
     end
 
     def delete_stack(cfargs)
