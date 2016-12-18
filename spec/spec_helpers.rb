@@ -124,6 +124,17 @@ shared_context 'changesets' do
       :changes => change_set_changes,
     }
   end
+
+  let :change_set_failed do
+    {
+      :change_set_id => change_set_id,
+      :stack_id => stack_id,
+      :stack_name => stack_name,
+      :status => 'FAILED',
+      :statue_reason => 'The submitted information didn\'t contain changes. Submit different information to create a change set.',
+      :changes => [],
+    }
+  end
 end
 
 shared_context 'stack states' do

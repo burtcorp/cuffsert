@@ -19,5 +19,6 @@ module CuffSert
     DELETE_COMPLETE
     DELETE_FAILED
     DELETE_SKIPPED
+    FAILED
   ]
 end

@@ -55,7 +55,9 @@ module CuffSert
       .flat_map do |change_set|
         Rx::Observable.concat(
           Rx::Observable.of(change_set),
-          if confirm_update.call(change_set)
+          if change_set[:status] == 'FAILED'
+            Rx::Observable.empty
+          elsif confirm_update.call(change_set)
             client.update_stack(change_set[:stack_id], change_set[:change_set_id])
           else
             Rx::Observable.of('abort')

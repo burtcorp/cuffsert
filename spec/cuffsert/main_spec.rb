@@ -118,6 +118,7 @@ describe 'CuffSert#execute' do
   end
 
   describe 'update' do
+    let(:confirm_update) { lambda { |_| true } }
     let(:change_set_stream) { Rx::Observable.of(change_set_ready) }
 
     let :cfmock do
@@ -133,8 +134,6 @@ describe 'CuffSert#execute' do
     subject { CuffSert.execute(meta, confirm_update, :client => cfmock) }
 
     context 'given confirmation' do
-      let(:confirm_update) { lambda { |_| true } }
-
       it 'updates an existing stack' do
         expect(cfmock).to receive(:update_stack)
           .and_return(Rx::Observable.of(r1_done, r2_done))
@@ -142,6 +141,16 @@ describe 'CuffSert#execute' do
         observe_expect(subject).to eq(
           [change_set_ready, r1_done, r2_done]
         )
+      end
+    end
+
+    context 'when change set failed' do
+      let(:change_set_stream) { Rx::Observable.of(change_set_failed) }
+
+      it 'does not update' do
+        expect(cfmock).not_to receive(:update_stack)
+
+        observe_expect(subject).to eq([change_set_failed])
       end
     end
 

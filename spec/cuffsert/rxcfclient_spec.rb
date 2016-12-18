@@ -107,19 +107,29 @@ describe CuffSert::RxCFClient do
       mock = double(:aws_mock)
       expect(mock).to receive(:create_change_set)
         .and_return(stack_update_change_set)
-      expect(mock).to receive(:describe_change_set)
+      mock
+    end
+
+    subject { described_class.new(aws_mock).prepare_update(cfargs) }
+
+    it 'returns change_set when ready' do
+      expect(aws_mock).to receive(:describe_change_set)
         .at_least(:twice)
         .with(:change_set_name => change_set_id)
         .and_return(
           change_set_in_progress,
           change_set_ready
         )
-      mock
+      observe_expect(subject).to include(change_set_ready)
     end
 
-    subject { described_class.new(aws_mock).prepare_update(cfargs) }
-
-    it { observe_expect(subject).to include(change_set_ready) }
+    it 'returns change_set when failing' do
+      expect(aws_mock).to receive(:describe_change_set)
+        .once
+        .with(:change_set_name => change_set_id)
+        .and_return(change_set_failed)
+      observe_expect(subject).to include(change_set_failed)
+    end
   end
 
   describe '#update stack' do
