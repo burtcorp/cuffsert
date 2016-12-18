@@ -34,15 +34,15 @@ describe '#as_create_stack_args' do
   end
 end
 
-describe '#as_update_stack_args' do
+describe '#as_update_change_set' do
   include_context 'metadata'
 
   subject do
-    CuffSert.as_update_stack_args(meta)
+    CuffSert.as_update_change_set(meta)
   end
 
   it { should include(:use_previous_template => false) }
-  it { should_not include(:on_failure, :change_set_type)}
+  it { should include(:change_set_type => 'UPDATE') }
 end
 
 describe '#as_delete_stack_args' do
