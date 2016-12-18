@@ -89,8 +89,10 @@ describe 'CuffSert#need_confirmation' do
 end
 
 describe 'CuffSert#execute' do
-  include_context 'stack states'
+  include_context 'changesets'
   include_context 'metadata'
+  include_context 'stack events'
+  include_context 'stack states'
 
   let :cfmock do
     double(:cfclient)
@@ -102,7 +104,7 @@ describe 'CuffSert#execute' do
       .and_return(nil)
     expect(cfmock).to receive(:create_stack)
       .with(CuffSert.as_create_stack_args(meta))
-    CuffSert.execute(meta, :client => cfmock)
+    CuffSert.execute(meta, nil, :client => cfmock)
   end
 
   it 'deletes rolledback stack before create' do
@@ -112,22 +114,53 @@ describe 'CuffSert#execute' do
       .with(CuffSert.as_delete_stack_args(meta))
     expect(cfmock).to receive(:create_stack)
       .with(CuffSert.as_create_stack_args(meta))
-    CuffSert.execute(meta, :client => cfmock)
+    CuffSert.execute(meta, nil, :client => cfmock)
   end
 
-  it 'updates an existing stack' do
-    allow(cfmock).to receive(:find_stack_blocking)
-      .and_return(stack_complete)
-    expect(cfmock).to receive(:update_stack)
-      .with(CuffSert.as_update_stack_args(meta))
-    CuffSert.execute(meta, :client => cfmock)
+  describe 'update' do
+    let(:change_set_stream) { Rx::Observable.of(change_set_ready) }
+
+    let :cfmock do
+      mock = double(:cfmock)
+      allow(mock).to receive(:find_stack_blocking)
+        .and_return(stack_complete)
+      expect(mock).to receive(:prepare_update)
+        .with(CuffSert.as_update_change_set(meta))
+        .and_return(change_set_stream)
+      mock
+    end
+
+    subject { CuffSert.execute(meta, confirm_update, :client => cfmock) }
+
+    context 'given confirmation' do
+      let(:confirm_update) { lambda { |_| true } }
+
+      it 'updates an existing stack' do
+        expect(cfmock).to receive(:update_stack)
+          .and_return(Rx::Observable.of(r1_done, r2_done))
+
+        observe_expect(subject).to eq(
+          [change_set_ready, r1_done, r2_done]
+        )
+      end
+    end
+
+    context 'given rejection' do
+      let(:confirm_update) { lambda { |_| false } }
+
+      it 'does not update' do
+        expect(cfmock).not_to receive(:update_stack)
+
+        observe_expect(subject).to eq([change_set_ready, 'abort'])
+      end
+    end
   end
 
   it 'bails on stack already in progress' do
     allow(cfmock).to receive(:find_stack_blocking)
       .and_return(stack_in_progress)
     expect {
-      CuffSert.execute(meta, :client => cfmock)
+      CuffSert.execute(meta, nil, :client => cfmock)
     }.to raise_error(/in progress/)
   end
 end

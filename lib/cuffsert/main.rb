@@ -13,6 +13,8 @@ require 'uri'
 # - selector and metadata are mandatory and need guards accordingly
 # - validate_and_urlify belongs in metadata.rb
 # - execute should use helpers and not know details of statuses
+# - update 'abort' should delete cheangeset and emit the result
+# - implement a proper update confirmation function
 
 module CuffSert
   def self.validate_and_urlify(stack_path)
@@ -46,9 +48,20 @@ module CuffSert
     client.create_stack(cfargs)
   end
 
-  def self.update_stack(client, meta)
-    cfargs = CuffSert.as_update_stack_args(meta)
-    client.update_stack(cfargs)
+  def self.update_stack(client, meta, confirm_update)
+    cfargs = CuffSert.as_update_change_set(meta)
+    client.prepare_update(cfargs)
+      .last
+      .flat_map do |change_set|
+        Rx::Observable.concat(
+          Rx::Observable.of(change_set),
+          if confirm_update.call(change_set)
+            client.update_stack(change_set[:stack_id], change_set[:id])
+          else
+            Rx::Observable.of('abort')
+          end
+        )
+      end
   end
 
   def self.delete_stack(client, meta)
@@ -56,7 +69,7 @@ module CuffSert
     client.delete_stack(cfargs)
   end
 
-  def self.execute(meta, client: RxCFClient.new)
+  def self.execute(meta, confirm_update, client: RxCFClient.new)
     sources = []
     found = client.find_stack_blocking(meta)
 
@@ -70,7 +83,7 @@ module CuffSert
       sources << self.delete_stack(client, meta)
       sources << self.create_stack(client, meta)
     else
-      sources << self.update_stack(client, meta)
+      sources << self.update_stack(client, meta, confirm_update)
     end
     Rx::Observable.concat(*sources)
   end
@@ -83,7 +96,7 @@ module CuffSert
     end
     stack_path = cli_args[:stack_path][0]
     meta.stack_uri = CuffSert.validate_and_urlify(stack_path)
-    events = CuffSert.execute(meta)
+    events = CuffSert.execute(meta, lambda { |_| true })
     RawPresenter.new(events)
   end
 end

@@ -48,9 +48,10 @@ module CuffSert
     cfargs
   end
 
-  def self.as_update_stack_args(meta)
+  def self.as_update_change_set(meta)
     cfargs = self.as_cloudformation_args(meta)
     cfargs[:use_previous_template] = false
+    cfargs[:change_set_type] = 'UPDATE'
     cfargs
   end
 
