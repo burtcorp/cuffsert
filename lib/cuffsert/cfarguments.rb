@@ -4,7 +4,6 @@ require 'open-uri'
 # - propagate timeout here (from config?)
 # - fail on template body > 51200 bytes
 # - creation change-set: cfargs[:change_set_type] = 'CREATE'
-# - update change-set: cfargs[:change_set_type] = 'UPDATE'
 
 module CuffSert
   TIMEOUT = 5
@@ -16,7 +15,6 @@ module CuffSert
         CAPABILITY_IAM
         CAPABILITY_NAMED_IAM
       ],
-      :timeout_in_minutes => TIMEOUT,
     }
 
     unless meta.parameters.empty?
@@ -44,6 +42,7 @@ module CuffSert
 
   def self.as_create_stack_args(meta)
     cfargs = self.as_cloudformation_args(meta)
+    cfargs[:timeout_in_minutes] = TIMEOUT,
     cfargs[:on_failure] = 'DELETE'
     cfargs
   end
@@ -51,6 +50,7 @@ module CuffSert
   def self.as_update_change_set(meta)
     cfargs = self.as_cloudformation_args(meta)
     cfargs[:use_previous_template] = false
+    cfargs[:change_set_name] = meta.stackname
     cfargs[:change_set_type] = 'UPDATE'
     cfargs
   end

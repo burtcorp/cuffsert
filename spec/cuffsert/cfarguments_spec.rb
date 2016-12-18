@@ -8,17 +8,17 @@ describe '#as_create_stack_args' do
   include_context 'metadata'
   include_context 'templates'
 
-  context 'given tags' do
-    subject { CuffSert.as_create_stack_args(meta) }
+  subject { CuffSert.as_create_stack_args(meta) }
 
+  it { should_not include(:change_set_name) }
+
+  context 'given tags' do
     it { should include(:tags => include({:key => 'k1', :value => 'v1'})) }
     it { should include(:tags => include({:key => 'k2', :value => 'v2'})) }
     it { should_not include(:parameters) }
   end
 
   context 'when stack uri is an s3 url' do
-    subject { CuffSert.as_create_stack_args(meta) }
-
     it { should include(:template_url => s3url) }
     it { should_not include(:template_body) }
   end
@@ -41,8 +41,10 @@ describe '#as_update_change_set' do
     CuffSert.as_update_change_set(meta)
   end
 
+  it { should include(:change_set_name => meta.stackname) }
   it { should include(:use_previous_template => false) }
   it { should include(:change_set_type => 'UPDATE') }
+  it { should_not include(:timeout_in_minutes) }
 end
 
 describe '#as_delete_stack_args' do

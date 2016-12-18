@@ -56,7 +56,7 @@ module CuffSert
         Rx::Observable.concat(
           Rx::Observable.of(change_set),
           if confirm_update.call(change_set)
-            client.update_stack(change_set[:stack_id], change_set[:id])
+            client.update_stack(change_set[:stack_id], change_set[:change_set_id])
           else
             Rx::Observable.of('abort')
           end
