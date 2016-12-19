@@ -24,10 +24,8 @@ describe '#as_create_stack_args' do
   end
 
   context 'when stack uri is file' do
-    subject do
-      meta.stack_uri = URI.join('file:///', template_body.path)
-      CuffSert.as_create_stack_args(meta)
-    end
+    before { meta.stack_uri = URI.join('file:///', template_body.path) }
+    subject { CuffSert.as_create_stack_args(meta) }
 
     it { should include(:template_body => template_json) }
     it { should_not include(:template_uri) }
@@ -37,9 +35,7 @@ end
 describe '#as_update_change_set' do
   include_context 'metadata'
 
-  subject do
-    CuffSert.as_update_change_set(meta)
-  end
+  subject { CuffSert.as_update_change_set(meta) }
 
   it { should include(:change_set_name => meta.stackname) }
   it { should include(:use_previous_template => false) }
@@ -50,15 +46,7 @@ end
 describe '#as_delete_stack_args' do
   include_context 'metadata'
 
-  let(:stackname) { 'ze-stack' }
-
-  let :meta do
-    meta = CuffSert::StackConfig.new
-    meta.stackname = stackname
-    meta
-  end
-
   subject { CuffSert.as_delete_stack_args(meta) }
 
-  it { should include(:stack_name => stackname) }
+  it { should include(:stack_name => stack_name) }
 end
