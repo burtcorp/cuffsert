@@ -16,11 +16,9 @@ describe CuffSert::StackConfig do
       config
     end
 
-    it { expect(subject.stackname).to eq('updated') }
-    it { expect(subject.parameters).to eq({'P1' => 'new'}) }
-    it { expect(subject.tags).to eq(
-      {'T1' => 'updated',  'T2' => 'V2', 'T3' => 'new'}
-    )}
+    it { should have_attributes(:stackname =>'updated') }
+    it { should have_attributes(:parameters => {'P1' => 'new'}) }
+    it { should have_attributes(:tags => {'T1' => 'updated',  'T2' => 'V2', 'T3' => 'new'}) }
   end
 end
 
@@ -39,54 +37,46 @@ describe CuffSert do
   end
 
   context '#load_config fails on' do
-    it 'no data' do
-      io = StringIO.new('')
-      expect { CuffSert.load_config(io) }.to raise_error(/hash/)
+    subject { |example| CuffSert.load_config(example.metadata[:io]) }
+
+    it 'no data', :io => StringIO.new('') do
+      expect { subject }.to raise_error(/hash/)
     end
 
-    it 'unknown version' do
-      io = StringIO.new('Format: foo')
-      expect { CuffSert.load_config(io) }.to raise_error(/Format: v1/)
+    it 'unknown version', :io => StringIO.new('Format: foo') do
+      expect { subject }.to raise_error(/Format: v1/)
     end
   end
 
-  context '#meta_for_path' do
-    let :config do
-      CuffSert.load_config(StringIO.new(config_yaml))
+  context '#meta_for_path returned meta' do
+    let(:config) { CuffSert.load_config(StringIO.new(config_yaml)) }
+
+    subject do |example|
+      CuffSert.meta_for_path(config, example.metadata[:path])
     end
 
-    it 'finds default on ""' do
-      result = CuffSert.meta_for_path(config, [])
-      expect(result.tags).to eq({'tlevel' => 'top'})
-      expect(result.parameters).to eq({'plevel' => 'top'})
-      expect(result.stackname).to eq('')
+    context 'from empty path', :path => [] do
+      it { should have_attributes(:tags => {'tlevel' => 'top'}) }
+      it { should have_attributes(:parameters => {'plevel' => 'top'}) }
+      it { should have_attributes(:stackname => '') }
     end
 
-    it 'finds "level1_a"' do
-      result = CuffSert.meta_for_path(config, ['level1_a'])
-      expect(result.tags).to eq({'tlevel' => 'level1_a'})
-      expect(result.parameters).to eq({'plevel' => 'top'})
-      expect(result.stackname).to eq('level1_a')
+    context 'from "level1_a"', :path => ['level1_a'] do
+      it { should have_attributes(:tags => {'tlevel' => 'level1_a'}) }
+      it { should have_attributes(:parameters => {'plevel' => 'top'}) }
+      it { should have_attributes(:stackname => 'level1_a') }
     end
 
-    it 'defaults to "level1_b/level2_a"' do
-      result = CuffSert.meta_for_path(config, ['level1_b'])
-      expect(result.tags).to eq({'tlevel' => 'top'})
-      expect(result.parameters).to eq({'plevel' => 'level2_a'})
-      expect(result.stackname).to eq('level1_b-level2_a')
+    context 'defaults to "level1_b/level2_a"', :path => ['level1_b'] do
+      it { should have_attributes(:tags => {'tlevel' => 'top'}) }
+      it { should have_attributes(:parameters => {'plevel' => 'level2_a'}) }
+      it { should have_attributes(:stackname => 'level1_b-level2_a') }
     end
 
-    it 'explicit reference to "level1_b/level2_b"' do
-      result = CuffSert.meta_for_path(config, ['level1_b', 'level2_b'])
-      expect(result.tags).to eq({'tlevel' => 'top'})
-      expect(result.parameters).to eq({'plevel' => 'level2_b'})
-      expect(result.stackname).to eq('level1_b-level2_b')
-    end
-
-     it 'explicit reference to "level1_b-level2_b"' do
-      result = CuffSert.meta_for_path(config, ['level1_b', 'level2_b'])
-      expect(result.parameters).to eq({'plevel' => 'level2_b'})
-      expect(result.stackname).to eq('level1_b-level2_b')
+    context 'from "level1_b/level2_b"', :path => ['level1_b', 'level2_b'] do
+      it { should have_attributes(:tags => {'tlevel' => 'top'}) }
+      it { should have_attributes(:parameters => {'plevel' => 'level2_b'}) }
+      it { should have_attributes(:stackname => 'level1_b-level2_b') }
     end
   end
 
@@ -104,16 +94,12 @@ describe CuffSert do
       }
     end
 
-    subject do
-      CuffSert.build_meta(cli_args)
-    end
+    subject { CuffSert.build_meta(cli_args) }
 
-    it 'reads metadata file and allows overrides' do
-      expect(subject.stackname).to eq('customname')
-      expect(subject.tags).to include(
-        'tlevel' => 'level1_a',
-        'another' => 'tag'
-      )
+    context 'reads metadata file and allows overrides' do
+      it { should have_attributes(:stackname => 'customname') }
+      it { should have_attributes(:tags => include('tlevel' => 'level1_a')) }
+      it { should have_attributes(:tags => include('another' => 'tag')) }
     end
   end
 end
