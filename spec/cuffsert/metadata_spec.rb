@@ -20,6 +20,21 @@ describe CuffSert::StackConfig do
     it { should have_attributes(:parameters => {'P1' => 'new'}) }
     it { should have_attributes(:tags => {'T1' => 'updated',  'T2' => 'V2', 'T3' => 'new'}) }
   end
+
+  it 'given explicit stackname, suffix is ignored' do
+    config = described_class.new
+    config.suffix = 'suffix'
+    config.stackname = 'stackname'
+    expect(config.stackname).to eq('stackname')
+  end
+
+  it 'absent explicit stackname, one is calculated' do
+    config = described_class.new
+    config.append_path('foo')
+    config.append_path('bar')
+    config.suffix = 'baz'
+    expect(config.stackname).to eq('foo-bar-baz')
+  end
 end
 
 describe CuffSert do
@@ -55,28 +70,26 @@ describe CuffSert do
       CuffSert.meta_for_path(config, example.metadata[:path])
     end
 
-    context 'from empty path', :path => [] do
-      it { should have_attributes(:tags => {'tlevel' => 'top'}) }
-      it { should have_attributes(:parameters => {'plevel' => 'top'}) }
-      it { should have_attributes(:stackname => '') }
+    it 'from empty path', :path => [] do
+      expect { subject }.to raise_error(/no.defaultpath.*level1_a/i)
     end
 
     context 'from "level1_a"', :path => ['level1_a'] do
       it { should have_attributes(:tags => {'tlevel' => 'level1_a'}) }
       it { should have_attributes(:parameters => {'plevel' => 'top'}) }
-      it { should have_attributes(:stackname => 'level1_a') }
+      it { should have_attributes(:stackname => 'level1_a-stack') }
     end
 
     context 'defaults to "level1_b/level2_a"', :path => ['level1_b'] do
       it { should have_attributes(:tags => {'tlevel' => 'top'}) }
       it { should have_attributes(:parameters => {'plevel' => 'level2_a'}) }
-      it { should have_attributes(:stackname => 'level1_b-level2_a') }
+      it { should have_attributes(:stackname => 'level1_b-level2_a-stack') }
     end
 
     context 'from "level1_b/level2_b"', :path => ['level1_b', 'level2_b'] do
       it { should have_attributes(:tags => {'tlevel' => 'top'}) }
       it { should have_attributes(:parameters => {'plevel' => 'level2_b'}) }
-      it { should have_attributes(:stackname => 'level1_b-level2_b') }
+      it { should have_attributes(:stackname => 'level1_b-level2_b-stack') }
     end
   end
 

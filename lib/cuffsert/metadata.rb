@@ -3,7 +3,7 @@ require 'yaml'
 module CuffSert
   class StackConfig
     attr_accessor :stackname, :selected_path, :dangerous_ok, :stack_uri
-    attr_accessor :parameters, :tags
+    attr_accessor :suffix, :parameters, :tags
 
     def initialize
       @selected_path = []
@@ -18,13 +18,14 @@ module CuffSert
 
     def update_from(metadata)
       @stackname = metadata[:stackname] || @stackname
+      @suffix = metadata[:suffix] || @suffix
       @parameters.merge!(metadata[:parameters] || {})
       @tags.merge!(metadata[:tags] || {})
       self
     end
 
     def stackname
-      @stackname || @selected_path.join('-')
+      @stackname || (@selected_path + [*@suffix]).join('-')
     end
   end
 
@@ -41,10 +42,13 @@ module CuffSert
     target.update_from(metadata)
     candidate, path = path
     key = candidate || metadata[:defaultpath]
-    return target if key.nil?
+    variants = metadata[:variants]
+    if key.nil?
+      raise "No DefaultPath found for #{variants.keys}" unless variants.nil?
+      return target
+    end
     target.append_path(key)
 
-    variants = metadata[:variants]
     raise "Missing variants section as expected by #{key}" if variants.nil?
     new_meta = variants[key.to_sym]
     raise "#{key.inspect} not found in variants" if new_meta.nil?

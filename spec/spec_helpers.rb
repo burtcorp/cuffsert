@@ -15,6 +15,7 @@ shared_context 'yaml configs' do
   let :config_yaml do
     data = <<EOF
 Format: v1
+Suffix: stack
 Tags:
  - Name: tlevel
    Value: top
