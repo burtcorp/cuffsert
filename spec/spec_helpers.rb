@@ -179,13 +179,23 @@ shared_context 'stack states' do
 end
 
 shared_context 'stack events' do
+  let :r1_old do
+    {
+      :event_id => 'r1_old',
+      :stack_id => stack_id,
+      :logical_resource_id => 'resource1_id',
+      :resource_status => 'CREATE_COMPLETE',
+      :timestamp => DateTime.rfc3339('2011-08-23T01:02:28.025Z').to_time,
+    }
+  end
+
   let :r1_done do
     {
       :event_id => 'r1_done',
       :stack_id => stack_id,
       :logical_resource_id => 'resource1_id',
       :resource_status => 'CREATE_COMPLETE',
-      :timestamp => '2013-08-23T01:02:28.025Z',
+      :timestamp => DateTime.rfc3339('2013-08-23T01:02:28.025Z').to_time,
     }
   end
 
@@ -195,7 +205,7 @@ shared_context 'stack events' do
       :stack_id => stack_id,
       :logical_resource_id => 'resource2_id',
       :resource_status => 'CREATE_IN_PROGRESS',
-      :timestamp => '2013-08-23T01:02:28.025Z',
+      :timestamp => DateTime.rfc3339('2013-08-23T01:02:28.025Z').to_time,
     }
   end
 
@@ -205,7 +215,7 @@ shared_context 'stack events' do
       :stack_id => stack_id,
       :logical_resource_id => 'resource2_id',
       :resource_status => 'CREATE_COMPLETE',
-      :timestamp => '2013-08-23T01:02:38.534Z',
+      :timestamp => DateTime.rfc3339('2013-08-23T01:02:38.534Z').to_time,
     }
   end
 
@@ -215,8 +225,12 @@ shared_context 'stack events' do
       :stack_id => stack_id,
       :logical_resource_id => 'resource2_id',
       :resource_status => 'DELETE_COMPLETE',
-      :timestamp => '2013-08-23T01:02:38.534Z',
+      :timestamp => DateTime.rfc3339('2013-08-23T01:02:38.534Z').to_time,
     }
+  end
+
+  let :too_old_events do
+    { :stack_events => [r1_old] }
   end
 
   let :stack_in_progress_events do

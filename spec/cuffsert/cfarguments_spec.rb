@@ -10,6 +10,7 @@ describe '#as_create_stack_args' do
 
   subject { CuffSert.as_create_stack_args(meta) }
 
+  it { should include(:timeout_in_minutes => CuffSert::TIMEOUT) }
   it { should_not include(:change_set_name) }
 
   context 'given tags' do

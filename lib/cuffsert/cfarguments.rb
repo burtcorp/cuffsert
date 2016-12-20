@@ -42,7 +42,7 @@ module CuffSert
 
   def self.as_create_stack_args(meta)
     cfargs = self.as_cloudformation_args(meta)
-    cfargs[:timeout_in_minutes] = TIMEOUT,
+    cfargs[:timeout_in_minutes] = TIMEOUT
     cfargs[:on_failure] = 'DELETE'
     cfargs
   end
