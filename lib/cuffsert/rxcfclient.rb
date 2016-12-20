@@ -3,15 +3,14 @@ require 'cuffsert/cfstates'
 require 'rx'
 
 # TODO:
-# - look only at events that occurred recently
 # - throttle describe_stack_events calls
 # - retry on "5xx" errors
-# - handle pagination
 
 module CuffSert
   class RxCFClient
-    def initialize(aws_cf = Aws::CloudFormation::Client.new)
+    def initialize(aws_cf = Aws::CloudFormation::Client.new, max_items: 1000)
       @cf = aws_cf
+      @max_items = max_items
     end
 
     def find_stack_blocking(meta)
@@ -24,8 +23,9 @@ module CuffSert
     def create_stack(cfargs)
       eventid_cache = Set.new
       Rx::Observable.create do |observer|
+        start_time = record_start_time
         stack_id = @cf.create_stack(cfargs)[:stack_id]
-        stack_events(stack_id) do |event|
+        stack_events(stack_id, start_time) do |event|
           observer.on_next(event)
         end
         observer.on_completed
@@ -50,8 +50,9 @@ module CuffSert
     def update_stack(stack_id, change_set_id)
       eventid_cache = Set.new
       Rx::Observable.create do |observer|
+        start_time = record_start_time
         @cf.execute_change_set(change_set_name: change_set_id)
-        stack_events(stack_id) do |event|
+        stack_events(stack_id, start_time) do |event|
           observer.on_next(event)
         end
         observer.on_completed
@@ -66,14 +67,22 @@ module CuffSert
 
     private
 
+    def record_start_time
+      # Please make sure your machine has NTP :p
+      DateTime.now - 5.0 / 86400
+    end
+
     def stack_finished?(state)
       FINAL_STATES.include?(state[:stack_status])
     end
 
-    def stack_events(stack_id)
+    def stack_events(stack_id, start_time)
       loop do
-        for event in @cf.describe_stack_events(stack_name: stack_id)[:stack_events]
-          yield event
+        @cf.describe_stack_events(stack_name: stack_id).each do |events|
+          for event in events[:stack_events]
+            next if event[:timestamp].to_datetime < start_time
+            yield event
+          end
         end
         state = @cf.describe_stacks(stack_name: stack_id)[:stacks][0]
         break if stack_finished?(state)

@@ -1,5 +1,6 @@
 require 'cuffsert/metadata'
 require 'cuffsert/rxcfclient'
+require 'date'
 require 'spec_helpers'
 
 describe CuffSert::RxCFClient do
@@ -7,6 +8,11 @@ describe CuffSert::RxCFClient do
   include_context 'stack states'
   include_context 'stack events'
   include_context 'changesets'
+
+  before do
+    allow(DateTime).to receive(:now)
+      .and_return(DateTime.rfc3339('2013-08-23T01:02:00.000Z'))
+  end
 
   let :cfargs do
     {}
@@ -55,6 +61,7 @@ describe CuffSert::RxCFClient do
       expect(mock).to receive(:create_stack)
         .and_return(create_reply)
       expect(mock).to receive(:describe_stack_events)
+        .with(:stack_name => stack_id)
         .at_least(:twice)
         .and_return(*events_sequence)
       expect(mock).to receive(:describe_stacks)
@@ -66,8 +73,8 @@ describe CuffSert::RxCFClient do
     context 'events when create is succesful' do
       let :events_sequence do
         [
-          stack_in_progress_events,
-          stack_complete_events
+          [too_old_events, stack_in_progress_events],
+          [stack_complete_events]
         ]
       end
       let :stack_sequence do
@@ -85,8 +92,8 @@ describe CuffSert::RxCFClient do
     context 'events when create failed with rollback' do
       let :events_sequence do
         [
-          stack_in_progress_events,
-          stack_rolled_back_events
+          [stack_in_progress_events],
+          [stack_rolled_back_events]
         ]
       end
       let :stack_sequence do
@@ -140,11 +147,11 @@ describe CuffSert::RxCFClient do
         .with(include(:change_set_name => change_set_id))
         .and_return(nil)
       expect(mock).to receive(:describe_stack_events)
-        .with(:stack_name => stack_id)
+        .with(including(:stack_name => stack_id))
         .at_least(:twice)
         .and_return(
-          stack_in_progress_events,
-          stack_complete_events
+          [stack_in_progress_events],
+          [stack_complete_events]
         )
       expect(mock).to receive(:describe_stacks)
         .at_least(:twice)
