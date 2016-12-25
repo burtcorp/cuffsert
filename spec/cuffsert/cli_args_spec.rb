@@ -1,72 +1,47 @@
 require 'cuffsert/cli_args'
 
+def have_overrides(overrides)
+  include(:overrides => include(overrides))
+end
+
 describe 'CuffSert#parse_cli_args' do
-  it 'accepts --metadata' do
-    file = Tempfile.new('metadata')
-    result = CuffSert.parse_cli_args(['--metadata',  file.path])
-    expect(result).to include(:metadata => file.path)
+  metadata = Tempfile.new('metadata')
+  stack = Tempfile.new('stack')
+
+  subject do |example|
+    argv = example.metadata[:argv] || example.metadata[:description_args][0]
+    CuffSert.parse_cli_args(argv)
   end
 
-  it 'accepts --metadata=-' do
-    file = Tempfile.new('stack')
-    result = CuffSert.parse_cli_args(['--metadata', '-', file.path])
-    expect(result).to include(:metadata => '/dev/stdin')
+  it ['--metadata',  metadata.path] { should include(:metadata => metadata.path) }
+  it ['--metadata', '-'] { should include(:metadata => '/dev/stdin') }
+  it ['--selector', 'foo/bar/baz'] { should include(:selector => ['foo', 'bar', 'baz']) }
+  it ['--tag=foo=bar'] { should have_overrides(:tags => {'foo' => 'bar'}) }
+  it ['--name=foo'] { should have_overrides(:stackname => 'foo') }
+  it ['--parameter', 'foo=bar'] { should have_overrides(:parameters => {'foo' => 'bar'}) }
+
+  it 'stack argument as array beacuse future', :argv => [stack.path] do
+    should include(:stack_path => [stack.path])
   end
 
-  it 'accepts --selector' do
-    result = CuffSert.parse_cli_args(['-s', 'foo/bar/baz'])
-    expect(result).to include(:selector => ['foo', 'bar', 'baz'])
+  it 'rejects unparseable tag', :argv => ['-t', 'asdf'] do
+    expect { subject }.to raise_error(/--tag.*asdf/)
   end
 
-  it 'accepts --tag' do
-    result = CuffSert.parse_cli_args(['--tag=foo=bar'])[:overrides]
-    expect(result).to include(:tags => {'foo' => 'bar'})
+  it 'rejects duplicate tag', :argv => ['-t', 'foo=bar', '-t', 'foo=baz'] do
+    expect { subject }.to raise_error(/duplicate.*foo/)
   end
 
-  it 'throws meaningfully on unparseable tag' do
-    expect {
-      CuffSert.parse_cli_args(['-t', 'asdf'])
-    }.to raise_error(/--tag.*asdf/)
+  it 'rejects unparseable parameter', :argv => ['-p', 'asdf']  do
+    expect { subject }.to raise_error(/--parameter.*asdf/)
   end
 
-  it 'throws meaningfully on duplicate tag' do
-    expect {
-      CuffSert.parse_cli_args(['-t', 'foo=bar', '-t', 'foo=baz'])
-    }.to raise_error(/duplicate.*foo/)
+  it 'rejects duplicate parameter', :argv => ['-p', 'foo=bar', '-p', 'foo=baz'] do
+    expect { subject }.to raise_error(/duplicate.*foo/)
   end
 
-  it 'accepts --parameter' do
-    result = CuffSert.parse_cli_args(['-p' 'foo=bar'])[:overrides]
-    expect(result).to include(:parameters => {'foo' => 'bar'})
-  end
-
-  it 'throws meaningfully on unparseable parameter' do
-    expect {
-      CuffSert.parse_cli_args(['-p', 'asdf'])
-    }.to raise_error(/--parameter.*asdf/)
-  end
-
-  it 'throws meaningfully on duplicate parameter' do
-    expect {
-      CuffSert.parse_cli_args(['-p', 'foo=bar', '-p', 'foo=baz'])
-    }.to raise_error(/duplicate.*foo/)
-  end
-
-  it 'accepts --name' do
-    result = CuffSert.parse_cli_args(['--name=foo'])[:overrides]
-    expect(result).to include(:stackname => 'foo')
-  end
-
-  it 'throws meaningfully on bad stackname' do
-    expect {
-      CuffSert.parse_cli_args(['-n', '*foo'])
-    }.to raise_error(/--name.*\*foo/)
-  end
-
-  it 'stack argument as array beacuse future' do
-    file = Tempfile.new('stack')
-    result = CuffSert.parse_cli_args([file.path])
-    expect(result).to include(:stack_path => [file.path])
+  it 'rejects bad stackname', :argv => ['-n', '*foo'] do
+    expect { subject }.to raise_error(/--name.*\*foo/)
   end
 
   context '--help exit code' do
