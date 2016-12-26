@@ -1,5 +1,6 @@
-require 'cuffsert/cfstates'
 require 'aws-sdk'
+require 'colorize'
+require 'cuffsert/cfstates'
 require 'rx'
 
 # TODO: Animate in-progress states
@@ -99,6 +100,58 @@ module CuffSert
       resource[:states] = resource[:states].reject do |state|
         state == :progress
       end << state
+    end
+  end
+
+  class ProgressbarRenderer
+    def initialize(output = STDOUT)
+      @output = output
+    end
+
+    def clear
+      @output.write("\r")
+    end
+
+    def error(event)
+      @output.write("\r")
+      puts event
+    end
+
+    def render(resource)
+      color, symbol = case resource[:states]
+      when [:progress]
+        [:yellow, :tripple_dot]
+      when [:good]
+        [:green, :check]
+      when [:bad]
+        [:red, :cross]
+      when [:good, :progress]
+        [:light_white, :tripple_dot]
+      when [:bad, :progress]
+        [:red, :tripple_dot]
+      when [:good, :good], [:bad, :good]
+        [:light_white, :check]
+      when [:good, :bad], [:bad, :bad]
+        [:red, :qmark]
+      else
+        raise 'Ye olde should-not-occur error'
+      end
+
+      table = {
+        :check => "+",
+        :tripple_dot => ".", # "\u2026"
+        :cross  => "!",
+        :qmark => "?",
+      }
+
+      @output.write(table[symbol].colorize(
+        :color => :white,
+        :background => color
+      ))
+    end
+
+    def done
+      @output.write("\nDone.\n".colorize(:green))
     end
   end
 end

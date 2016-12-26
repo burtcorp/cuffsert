@@ -99,6 +99,6 @@ module CuffSert
     stack_path = cli_args[:stack_path][0]
     meta.stack_uri = CuffSert.validate_and_urlify(stack_path)
     events = CuffSert.execute(meta, lambda { |_| true })
-    RawPresenter.new(events)
+    RendererPresenter.new(events, ProgressbarRenderer.new)
   end
 end
