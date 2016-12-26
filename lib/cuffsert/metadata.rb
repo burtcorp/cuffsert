@@ -58,11 +58,18 @@ module CuffSert
   def self.build_meta(cli_args)
     io = open(cli_args[:metadata])
     config = CuffSert.load_config(io)
-    meta = CuffSert.meta_for_path(config, cli_args[:selector])
+    default = self.meta_defaults(cli_args)
+    meta = CuffSert.meta_for_path(config, cli_args[:selector], default)
     meta.update_from(cli_args[:overrides])
   end
 
   private_class_method
+
+  def self.meta_defaults(cli_args)
+    default = StackConfig.new
+    default.suffix = File.basename(cli_args[:metadata], '.yml')
+    default
+  end
 
   def self.symbolize_keys(hash)
     hash.each_with_object({}) do |(k, v), h|

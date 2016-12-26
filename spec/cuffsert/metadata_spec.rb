@@ -77,7 +77,7 @@ describe CuffSert do
     context 'from "level1_a"', :path => ['level1_a'] do
       it { should have_attributes(:tags => {'tlevel' => 'level1_a'}) }
       it { should have_attributes(:parameters => {'plevel' => 'top'}) }
-      it { should have_attributes(:stackname => 'level1_a-stack') }
+      it { should have_attributes(:stackname => 'level1_a') }
     end
 
     context 'defaults to "level1_b/level2_a"', :path => ['level1_b'] do
@@ -97,22 +97,25 @@ describe CuffSert do
     include_context 'yaml configs'
 
     let :cli_args do
-      args = {
+      {
         :metadata => config_file.path,
         :selector => ['level1_a'],
-        :overrides => {
-          :stackname => 'customname',
-          :tags => {'another' => 'tag'}
-        },
+        :overrides => overrides
       }
     end
 
     subject { CuffSert.build_meta(cli_args) }
 
     context 'reads metadata file and allows overrides' do
+      let(:overrides) { {:stackname => 'customname', :tags => {'another' => 'tag'}} }
       it { should have_attributes(:stackname => 'customname') }
       it { should have_attributes(:tags => include('tlevel' => 'level1_a')) }
       it { should have_attributes(:tags => include('another' => 'tag')) }
+    end
+
+    context 'defaults suffix from config file name because level1_a has no declared suffix' do
+      let(:overrides) { {} }
+      it { should have_attributes(:stackname => "level1_a-#{File.basename(config_file.path, '.yml')}") }
     end
   end
 end

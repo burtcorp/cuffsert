@@ -15,7 +15,6 @@ shared_context 'yaml configs' do
   let :config_yaml do
     data = <<EOF
 Format: v1
-Suffix: stack
 Tags:
  - Name: tlevel
    Value: top
@@ -28,6 +27,7 @@ Variants:
      - Name: tlevel
        Value: level1_a
  level1_b:
+   Suffix: stack
    DefaultPath: level2_a
    Variants:
      level2_a:
@@ -42,7 +42,7 @@ EOF
   end
 
   let :config_file do
-    config = Tempfile.new('metadata')
+    config = Tempfile.new(['metadata', '.yml'])
     config.write(config_yaml)
     config.close
     config
