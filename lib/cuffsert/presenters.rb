@@ -76,11 +76,10 @@ module CuffSert
 
     def on_stack_event(event, n)
       resource = lookup_stack_resource(event)
-      category = CuffSert.state_category(event[:resource_status])
-      update_resource_states(resource, category)
-      @renderer.error(event) if category == :bad
+      update_resource_states(resource, event)
+      @renderer.event(event, resource)
       @renderer.clear
-      @resources.each { |resource| @renderer.render(resource) }
+      @resources.each { |resource| @renderer.resource(resource) }
     end
 
     def lookup_stack_resource(event)
@@ -93,13 +92,15 @@ module CuffSert
     end
 
     def make_resource(event)
-      event.to_h.merge!(:states => [])
+      event.to_h
+        .reject { |k, _| k == :timestamp }
+        .merge!(:states => [])
     end
 
-    def update_resource_states(resource, state)
+    def update_resource_states(resource, event)
       resource[:states] = resource[:states].reject do |state|
         state == :progress
-      end << state
+      end << CuffSert.state_category(event[:resource_status])
     end
   end
 
@@ -108,16 +109,18 @@ module CuffSert
       @output = output
     end
 
+    def event(event, resource)
+      if resource[:states][-1] == :bad
+        @output.write("\r")
+        puts event
+      end
+    end
+
     def clear
       @output.write("\r")
     end
 
-    def error(event)
-      @output.write("\r")
-      puts event
-    end
-
-    def render(resource)
+    def resource(resource)
       color, symbol = case resource[:states]
       when [:progress]
         [:yellow, :tripple_dot]

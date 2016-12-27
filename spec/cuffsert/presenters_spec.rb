@@ -11,15 +11,15 @@ describe CuffSert::RendererPresenter do
       @rendered = []
     end
 
+    def event(event, resource)
+      @rendered << :error if resource[:states][-1] == :bad
+    end
+
     def clear
       @rendered << :clear
     end
 
-    def error(event)
-      @rendered << :error
-    end
-
-    def render(resource)
+    def resource(resource)
       @rendered << resource[:states]
     end
 
