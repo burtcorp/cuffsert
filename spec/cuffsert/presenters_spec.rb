@@ -62,3 +62,26 @@ describe CuffSert::RendererPresenter do
     end
   end
 end
+
+describe CuffSert::ProgressbarRenderer do
+  include_context 'stack events'
+
+  subject do
+    output = StringIO.new
+    described_class.new(output).event(event, resource)
+    output.string
+  end
+
+  context 'given an in_progress event' do
+    let(:event) { r2_progress }
+    let(:resource) { event.to_h.merge!(:states => [:progress]) }
+    it { should be_empty }
+  end
+
+  context 'given an failed event' do
+    let(:event) { r2_failed }
+    let(:resource) { event.to_h.merge!(:states => [:bad]) }
+    it { should match(/resource2_id/) }
+    it { should include('Insufficient permissions') }
+  end
+end

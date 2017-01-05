@@ -227,6 +227,7 @@ shared_context 'stack events' do
       :stack_id => stack_id,
       :logical_resource_id => 'resource2_id',
       :resource_status => 'CREATE_FAILED',
+      :resource_status_reason => 'Insufficient permissions',
       :timestamp => DateTime.rfc3339('2013-08-23T01:02:28.025Z').to_time,
     })
   end

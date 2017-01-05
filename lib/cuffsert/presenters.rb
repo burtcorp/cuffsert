@@ -111,8 +111,13 @@ module CuffSert
 
     def event(event, resource)
       if resource[:states][-1] == :bad
-        @output.write("\r")
-        puts event
+        message = sprintf('%s  %s[%s] %s',
+          event[:timestamp].strftime('%H:%M:%S%z'),
+          event[:logical_resource_id],
+          event[:resource_type],
+          event[:resource_status_reason]
+        ).colorize(:red)
+        @output.write("\r#{message}\n")
       end
     end
 
