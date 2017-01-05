@@ -13,6 +13,7 @@ Gem::Specification.new do |spec|
   spec.files       = `git ls-files -z`.split("\x0").reject { |f| f.match(/^spec/) }
 
   spec.add_runtime_dependency 'aws-sdk'
+  spec.add_runtime_dependency 'colorize'
   spec.add_runtime_dependency 'rx'
 
   spec.add_development_dependency 'bundler', '~> 1.12'

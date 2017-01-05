@@ -105,7 +105,7 @@ describe CuffSert::RxCFClient do
 
       subject { described_class.new(aws_mock).create_stack(cfargs) }
 
-      it { observe_expect(subject).to eq([r1_done, r2_progress, r2_rolled_back]) }
+      it { observe_expect(subject).to eq([r1_done, r2_progress, r2_deleted]) }
     end
   end
 
