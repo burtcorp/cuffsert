@@ -1,6 +1,7 @@
 require 'cuffsert/metadata'
 require 'cuffsert/rxcfclient'
 require 'date'
+require 'rx-rspec'
 require 'spec_helpers'
 
 describe CuffSert::RxCFClient do
@@ -86,7 +87,7 @@ describe CuffSert::RxCFClient do
 
       subject { described_class.new(aws_mock).create_stack(cfargs) }
 
-      it { observe_expect(subject).to eq([r1_done, r2_progress, r2_done]) }
+      it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_done) }
     end
 
     context 'events when create failed with rollback' do
@@ -105,7 +106,7 @@ describe CuffSert::RxCFClient do
 
       subject { described_class.new(aws_mock).create_stack(cfargs) }
 
-      it { observe_expect(subject).to eq([r1_done, r2_progress, r2_deleted]) }
+      it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_deleted) }
     end
   end
 
@@ -127,7 +128,7 @@ describe CuffSert::RxCFClient do
           change_set_in_progress,
           change_set_ready
         )
-      observe_expect(subject).to include(change_set_ready)
+      expect(subject).to emit_include(change_set_ready)
     end
 
     it 'returns change_set when failing' do
@@ -135,7 +136,7 @@ describe CuffSert::RxCFClient do
         .once
         .with(:change_set_name => change_set_id)
         .and_return(change_set_failed)
-      observe_expect(subject).to include(change_set_failed)
+      expect(subject).to emit_include(change_set_failed)
     end
   end
 
@@ -164,6 +165,6 @@ describe CuffSert::RxCFClient do
 
     subject { described_class.new(aws_mock).update_stack(stack_id, change_set_id) }
 
-    it { observe_expect(subject).to eq([r1_done, r2_progress, r2_done]) }
+    it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_done) }
   end
 end

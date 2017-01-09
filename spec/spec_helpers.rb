@@ -268,24 +268,3 @@ shared_context 'stack events' do
     {:stack_events => [r1_done, r2_deleted] }
   end
 end
-
-def observe_expect(subject)
-  result = []
-  error = nil
-  Thread.new do
-    spinlock = 1
-    subject.subscribe(
-      lambda { |event| result << event },
-      lambda { |err| error = err ; spinlock -= 1 },
-      lambda { spinlock -= 1 }
-    )
-
-    for n in 1..10
-      break if spinlock == 0
-      sleep(0.05)
-    end
-    raise 'timeout' if spinlock == 1
-  end.join
-  raise error if error
-  expect(result)
-end

@@ -1,6 +1,7 @@
 require 'cuffsert/cfarguments'
 require 'cuffsert/main'
 require 'rx'
+require 'rx-rspec'
 require 'spec_helpers'
 require 'tempfile'
 
@@ -138,9 +139,7 @@ describe 'CuffSert#execute' do
         expect(cfmock).to receive(:update_stack)
           .and_return(Rx::Observable.of(r1_done, r2_done))
 
-        observe_expect(subject).to eq(
-          [change_set_ready, r1_done, r2_done]
-        )
+        expect(subject).to emit_exactly(change_set_ready, r1_done, r2_done)
       end
     end
 
@@ -150,7 +149,7 @@ describe 'CuffSert#execute' do
       it 'does not update' do
         expect(cfmock).not_to receive(:update_stack)
 
-        observe_expect(subject).to eq([change_set_failed])
+        expect(subject).to emit_exactly(change_set_failed)
       end
     end
 
@@ -160,7 +159,7 @@ describe 'CuffSert#execute' do
       it 'does not update' do
         expect(cfmock).not_to receive(:update_stack)
 
-        observe_expect(subject).to eq([change_set_ready, 'abort'])
+        expect(subject).to emit_exactly(change_set_ready, 'abort')
       end
     end
   end
