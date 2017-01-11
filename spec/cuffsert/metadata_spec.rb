@@ -103,6 +103,7 @@ describe CuffSert do
         :overrides => overrides
       }
     end
+    let(:overrides) { {} }
 
     subject { CuffSert.build_meta(cli_args) }
 
@@ -114,8 +115,17 @@ describe CuffSert do
     end
 
     context 'defaults suffix from config file name because level1_a has no declared suffix' do
-      let(:overrides) { {} }
       it { should have_attributes(:stackname => "level1_a-#{File.basename(config_file.path, '.yml')}") }
+    end
+
+    context 'safe by default' do
+      it { should have_attributes(:dangerous_ok => false) }
+    end
+
+    context 'given cil arg' do
+      let(:cli_args) { super().merge({:dangerous_ok => true }) }
+
+      it { should have_attributes(:dangerous_ok => true) }
     end
   end
 end

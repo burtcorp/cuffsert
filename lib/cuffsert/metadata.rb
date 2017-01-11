@@ -60,7 +60,7 @@ module CuffSert
     config = CuffSert.load_config(io)
     default = self.meta_defaults(cli_args)
     meta = CuffSert.meta_for_path(config, cli_args[:selector], default)
-    meta.update_from(cli_args[:overrides])
+    CuffSert.cli_overrides(meta, cli_args)
   end
 
   private_class_method
@@ -69,6 +69,12 @@ module CuffSert
     default = StackConfig.new
     default.suffix = File.basename(cli_args[:metadata], '.yml')
     default
+  end
+
+  def self.cli_overrides(meta, cli_args)
+    meta.update_from(cli_args[:overrides])
+    meta.dangerous_ok = cli_args.fetch(:dangerous_ok, false)
+    meta
   end
 
   def self.symbolize_keys(hash)

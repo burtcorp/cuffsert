@@ -19,6 +19,7 @@ describe 'CuffSert#parse_cli_args' do
   it ['--tag=foo=bar'] { should have_overrides(:tags => {'foo' => 'bar'}) }
   it ['--name=foo'] { should have_overrides(:stackname => 'foo') }
   it ['--parameter', 'foo=bar'] { should have_overrides(:parameters => {'foo' => 'bar'}) }
+  it ['--yes'] { should include(:dangerous_ok => true) }
 
   it 'stack argument as array beacuse future', :argv => [stack.path] do
     should include(:stack_path => [stack.path])
