@@ -142,7 +142,7 @@ module CuffSert
       when [:good, :bad], [:bad, :bad]
         [:red, :qmark]
       else
-        raise 'Ye olde should-not-occur error'
+        raise "Unexpected :states in #{resource.inspect}"
       end
 
       table = {

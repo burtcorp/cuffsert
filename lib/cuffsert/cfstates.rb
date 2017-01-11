@@ -35,7 +35,7 @@ module CuffSert
     elsif INPROGRESS_STATES.include?(state)
       :progress
     else
-      raise 'Ye olde should-not-occur error'
+      raise "Cannot categorize state #{state}"
     end
   end
 end
