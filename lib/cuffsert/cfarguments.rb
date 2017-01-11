@@ -19,13 +19,13 @@ module CuffSert
 
     unless meta.parameters.empty?
       cfargs[:parameters] = meta.parameters.map do |k, v|
-        {:parameter_key => k, :parameter_value => v}
+        {:parameter_key => k, :parameter_value => v.to_s}
       end
     end
 
     unless meta.tags.empty?
       cfargs[:tags] = meta.tags.map do |k, v|
-        {:key => k, :value => v}
+        {:key => k, :value => v.to_s}
       end
     end
 

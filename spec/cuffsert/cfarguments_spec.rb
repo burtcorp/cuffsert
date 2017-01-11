@@ -31,6 +31,23 @@ describe '#as_create_stack_args' do
     it { should include(:template_body => template_json) }
     it { should_not include(:template_uri) }
   end
+
+  context 'everything is a string' do
+    let :meta do
+      meta = CuffSert::StackConfig.new
+      meta.tags = {'numeric' => 1}
+      meta.parameters = {'bool' => true}
+      meta.stack_uri = URI.parse(s3url)
+      meta
+    end
+
+    it { should include(:tags => include({:key => 'numeric', :value => '1'})) }
+    it do
+      should include(:parameters => include(
+        {:parameter_key => 'bool', :parameter_value => 'true'}
+      ))
+    end
+  end
 end
 
 describe '#as_update_change_set' do
