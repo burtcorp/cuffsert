@@ -29,7 +29,7 @@ describe CuffSert::RxCFClient do
         mock
       end
 
-      subject { described_class.new(aws_mock).find_stack_blocking(meta) }
+      subject { described_class.new(aws_mock, pause: 0).find_stack_blocking(meta) }
 
       it { should include(:stack_name => stack_name) }
     end
@@ -48,7 +48,7 @@ describe CuffSert::RxCFClient do
         mock
       end
 
-      subject { described_class.new(aws_mock).find_stack_blocking(meta) }
+      subject { described_class.new(aws_mock, pause: 0).find_stack_blocking(meta) }
 
       it { should be(nil) }
     end
@@ -85,7 +85,7 @@ describe CuffSert::RxCFClient do
         ]
       end
 
-      subject { described_class.new(aws_mock).create_stack(cfargs) }
+      subject { described_class.new(aws_mock, pause: 0).create_stack(cfargs) }
 
       it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_done) }
     end
@@ -104,7 +104,7 @@ describe CuffSert::RxCFClient do
         ]
       end
 
-      subject { described_class.new(aws_mock).create_stack(cfargs) }
+      subject { described_class.new(aws_mock, pause: 0).create_stack(cfargs) }
 
       it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_deleted) }
     end
@@ -118,7 +118,7 @@ describe CuffSert::RxCFClient do
       mock
     end
 
-    subject { described_class.new(aws_mock).prepare_update(cfargs) }
+    subject { described_class.new(aws_mock, pause: 0).prepare_update(cfargs) }
 
     it 'returns change_set when ready' do
       expect(aws_mock).to receive(:describe_change_set)
@@ -163,7 +163,7 @@ describe CuffSert::RxCFClient do
       mock
     end
 
-    subject { described_class.new(aws_mock).update_stack(stack_id, change_set_id) }
+    subject { described_class.new(aws_mock, pause: 0).update_stack(stack_id, change_set_id) }
 
     it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_done) }
   end

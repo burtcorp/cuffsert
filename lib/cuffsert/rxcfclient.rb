@@ -2,15 +2,15 @@ require 'aws-sdk'
 require 'cuffsert/cfstates'
 require 'rx'
 
-# TODO:
-# - throttle describe_stack_events calls
-# - retry on "5xx" errors
-
 module CuffSert
   class RxCFClient
-    def initialize(aws_cf = Aws::CloudFormation::Client.new, max_items: 1000)
+    def initialize(
+        aws_cf = Aws::CloudFormation::Client.new(retry_limit: 8),
+        pause: 5,
+        max_items: 1000)
       @cf = aws_cf
       @max_items = max_items
+      @pause = pause
     end
 
     def find_stack_blocking(meta)
@@ -86,6 +86,7 @@ module CuffSert
         end
         state = @cf.describe_stacks(stack_name: stack_id)[:stacks][0]
         break if stack_finished?(state)
+        sleep(@pause)
       end
     end
   end
