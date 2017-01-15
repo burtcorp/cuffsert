@@ -4,6 +4,7 @@ PATH
     cuffsert (0.5.0)
       aws-sdk
       colorize
+      ruby-termios
       rx
 
 GEM
@@ -36,6 +37,7 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.5.0)
     rspec-support (3.5.0)
+    ruby-termios (1.0.2)
     rx (0.0.3)
     rx-rspec (0.1.3)
       rx

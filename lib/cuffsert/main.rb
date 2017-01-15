@@ -6,6 +6,7 @@ require 'cuffsert/metadata'
 require 'cuffsert/presenters'
 require 'cuffsert/rxcfclient'
 require 'rx'
+require 'termios'
 require 'uri'
 
 # TODO:
@@ -15,7 +16,6 @@ require 'uri'
 # - validate_and_urlify belongs in metadata.rb
 # - execute should use helpers and not know details of statuses
 # - update 'abort' should delete cheangeset and emit the result
-# - implement a proper update confirmation function
 
 module CuffSert
   def self.validate_and_urlify(stack_path)
@@ -37,10 +37,29 @@ module CuffSert
   def self.need_confirmation(meta, change_set)
     return false if meta.dangerous_ok
     change_set[:changes].any? do |change|
-      change[:action] == 'Delete' || (
-        change[:action] == 'Modify' &&
-        ['True', 'Conditional'].include?(change[:replacement])
+      rc = change[:resource_change]
+      rc[:action] == 'Delete' || (
+        rc[:action] == 'Modify' &&
+        ['Always', 'True', 'Conditional'].include?(rc[:replacement])
       )
+    end
+  end
+
+  def self.ask_confirmation(input = STDIN, output = STDOUT)
+    return false unless input.isatty
+    state = Termios.tcgetattr(input)
+    mystate = state.dup
+    mystate.c_lflag |= Termios::ISIG
+    mystate.c_lflag &= ~Termios::ECHO
+    mystate.c_lflag &= ~Termios::ICANON
+    output.write 'Continue? [yN] '
+    begin
+      Termios.tcsetattr(input, Termios::TCSANOW, mystate)
+      answer = input.getc.chr.downcase
+      output.write("\n")
+      answer == 'y'
+    ensure
+      Termios.tcsetattr(input, Termios::TCSANOW, state)
     end
   end
 
@@ -97,7 +116,10 @@ module CuffSert
     end
     stack_path = cli_args[:stack_path][0]
     meta.stack_uri = CuffSert.validate_and_urlify(stack_path)
-    events = CuffSert.execute(meta, lambda { |_| true })
+    events = CuffSert.execute(meta, lambda do |change_set|
+      !CuffSert.need_confirmation(meta, change_set) ||
+        CuffSert.ask_confirmation(STDIN, STDOUT)
+    end)
     RendererPresenter.new(events, ProgressbarRenderer.new)
   end
 end

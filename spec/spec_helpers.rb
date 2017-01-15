@@ -122,7 +122,7 @@ shared_context 'changesets' do
       :stack_id => stack_id,
       :stack_name => stack_name,
       :status => 'CREATE_COMPLETE',
-      :changes => change_set_changes,
+      :changes => change_set_changes.map { |c| {:resource_change => c} },
     }
   end
 

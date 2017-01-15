@@ -4,6 +4,7 @@ require 'cuffsert/messages'
 require 'rx'
 require 'rx-rspec'
 require 'spec_helpers'
+require 'stringio'
 require 'tempfile'
 
 describe 'CuffSert#validate_and_urlify' do
@@ -88,6 +89,39 @@ describe 'CuffSert#need_confirmation' do
       it { should be(false) }
     end
   end
+end
+
+describe 'CuffSert#ask_confirmation' do
+  let(:output) { StringIO.new }
+
+  subject { CuffSert.ask_confirmation(input, output) }
+
+  context 'given non-tty' do
+    let(:input) { StringIO.new }
+
+    it { should be(false) }
+    it { expect(output.string).to eq('') }
+  end
+
+  # context 'given a tty saying yea' do
+  #   let(:input) { double(:stdin, :isatty => true, :getc => 'Y') }
+  #
+  #   it { should be(true) }
+  #   it { expect(output.string).to match(/continue/) }
+  # end
+  #
+  # context 'given a tty saying nay' do
+  #   let(:input) { double(:stdin, :isatty => true, :getc => 'n') }
+  #
+  #   it { should be(false) }
+  #   it { expect(output.string).to match(/continue/) }
+  # end
+  #
+  # context 'given a tty saying foo' do
+  #   let(:input) { double(:stdin, :isatty => true, :getc => 'f') }
+  #
+  #   it { should be(false) }
+  # end
 end
 
 describe 'CuffSert#execute' do
