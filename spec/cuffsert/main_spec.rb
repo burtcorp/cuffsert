@@ -54,17 +54,17 @@ describe 'CuffSert#need_confirmation' do
   end
 
   context 'with non-replace modify' do
-    let(:change_set_changes) { [r1_modify.merge(:replacement => 'False')] }
+    let(:change_set_changes) { [r1_modify] }
     it { should be(false) }
   end
 
   context 'with conditional replace' do
-    let(:change_set_changes) { [r1_modify.merge(:replacement => 'Conditional')] }
+    let(:change_set_changes) { [r1_conditional_replace] }
     it { should be(true) }
   end
 
   context 'with known replacement' do
-    let(:change_set_changes) { [r1_modify.merge(:replacement => 'True')] }
+    let(:change_set_changes) { [r1_replace] }
     it { should be(true) }
   end
 
@@ -80,7 +80,7 @@ describe 'CuffSert#need_confirmation' do
     end
 
     context 'with known replacement' do
-      let(:change_set_changes) { [r1_modify.merge(:replacement => 'True')] }
+      let(:change_set_changes) { [r1_replace] }
       it { should be(false) }
     end
 

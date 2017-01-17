@@ -111,6 +111,49 @@ describe CuffSert::ProgressbarRenderer do
     end
   end
 
+  describe '#change_set' do
+    include_context 'changesets'
+
+    subject do
+      output = StringIO.new
+      described_class.new(output).change_set(changeset)
+      output.string
+    end
+
+    context 'given an update changeset' do
+      let(:changeset) { change_set_ready }
+      let(:change_set_changes) { [r2_add] }
+
+      it { should include('Updating ze-stack') }
+      it { should include('resource2_id') }
+
+      context 'with a non-replacing changeset' do
+        let(:change_set_changes) { [r1_modify] }
+
+        it { should include('Modify'.colorize(:yellow)) }
+      end
+
+      context 'with an unconditional replacement' do
+        let(:change_set_changes) { [r1_replace] }
+
+        it { should include('Replace!'.colorize(:red)) }
+      end
+
+      context 'with a conditional replacement' do
+        let(:change_set_changes) { [r1_conditional_replace] }
+
+        it { should include('Replace?'.colorize(:red)) }
+      end
+
+      context 'with two changes' do
+        let(:change_set_changes) { [r1_replace, r2_add, r1_conditional_replace] }
+        it('sorts according to action') do
+          should match(/add.*replace\?.*replace!/im)
+        end
+      end
+    end
+  end
+
   describe '#abort' do
     subject do
       output = StringIO.new

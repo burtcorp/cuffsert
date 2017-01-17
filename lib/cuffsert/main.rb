@@ -58,6 +58,8 @@ module CuffSert
       answer = input.getc.chr.downcase
       output.write("\n")
       answer == 'y'
+    rescue Interrupt
+      false
     ensure
       Termios.tcsetattr(input, Termios::TCSANOW, state)
     end
@@ -75,13 +77,15 @@ module CuffSert
       .flat_map do |change_set|
         Rx::Observable.concat(
           Rx::Observable.of(change_set),
-          if change_set[:status] == 'FAILED'
-            Rx::Observable.empty
-          elsif confirm_update.call(change_set)
-            client.update_stack(change_set[:stack_id], change_set[:change_set_id])
-          else
-            Abort.new('Stack operation already in progress').as_observable
-          end
+          Rx::Observable.defer {
+            if change_set[:status] == 'FAILED'
+              Rx::Observable.empty
+            elsif confirm_update.call(change_set)
+              client.update_stack(change_set[:stack_id], change_set[:change_set_id])
+            else
+              Abort.new('User abort!').as_observable
+            end
+          }
         )
       end
   end

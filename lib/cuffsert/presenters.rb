@@ -4,19 +4,8 @@ require 'cuffsert/cfstates'
 require 'rx'
 
 # TODO: Animate in-progress states
-# def initialize(
-#     events,
-#     strobe: Rx::Observable.just(0).concat(Rx::Observable.interval(0.5)),
-#     renderer: ProgressbarRenderer.new
-#   )
-#   @resources = []
-#   @index = {}
-#   @renderer = renderer
-#   super(Rx::Observable.combine_latest(strobe, events) { |n, event|
-#     [event, n]
-#   })
-# end
 # - Introduce a Done message and stop printing in on_complete
+# - Present the error message in change_set properly - and abort
 
 module CuffSert
   class BasePresenter
@@ -60,9 +49,14 @@ module CuffSert
     end
 
     def on_event((event, n))
+      # Workaround for now
+      event = event.data if event.class == Seahorse::Client::Response
+
       case event
       when Aws::CloudFormation::Types::StackEvent
         on_stack_event(event, n)
+      when Aws::CloudFormation::Types::DescribeChangeSetOutput
+        on_change_set(event)
       when ::CuffSert::Abort
         @renderer.abort(event)
       else
@@ -75,6 +69,10 @@ module CuffSert
     end
 
     private
+
+    def on_change_set(change_set)
+      @renderer.change_set(change_set.to_h)
+    end
 
     def on_stack_event(event, n)
       resource = lookup_stack_resource(event)
@@ -106,9 +104,60 @@ module CuffSert
     end
   end
 
+  ACTION_ORDER = ['Add', 'Modify', 'Replace?', 'Replace!', 'Delete']
+
   class ProgressbarRenderer
     def initialize(output = STDOUT)
       @output = output
+    end
+
+    def change_set(change_set)
+      @output.write(sprintf("Updating %s\n", change_set[:stack_name]))
+      change_set[:changes].sort do |l, r|
+        lr = l[:resource_change]
+        rr = r[:resource_change]
+        [
+          ACTION_ORDER.index(action(lr)),
+          lr[:logical_resource_id]
+        ] <=> [
+          ACTION_ORDER.index(action(rr)),
+          rr[:logical_resource_id]
+        ]
+      end.map do |change|
+        rc = change[:resource_change]
+        sprintf("%s[%s] %-10s %s\n",
+          rc[:logical_resource_id],
+          rc[:resource_type],
+          action_color(action(rc)),
+          rc[:scope]
+        )
+      end.each { |row| @output.write(row) }
+    end
+
+    def action(rc)
+      if rc[:action] == 'Modify'
+        if ['True', 'Always'].include?(rc[:replacement])
+          'Replace!'
+        elsif ['False', 'Never'].include?(rc[:replacement])
+          'Modify'
+        elsif rc[:replacement] == 'Conditional'
+          'Replace?'
+        else
+          "#{rc[:action]}/#{rc[:replacement]}"
+        end
+      else
+        rc[:action]
+      end
+    end
+
+    def action_color(action)
+      action.colorize(
+        case action
+        when 'Add' then :green
+        when 'Modify' then :yellow
+        else :red
+        end
+      )
     end
 
     def event(event, resource)

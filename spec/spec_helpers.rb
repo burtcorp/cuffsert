@@ -73,68 +73,92 @@ shared_context 'templates' do
 end
 
 shared_context 'changesets' do
+  include_context 'basic parameters'
+
   let(:change_set_id) { 'ze-change-set-id' }
 
   let :stack_update_change_set do
     { :id => change_set_id, :stack_id => 'ze-stack' }
   end
 
-  let :r1_modify do
-    {
-      :action => 'Modify',
-      :replacement => 'True',
-      :logical_resource_id => 'resource1_id',
-    }
+  let :change_set_in_progress do
+    Aws::CloudFormation::Types::DescribeChangeSetOutput.new({
+      :change_set_id => change_set_id,
+      :stack_id => stack_id,
+      :stack_name => stack_name,
+      :status => 'CREATE_IN_PROGRESS',
+      :changes => change_set_changes.map { |c| {:resource_change => c} },
+    })
   end
 
-  let :r2_add do
-    {
-      :action => 'Add',
-      :replacement => 'False',
-      :logical_resource_id => 'resource2_id',
-    }
+  let :change_set_ready do
+    Aws::CloudFormation::Types::DescribeChangeSetOutput.new({
+      :change_set_id => change_set_id,
+      :stack_id => stack_id,
+      :stack_name => stack_name,
+      :status => 'CREATE_COMPLETE',
+      :changes => change_set_changes.map { |c| {:resource_change => c} },
+    })
   end
 
-  let :r3_delete do
-    {
-      :action => 'Delete',
-      :replacement => 'False',
-      :logical_resource_id => 'resource3_id',
-    }
+  let :change_set_failed do
+    Aws::CloudFormation::Types::DescribeChangeSetOutput.new({
+      :change_set_id => change_set_id,
+      :stack_id => stack_id,
+      :stack_name => stack_name,
+      :status => 'FAILED',
+      :status_reason => 'The submitted information didn\'t contain changes. Submit different information to create a change set.',
+      :changes => change_set_changes.map { |c| {:resource_change => c} },
+    })
   end
 
   let :change_set_changes do
     []
   end
 
-  let :change_set_in_progress do
-    {
-      :change_set_id => change_set_id,
-      :stack_id => stack_id,
-      :stack_name => stack_name,
-      :status => 'CREATE_IN_PROGRESS',
-    }
+  let :r1_modify do
+    Aws::CloudFormation::Types::ResourceChange.new({
+      :action => 'Modify',
+      :replacement => 'Never',
+      :logical_resource_id => 'resource1_id',
+      :resource_type => 'AWS::EC2::VPC',
+    })
   end
 
-  let :change_set_ready do
-    {
-      :change_set_id => change_set_id,
-      :stack_id => stack_id,
-      :stack_name => stack_name,
-      :status => 'CREATE_COMPLETE',
-      :changes => change_set_changes.map { |c| {:resource_change => c} },
-    }
+  let :r1_replace do
+    Aws::CloudFormation::Types::ResourceChange.new({
+      :action => 'Modify',
+      :replacement => 'True',
+      :logical_resource_id => 'resource1_id',
+      :resource_type => 'AWS::EC2::VPC',
+    })
   end
 
-  let :change_set_failed do
-    {
-      :change_set_id => change_set_id,
-      :stack_id => stack_id,
-      :stack_name => stack_name,
-      :status => 'FAILED',
-      :statue_reason => 'The submitted information didn\'t contain changes. Submit different information to create a change set.',
-      :changes => [],
-    }
+  let :r1_conditional_replace do
+    Aws::CloudFormation::Types::ResourceChange.new({
+      :action => 'Modify',
+      :replacement => 'Conditional',
+      :logical_resource_id => 'resource1_id',
+      :resource_type => 'AWS::EC2::VPC',
+    })
+  end
+
+  let :r2_add do
+    Aws::CloudFormation::Types::ResourceChange.new({
+      :action => 'Add',
+      :replacement => 'False',
+      :logical_resource_id => 'resource2_id',
+      :resource_type => 'AWS::EC2::VPC',
+    })
+  end
+
+  let :r3_delete do
+    Aws::CloudFormation::Types::ResourceChange.new({
+      :action => 'Delete',
+      :replacement => 'False',
+      :logical_resource_id => 'resource3_id',
+      :resource_type => 'AWS::EC2::VPC',
+    })
   end
 end
 
