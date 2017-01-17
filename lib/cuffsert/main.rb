@@ -1,6 +1,7 @@
 require 'cuffsert/cfarguments'
 require 'cuffsert/cfstates'
 require 'cuffsert/cli_args'
+require 'cuffsert/messages'
 require 'cuffsert/metadata'
 require 'cuffsert/presenters'
 require 'cuffsert/rxcfclient'
@@ -60,7 +61,7 @@ module CuffSert
           elsif confirm_update.call(change_set)
             client.update_stack(change_set[:stack_id], change_set[:change_set_id])
           else
-            Rx::Observable.of('abort')
+            Abort.new('Stack operation already in progress').as_observable
           end
         )
       end
@@ -76,10 +77,8 @@ module CuffSert
     found = client.find_stack_blocking(meta)
 
     if found && INPROGRESS_STATES.include?(found[:stack_status])
-      raise 'Stack operation already in progress'
-    end
-
-    if found.nil?
+      sources << Abort.new('Stack operation already in progress').as_observable
+    elsif found.nil?
       sources << self.create_stack(client, meta)
     elsif found[:stack_status] == 'ROLLBACK_COMPLETE'
       sources << self.delete_stack(client, meta)

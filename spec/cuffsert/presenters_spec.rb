@@ -1,3 +1,4 @@
+require 'cuffsert/messages'
 require 'cuffsert/presenters'
 require 'rx'
 require 'spec_helpers'
@@ -21,6 +22,10 @@ describe CuffSert::RendererPresenter do
 
     def resource(resource)
       @rendered << resource[:states]
+    end
+
+    def abort(event)
+      @rendered << event
     end
 
     def done
@@ -61,6 +66,12 @@ describe CuffSert::RendererPresenter do
       ])
     end
   end
+
+  context 'given an abort message' do
+    let(:events) { [CuffSert::Abort.new('badness'), :done] }
+
+    it { should eq(events) }
+  end
 end
 
 describe CuffSert::ProgressbarRenderer do
@@ -97,6 +108,19 @@ describe CuffSert::ProgressbarRenderer do
     context 'given bad :states' do
       let(:resource) { r2_progress.to_h.merge({:states => []}) }
       it { expect { subject }.to raise_error(/:states/) }
+    end
+  end
+
+  describe '#abort' do
+    subject do
+      output = StringIO.new
+      described_class.new(output).abort(message)
+      output.string
+    end
+
+    context 'given a simple abort message' do
+      let(:message) { CuffSert::Abort.new('badness') }
+      it { should include('badness'.colorize(:red)) }
     end
   end
 end

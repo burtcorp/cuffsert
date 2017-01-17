@@ -16,7 +16,7 @@ require 'rx'
 #     [event, n]
 #   })
 # end
-
+# - Introduce a Done message and stop printing in on_complete
 
 module CuffSert
   class BasePresenter
@@ -63,6 +63,8 @@ module CuffSert
       case event
       when Aws::CloudFormation::Types::StackEvent
         on_stack_event(event, n)
+      when ::CuffSert::Abort
+        @renderer.abort(event)
       else
         puts event
       end
@@ -156,6 +158,10 @@ module CuffSert
         :color => :white,
         :background => color
       ))
+    end
+
+    def abort(event)
+      @output.write(event.message.colorize(:red) + "\n")
     end
 
     def done

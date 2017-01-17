@@ -1,5 +1,6 @@
 require 'cuffsert/cfarguments'
 require 'cuffsert/main'
+require 'cuffsert/messages'
 require 'rx'
 require 'rx-rspec'
 require 'spec_helpers'
@@ -159,7 +160,7 @@ describe 'CuffSert#execute' do
       it 'does not update' do
         expect(cfmock).not_to receive(:update_stack)
 
-        expect(subject).to emit_exactly(change_set_ready, 'abort')
+        expect(subject).to emit_exactly(change_set_ready, CuffSert::Abort.new(/.*/))
       end
     end
   end
@@ -167,9 +168,9 @@ describe 'CuffSert#execute' do
   it 'bails on stack already in progress' do
     allow(cfmock).to receive(:find_stack_blocking)
       .and_return(stack_in_progress)
-    expect {
+    expect(
       CuffSert.execute(meta, nil, :client => cfmock)
-    }.to raise_error(/in progress/)
+    ).to emit_exactly(CuffSert::Abort.new(/in progress/))
   end
 end
 
