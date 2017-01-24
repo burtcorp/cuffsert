@@ -209,7 +209,9 @@ shared_context 'stack events' do
     Aws::CloudFormation::Types::StackEvent.new({
       :event_id => 'r1_old',
       :stack_id => stack_id,
-      :logical_resource_id => 'resource1_id',
+      :logical_resource_id => 'resource1_name',
+      :physical_resource_id => 'resource1_id',
+      :resource_type => 'AWS::EC2::VPC',
       :resource_status => 'CREATE_COMPLETE',
       :timestamp => DateTime.rfc3339('2011-08-23T01:02:28.025Z').to_time,
     })
@@ -219,7 +221,9 @@ shared_context 'stack events' do
     Aws::CloudFormation::Types::StackEvent.new({
       :event_id => 'r1_done',
       :stack_id => stack_id,
-      :logical_resource_id => 'resource1_id',
+      :logical_resource_id => 'resource1_name',
+      :physical_resource_id => 'resource1_id',
+      :resource_type => 'AWS::EC2::VPC',
       :resource_status => 'CREATE_COMPLETE',
       :timestamp => DateTime.rfc3339('2013-08-23T01:02:28.025Z').to_time,
     })
@@ -229,7 +233,9 @@ shared_context 'stack events' do
     Aws::CloudFormation::Types::StackEvent.new({
       :event_id => 'r2_progress',
       :stack_id => stack_id,
-      :logical_resource_id => 'resource2_id',
+      :logical_resource_id => 'resource2_name',
+      :physical_resource_id => 'resource2_id',
+      :resource_type => 'AWS::EC2::Instance',
       :resource_status => 'CREATE_IN_PROGRESS',
       :timestamp => DateTime.rfc3339('2013-08-23T01:02:28.025Z').to_time,
     })
@@ -239,7 +245,9 @@ shared_context 'stack events' do
     Aws::CloudFormation::Types::StackEvent.new({
       :event_id => 'r2_done',
       :stack_id => stack_id,
-      :logical_resource_id => 'resource2_id',
+      :logical_resource_id => 'resource2_name',
+      :physical_resource_id => 'resource2_id',
+      :resource_type => 'AWS::EC2::Instance',
       :resource_status => 'CREATE_COMPLETE',
       :timestamp => DateTime.rfc3339('2013-08-23T01:02:38.534Z').to_time,
     })
@@ -249,7 +257,9 @@ shared_context 'stack events' do
     Aws::CloudFormation::Types::StackEvent.new({
       :event_id => 'r2_failed',
       :stack_id => stack_id,
-      :logical_resource_id => 'resource2_id',
+      :logical_resource_id => 'resource2_name',
+      :physical_resource_id => 'resource2_id',
+      :resource_type => 'AWS::EC2::Instance',
       :resource_status => 'CREATE_FAILED',
       :resource_status_reason => 'Insufficient permissions',
       :timestamp => DateTime.rfc3339('2013-08-23T01:02:28.025Z').to_time,
@@ -260,7 +270,9 @@ shared_context 'stack events' do
     Aws::CloudFormation::Types::StackEvent.new({
       :event_id => 'r2_rolling_back',
       :stack_id => stack_id,
-      :logical_resource_id => 'resource2_id',
+      :logical_resource_id => 'resource2_name',
+      :physical_resource_id => 'resource2_id',
+      :resource_type => 'AWS::EC2::Instance',
       :resource_status => 'DELETE_IN_PROGRESS',
       :timestamp => DateTime.rfc3339('2013-08-23T01:02:28.025Z').to_time,
     })
@@ -270,8 +282,34 @@ shared_context 'stack events' do
     Aws::CloudFormation::Types::StackEvent.new({
       :event_id => 'r2_deleted',
       :stack_id => stack_id,
-      :logical_resource_id => 'resource2_id',
+      :logical_resource_id => 'resource2_name',
+      :physical_resource_id => 'resource2_id',
+      :resource_type => 'AWS::EC2::Instance',
       :resource_status => 'DELETE_COMPLETE',
+      :timestamp => DateTime.rfc3339('2013-08-23T01:02:38.534Z').to_time,
+    })
+  end
+  
+  let :s1_done do
+    Aws::CloudFormation::Types::StackEvent.new({
+      :event_id => 's1_done',
+      :stack_id => stack_id,
+      :logical_resource_id => stack_name,
+      :physical_resource_id => stack_id,
+      :resource_type => 'AWS::CloudFormation::Stack',
+      :resource_status => 'CREATE_COMPLETE',
+      :timestamp => DateTime.rfc3339('2013-08-23T01:02:38.534Z').to_time,
+    })
+  end
+
+  let :s1_rolled do
+    Aws::CloudFormation::Types::StackEvent.new({
+      :event_id => 's1_rolled',
+      :stack_id => stack_id,
+      :logical_resource_id => stack_name,
+      :physical_resource_id => stack_id,
+      :resource_type => 'AWS::CloudFormation::Stack',
+      :resource_status => 'ROLLBACK_COMPLETE',
       :timestamp => DateTime.rfc3339('2013-08-23T01:02:38.534Z').to_time,
     })
   end
@@ -285,10 +323,10 @@ shared_context 'stack events' do
   end
 
   let :stack_complete_events do
-    { :stack_events => [r1_done, r2_done] }
+    { :stack_events => [r1_done, r2_done, s1_done] }
   end
 
   let :stack_rolled_back_events do
-    {:stack_events => [r1_done, r2_deleted] }
+    {:stack_events => [r1_done, r2_deleted, s1_rolled] }
   end
 end

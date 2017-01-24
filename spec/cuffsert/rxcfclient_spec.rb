@@ -65,9 +65,6 @@ describe CuffSert::RxCFClient do
         .with(:stack_name => stack_id)
         .at_least(:twice)
         .and_return(*events_sequence)
-      expect(mock).to receive(:describe_stacks)
-        .at_least(:twice)
-        .and_return(*stack_sequence)
       mock
     end
 
@@ -78,16 +75,10 @@ describe CuffSert::RxCFClient do
           [stack_complete_events]
         ]
       end
-      let :stack_sequence do
-        [
-          stack_in_progress_describe,
-          stack_complete_describe
-        ]
-      end
 
       subject { described_class.new(aws_mock, pause: 0).create_stack(cfargs) }
 
-      it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_done) }
+      it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_done, s1_done) }
     end
 
     context 'events when create failed with rollback' do
@@ -97,16 +88,10 @@ describe CuffSert::RxCFClient do
           [stack_rolled_back_events]
         ]
       end
-      let :stack_sequence do
-        [
-          stack_in_progress_describe,
-          stack_rolled_back_describe
-        ]
-      end
 
       subject { described_class.new(aws_mock, pause: 0).create_stack(cfargs) }
 
-      it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_deleted) }
+      it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_deleted, s1_rolled) }
     end
   end
 
@@ -154,17 +139,11 @@ describe CuffSert::RxCFClient do
           [stack_in_progress_events],
           [stack_complete_events]
         )
-      expect(mock).to receive(:describe_stacks)
-        .at_least(:twice)
-        .and_return(
-          stack_in_progress_describe,
-          stack_complete_describe
-        )
       mock
     end
 
     subject { described_class.new(aws_mock, pause: 0).update_stack(stack_id, change_set_id) }
 
-    it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_done) }
+    it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_done, s1_done) }
   end
 end

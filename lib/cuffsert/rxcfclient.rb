@@ -73,19 +73,20 @@ module CuffSert
     end
 
     def stack_finished?(state)
-      FINAL_STATES.include?(state[:stack_status])
+      !state.nil? && FINAL_STATES.include?(state[:resource_status])
     end
 
     def stack_events(stack_id, start_time)
       loop do
+        stack_event = nil
         @cf.describe_stack_events(stack_name: stack_id).each do |events|
           for event in events[:stack_events]
             next if event[:timestamp].to_datetime < start_time
             yield event
+            stack_event = event if event[:physical_resource_id] == stack_id
           end
         end
-        state = @cf.describe_stacks(stack_name: stack_id)[:stacks][0]
-        break if stack_finished?(state)
+        break if stack_finished?(stack_event)
         sleep(@pause)
       end
     end
