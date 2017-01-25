@@ -55,7 +55,7 @@ module CuffSert
     cfargs
   end
 
-  def self.as_delete_stack_args(meta)
-    { :stack_name => meta.stackname }
+  def self.as_delete_stack_args(stack)
+    { :stack_name => stack[:stack_id] }
   end
 end

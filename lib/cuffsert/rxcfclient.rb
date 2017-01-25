@@ -55,6 +55,18 @@ module CuffSert
     end
 
     def delete_stack(cfargs)
+      eventid_cache = Set.new
+      Rx::Observable.create do |observer|
+        start_time = record_start_time
+        @cf.delete_stack(cfargs)
+        stack_events(cfargs[:stack_name], start_time) do |event|
+          observer.on_next(event)
+        end
+        observer.on_completed
+      end
+      .select do |event|
+        eventid_cache.add?(event[:event_id])
+      end
     end
 
     private

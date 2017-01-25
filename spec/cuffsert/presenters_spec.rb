@@ -4,6 +4,7 @@ require 'rx'
 require 'spec_helpers'
 
 describe CuffSert::RendererPresenter do
+  include_context 'stack states'
   include_context 'stack events'
 
   class RecordingRenderer
@@ -14,6 +15,10 @@ describe CuffSert::RendererPresenter do
 
     def event(event, resource)
       @rendered << :error if resource[:states][-1] == :bad
+    end
+
+    def stack(event, stack)
+      @rendered << [event, stack]
     end
 
     def clear
@@ -67,6 +72,15 @@ describe CuffSert::RendererPresenter do
     end
   end
 
+  context 'given recreate of a rolled-back stack' do
+    let (:events) { [[:recreate, stack_rolled_back]] }
+    subject { renderer.rendered }
+
+    it 'pass it to renderer' do
+      should eq([[:recreate, stack_rolled_back], :done])
+    end
+  end
+
   context 'given an abort message' do
     let(:events) { [CuffSert::Abort.new('badness'), :done] }
 
@@ -75,6 +89,7 @@ describe CuffSert::RendererPresenter do
 end
 
 describe CuffSert::ProgressbarRenderer do
+  include_context 'stack states'
   include_context 'stack events'
 
   describe '#event' do
@@ -165,5 +180,15 @@ describe CuffSert::ProgressbarRenderer do
       let(:message) { CuffSert::Abort.new('badness') }
       it { should include('badness'.colorize(:red)) }
     end
+  end
+
+  context 'given a stack recreate' do
+    subject do
+      output = StringIO.new
+      described_class.new(output).stack(:recreate, stack_rolled_back)
+      output.string
+    end
+
+    it { should include('re-create') }
   end
 end

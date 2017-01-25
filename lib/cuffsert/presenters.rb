@@ -48,15 +48,18 @@ module CuffSert
       super(events)
     end
 
-    def on_event((event, n))
+    def on_event(event)
       # Workaround for now
       event = event.data if event.class == Seahorse::Client::Response
 
       case event
       when Aws::CloudFormation::Types::StackEvent
-        on_stack_event(event, n)
+        on_stack_event(event)
       when Aws::CloudFormation::Types::DescribeChangeSetOutput
         on_change_set(event)
+      # when [:recreate, Aws::CloudFormation::Types::Stack]
+      when Array
+        on_stack(*event)
       when ::CuffSert::Abort
         @renderer.abort(event)
       else
@@ -74,12 +77,16 @@ module CuffSert
       @renderer.change_set(change_set.to_h)
     end
 
-    def on_stack_event(event, n)
+    def on_stack_event(event)
       resource = lookup_stack_resource(event)
       update_resource_states(resource, event)
       @renderer.event(event, resource)
       @renderer.clear
       @resources.each { |resource| @renderer.resource(resource) }
+    end
+
+    def on_stack(event, stack)
+      @renderer.stack(event, stack)
     end
 
     def lookup_stack_resource(event)
@@ -169,6 +176,19 @@ module CuffSert
           event[:resource_status_reason]
         ).colorize(:red)
         @output.write("\r#{message}\n")
+      end
+    end
+
+    def stack(event, stack)
+      case event
+      when :recreate
+        message = sprintf(
+          "Will delete and re-create %s",
+          stack[:stack_name]
+        )
+        @output.write(message.colorize(:red) + "\n")
+      else
+        puts event, stack
       end
     end
 

@@ -182,10 +182,26 @@ shared_context 'stack states' do
   end
 
   let :stack_rolled_back do
-    {
+    Aws::CloudFormation::Types::Stack.new({
       :stack_id => stack_id,
       :stack_name => stack_name,
       :stack_status => 'ROLLBACK_COMPLETE',
+    })
+  end
+
+  let :stack_deleting do
+    {
+      :stack_id => stack_id,
+      :stack_name => stack_name,
+      :stack_status => 'DELETE_IN_PROGRESS',
+    }
+  end
+
+  let :stack_deleted do
+    {
+      :stack_id => stack_id,
+      :stack_name => stack_name,
+      :stack_status => 'DELETE_COMPLETE',
     }
   end
 
@@ -199,6 +215,14 @@ shared_context 'stack states' do
 
   let :stack_rolled_back_describe do
     {:stacks => [stack_rolled_back]}
+  end
+
+  let :stack_deleting_describe do
+    {:stacks => [stack_deleting]}
+  end
+
+  let :stack_deleted_describe do
+    {:stacks => [stack_deleted]}
   end
 end
 
@@ -225,6 +249,16 @@ shared_context 'stack events' do
       :physical_resource_id => 'resource1_id',
       :resource_type => 'AWS::EC2::VPC',
       :resource_status => 'CREATE_COMPLETE',
+      :timestamp => DateTime.rfc3339('2013-08-23T01:02:28.025Z').to_time,
+    })
+  end
+
+  let :r1_deleted do
+    Aws::CloudFormation::Types::StackEvent.new({
+      :event_id => 'r1_deleted',
+      :stack_id => stack_id,
+      :logical_resource_id => 'resource1_id',
+      :resource_status => 'DELETE_COMPLETE',
       :timestamp => DateTime.rfc3339('2013-08-23T01:02:28.025Z').to_time,
     })
   end
@@ -278,6 +312,16 @@ shared_context 'stack events' do
     })
   end
 
+  let :r2_deleting do
+    Aws::CloudFormation::Types::StackEvent.new({
+      :event_id => 'r2_deleting',
+      :stack_id => stack_id,
+      :logical_resource_id => 'resource2_id',
+      :resource_status => 'DELETE_IN_PROGRESS',
+      :timestamp => DateTime.rfc3339('2013-08-23T01:02:38.534Z').to_time,
+    })
+  end
+
   let :r2_deleted do
     Aws::CloudFormation::Types::StackEvent.new({
       :event_id => 'r2_deleted',
@@ -328,5 +372,13 @@ shared_context 'stack events' do
 
   let :stack_rolled_back_events do
     {:stack_events => [s1_rolled, r2_deleted, r1_done] }
+  end
+
+  let :stack_deleting_events do
+    {:stack_events => [r1_deleted, r2_deleting] }
+  end
+
+  let :stack_deleted_events do
+    {:stack_events => [r1_deleted, r2_deleted] }
   end
 end
