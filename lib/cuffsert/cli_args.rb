@@ -5,6 +5,7 @@ module CuffSert
 
   def self.parse_cli_args(argv)
     args = {
+      :verbosity => 1,
       :dangerous_ok => false,
       :overrides => {
         :parameters => {},
@@ -54,6 +55,14 @@ module CuffSert
           raise "cli args include duplicate tag #{key}"
         end
         args[:overrides][:tags][key] = val
+      end
+
+      opts.on('--verbose', '-v', 'More detailed output. Once will print all stack evwnts, twice will print debug info') do
+        args[:verbosity] += 1
+      end
+
+      opts.on('--quiet', '-q', 'Output only fatal errors') do
+        args[:verbosity] = 0
       end
 
       opts.on('--yes', '-y', 'Don\'t ask to replace and delete stack resources') do
