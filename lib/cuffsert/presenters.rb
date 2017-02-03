@@ -6,6 +6,7 @@ require 'rx'
 # TODO: Animate in-progress states
 # - Introduce a Done message and stop printing in on_complete
 # - Present the error message in change_set properly - and abort
+# - badness goes to stderr
 
 module CuffSert
   class BasePresenter
@@ -114,8 +115,9 @@ module CuffSert
   ACTION_ORDER = ['Add', 'Modify', 'Replace?', 'Replace!', 'Delete']
 
   class ProgressbarRenderer
-    def initialize(output = STDOUT)
+    def initialize(output = STDOUT, options = {})
       @output = output
+      @verbosity = options[:verbosity] || 1
     end
 
     def change_set(change_set)
@@ -168,15 +170,17 @@ module CuffSert
     end
 
     def event(event, resource)
-      if resource[:states][-1] == :bad
-        message = sprintf('%s  %s[%s] %s',
-          event[:timestamp].strftime('%H:%M:%S%z'),
-          event[:logical_resource_id],
-          event[:resource_type],
-          event[:resource_status_reason]
-        ).colorize(:red)
-        @output.write("\r#{message}\n")
-      end
+      return if @verbosity == 0
+      return if resource[:states][-1] != :bad && @verbosity <= 1
+      color, _ = interpret_states(resource)
+      message = sprintf('%s %s  %s[%s] %s',
+        event[:resource_status],
+        event[:timestamp].strftime('%H:%M:%S%z'),
+        event[:logical_resource_id],
+        event[:resource_type],
+        event[:resource_status_reason] || ""
+      ).colorize(color)
+      @output.write("\r#{message}\n")
     end
 
     def stack(event, stack)
@@ -197,25 +201,7 @@ module CuffSert
     end
 
     def resource(resource)
-      color, symbol = case resource[:states]
-      when [:progress]
-        [:yellow, :tripple_dot]
-      when [:good]
-        [:green, :check]
-      when [:bad]
-        [:red, :cross]
-      when [:good, :progress]
-        [:light_white, :tripple_dot]
-      when [:bad, :progress]
-        [:red, :tripple_dot]
-      when [:good, :good], [:bad, :good]
-        [:light_white, :check]
-      when [:good, :bad], [:bad, :bad]
-        [:red, :qmark]
-      else
-        raise "Unexpected :states in #{resource.inspect}"
-      end
-
+      color, symbol = interpret_states(resource)
       table = {
         :check => "+",
         :tripple_dot => ".", # "\u2026"
@@ -235,6 +221,29 @@ module CuffSert
 
     def done
       @output.write("\nDone.\n".colorize(:green))
+    end
+
+    private
+
+    def interpret_states(resource)
+      case resource[:states]
+      when [:progress]
+        [:yellow, :tripple_dot]
+      when [:good]
+        [:green, :check]
+      when [:bad]
+        [:red, :cross]
+      when [:good, :progress]
+        [:light_white, :tripple_dot]
+      when [:bad, :progress]
+        [:red, :tripple_dot]
+      when [:good, :good], [:bad, :good]
+        [:light_white, :check]
+      when [:good, :bad], [:bad, :bad]
+        [:red, :qmark]
+      else
+        raise "Unexpected :states in #{resource.inspect}"
+      end
     end
   end
 end

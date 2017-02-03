@@ -92,24 +92,59 @@ describe CuffSert::ProgressbarRenderer do
   include_context 'stack states'
   include_context 'stack events'
 
-  describe '#event' do
-    subject do
-      output = StringIO.new
-      described_class.new(output).event(event, resource)
-      output.string
-    end
+  let(:resource) do
+    event.to_h.merge!(
+      :states => [CuffSert.state_category(event[:resource_status])]
+    )
+  end
 
-    context 'given an in_progress event' do
-      let(:event) { r2_progress }
-      let(:resource) { event.to_h.merge!(:states => [:progress]) }
-      it { should be_empty }
+  describe '#event' do
+    subject do |example|
+      output = StringIO.new
+      described_class.new(output, example.metadata).event(event, resource)
+      output.string
     end
 
     context 'given an failed event' do
       let(:event) { r2_failed }
-      let(:resource) { event.to_h.merge!(:states => [:bad]) }
-      it { should match(/resource2_name/) }
-      it { should include('Insufficient permissions') }
+
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
+
+      context 'when default verbosity' do
+        it { should match(/resource2_name/) }
+        it { should include('Insufficient permissions') }
+      end
+
+      context 'when verbose', :verbosity => 2 do
+        it { should match(/resource2_name/) }
+        it { should include('Insufficient permissions') }
+      end
+    end
+
+    context 'given an in-progress event' do
+      let(:event) { r2_progress }
+
+      context 'when default verbosity' do
+        it { should be_empty }
+      end
+
+      context 'when verbose', :verbosity => 2 do
+        it { should match(/in.progress/i) }
+      end
+    end
+
+    context 'given a successful event' do
+      let(:event) { r2_done }
+
+      context 'when default verbosity' do
+        it { should be_empty }
+      end
+
+      context 'when verbose', :verbosity => 2 do
+        it { should match(/complete/i) }
+      end
     end
   end
 
