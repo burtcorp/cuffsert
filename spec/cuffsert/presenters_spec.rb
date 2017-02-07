@@ -239,20 +239,22 @@ describe CuffSert::ProgressbarRenderer do
 
     subject do |example|
       described_class.new(output, error, example.metadata).abort(message)
-      output.string
+      error.string
+    end
+
+    before do
+      expect(output.string).to be_empty
     end
 
     context 'given a simple abort message' do
       let(:message) { CuffSert::Abort.new('badness') }
 
       context 'when silent', :verbosity => 0 do
-        it { expect(output.string).to be_empty }
-        it { expect(error.string).to be_empty }
+        it { should be_empty }
       end
 
-      context 'when default verbosity' do
-        it { expect(output.string).to be_empty }
-        it { expect(error.string).to include('badness'.colorize(:red)) }
+      context 'whenn default verbosity' do
+        it { should include('badness'.colorize(:red)) }
       end
     end
   end
