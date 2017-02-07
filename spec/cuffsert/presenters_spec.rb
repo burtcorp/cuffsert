@@ -101,7 +101,7 @@ describe CuffSert::ProgressbarRenderer do
   describe '#event' do
     subject do |example|
       output = StringIO.new
-      described_class.new(output, example.metadata).event(event, resource)
+      described_class.new(output, StringIO.new, example.metadata).event(event, resource)
       output.string
     end
 
@@ -147,11 +147,11 @@ describe CuffSert::ProgressbarRenderer do
       end
     end
   end
- 
+
   describe '#clear' do
     subject do |example|
       output = StringIO.new
-      described_class.new(output, example.metadata).clear
+      described_class.new(output, StringIO.new, example.metadata).clear
       output.string
     end
 
@@ -168,10 +168,10 @@ describe CuffSert::ProgressbarRenderer do
   describe '#resource' do
     subject do |example|
       output = StringIO.new
-      described_class.new(output, example.metadata).resource(resource)
+      described_class.new(output, StringIO.new, example.metadata).resource(resource)
       output.string
     end
-    
+
     context 'given a successful event' do
       let(:resource) { r2_done.to_h.merge({:states => [:good]}) }
 
@@ -234,29 +234,33 @@ describe CuffSert::ProgressbarRenderer do
   end
 
   describe '#abort' do
+    let(:output) { StringIO.new }
+    let(:error) { StringIO.new }
+
     subject do |example|
-      output = StringIO.new
-      described_class.new(output, example.metadata).abort(message)
+      described_class.new(output, error, example.metadata).abort(message)
       output.string
     end
 
     context 'given a simple abort message' do
       let(:message) { CuffSert::Abort.new('badness') }
-      
+
       context 'when silent', :verbosity => 0 do
-        it { should be_empty }
+        it { expect(output.string).to be_empty }
+        it { expect(error.string).to be_empty }
       end
 
-      context 'whenn default verbosity' do
-        it { should include('badness'.colorize(:red)) }
+      context 'when default verbosity' do
+        it { expect(output.string).to be_empty }
+        it { expect(error.string).to include('badness'.colorize(:red)) }
       end
     end
   end
-  
+
   describe '#done' do
     subject do |example|
       output = StringIO.new
-      described_class.new(output, example.metadata).done
+      described_class.new(output, StringIO.new, example.metadata).done
       output.string
     end
 

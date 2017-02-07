@@ -147,6 +147,6 @@ module CuffSert
       !CuffSert.need_confirmation(meta, action, change_set) ||
         CuffSert.ask_confirmation(STDIN, STDOUT)
     end)
-    RendererPresenter.new(events, ProgressbarRenderer.new(STDOUT, cli_args))
+    RendererPresenter.new(events, ProgressbarRenderer.new(STDOUT, STDERR, cli_args))
   end
 end

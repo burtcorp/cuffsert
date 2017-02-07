@@ -115,8 +115,9 @@ module CuffSert
   ACTION_ORDER = ['Add', 'Modify', 'Replace?', 'Replace!', 'Delete']
 
   class ProgressbarRenderer
-    def initialize(output = STDOUT, options = {})
+    def initialize(output = STDOUT, error = STDERR, options = {})
       @output = output
+      @error = error
       @verbosity = options[:verbosity] || 1
     end
 
@@ -217,7 +218,7 @@ module CuffSert
     end
 
     def abort(event)
-      @output.write(event.message.colorize(:red) + "\n") unless @verbosity < 1
+      @error.write(event.message.colorize(:red) + "\n") unless @verbosity < 1
     end
 
     def done
