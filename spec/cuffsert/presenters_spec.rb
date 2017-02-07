@@ -147,12 +147,41 @@ describe CuffSert::ProgressbarRenderer do
       end
     end
   end
+ 
+  describe '#clear' do
+    subject do |example|
+      output = StringIO.new
+      described_class.new(output, example.metadata).clear
+      output.string
+    end
+
+    context 'when silent', :verbosity => 0 do
+      it { should be_empty }
+    end
+
+    context 'when default verbosity' do
+      it { should eq("\r") }
+    end
+  end
+
 
   describe '#resource' do
-    subject do
+    subject do |example|
       output = StringIO.new
-      described_class.new(output).resource(resource)
+      described_class.new(output, example.metadata).resource(resource)
       output.string
+    end
+    
+    context 'given a successful event' do
+      let(:resource) { r2_done.to_h.merge({:states => [:good]}) }
+
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
+
+      context 'when default verbosity' do
+        it { should_not be_empty }
+      end
     end
 
     context 'given bad :states' do
@@ -205,15 +234,38 @@ describe CuffSert::ProgressbarRenderer do
   end
 
   describe '#abort' do
-    subject do
+    subject do |example|
       output = StringIO.new
-      described_class.new(output).abort(message)
+      described_class.new(output, example.metadata).abort(message)
       output.string
     end
 
     context 'given a simple abort message' do
       let(:message) { CuffSert::Abort.new('badness') }
-      it { should include('badness'.colorize(:red)) }
+      
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
+
+      context 'whenn default verbosity' do
+        it { should include('badness'.colorize(:red)) }
+      end
+    end
+  end
+  
+  describe '#done' do
+    subject do |example|
+      output = StringIO.new
+      described_class.new(output, example.metadata).done
+      output.string
+    end
+
+    context 'when silent', :verbosity => 0 do
+      it { should be_empty }
+    end
+
+    context 'when default verbosity' do
+      it { should match(/done/i) }
     end
   end
 

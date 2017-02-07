@@ -197,10 +197,11 @@ module CuffSert
     end
 
     def clear
-      @output.write("\r")
+      @output.write("\r") unless @verbosity < 1
     end
 
     def resource(resource)
+      return if @verbosity < 1
       color, symbol = interpret_states(resource)
       table = {
         :check => "+",
@@ -216,11 +217,11 @@ module CuffSert
     end
 
     def abort(event)
-      @output.write(event.message.colorize(:red) + "\n")
+      @output.write(event.message.colorize(:red) + "\n") unless @verbosity < 1
     end
 
     def done
-      @output.write("\nDone.\n".colorize(:green))
+      @output.write("\nDone.\n".colorize(:green)) unless @verbosity < 1
     end
 
     private
