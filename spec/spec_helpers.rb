@@ -358,6 +358,18 @@ shared_context 'stack events' do
     })
   end
 
+  let :s1_deleted do
+    Aws::CloudFormation::Types::StackEvent.new({
+      :event_id => 's1_rolled',
+      :stack_id => stack_id,
+      :logical_resource_id => stack_name,
+      :physical_resource_id => stack_id,
+      :resource_type => 'AWS::CloudFormation::Stack',
+      :resource_status => 'DELETE_COMPLETE',
+      :timestamp => DateTime.rfc3339('2013-08-23T01:02:38.534Z').to_time,
+    })
+  end
+
   let :too_old_events do
     { :stack_events => [r1_old] }
   end
@@ -379,6 +391,6 @@ shared_context 'stack events' do
   end
 
   let :stack_deleted_events do
-    {:stack_events => [r1_deleted, r2_deleted] }
+    {:stack_events => [r1_deleted, r2_deleted, s1_deleted] }
   end
 end
