@@ -93,7 +93,7 @@ describe CuffSert::ProgressbarRenderer do
     context 'given an failed event' do
       let(:event) { r2_failed }
       let(:resource) { event.to_h.merge!(:states => [:bad]) }
-      it { should match(/resource2_id/) }
+      it { should match(/resource2_name/) }
       it { should include('Insufficient permissions') }
     end
   end
