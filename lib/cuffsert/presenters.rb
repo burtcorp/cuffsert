@@ -112,15 +112,33 @@ module CuffSert
     end
   end
 
-  ACTION_ORDER = ['Add', 'Modify', 'Replace?', 'Replace!', 'Delete']
-
-  class ProgressbarRenderer
+  class BaseRenderer
     def initialize(output = STDOUT, error = STDERR, options = {})
       @output = output
       @error = error
       @verbosity = options[:verbosity] || 1
     end
 
+    def event(event, resource) ; end
+    def clear ; end
+    def resource(resource) ; end
+    def abort(message) ; end
+    def done ; end
+  end
+
+  class JsonRenderer < BaseRenderer
+    def event(event, resource)
+      @output.write(event.to_h.to_json) unless @verbosity < 1
+    end
+
+    def abort(event)
+      @error.write(event.message + "\n") unless @verbosity < 1
+    end
+  end
+
+  ACTION_ORDER = ['Add', 'Modify', 'Replace?', 'Replace!', 'Delete']
+
+  class ProgressbarRenderer < BaseRenderer
     def change_set(change_set)
       @output.write(sprintf("Updating %s\n", change_set[:stack_name]))
       change_set[:changes].sort do |l, r|

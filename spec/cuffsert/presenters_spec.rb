@@ -88,6 +88,50 @@ describe CuffSert::RendererPresenter do
   end
 end
 
+describe CuffSert::JsonRenderer do
+  include_context 'stack events'
+
+  let(:output) { StringIO.new }
+  let(:error) { StringIO.new }
+  
+  describe '#event' do
+    let(:event) { r2_done }
+
+    subject do |example|
+      described_class.new(output, error, example.metadata).event(event, nil)
+      output.string
+    end
+
+    context 'when silent', :verbosity => 0 do
+      it { should be_empty }
+    end
+
+    context 'when default verbosity' do
+      it { should match(/^{".*}$/) }
+      it { should include('"event_id":"r2_done"') }
+    end
+  end
+  
+  describe '#abort' do
+    let(:message) { CuffSert::Abort.new('badness') }
+
+    subject do |example|
+      described_class.new(output, error, example.metadata).abort(message)
+      error.string
+    end
+
+    before { expect(output.string).to be_empty }
+
+    context 'when silent', :verbosity => 0 do
+      it { should be_empty }
+    end
+
+    context 'when default verbosity' do
+      it { should include('badness') }
+    end
+  end
+end
+
 describe CuffSert::ProgressbarRenderer do
   include_context 'stack states'
   include_context 'stack events'

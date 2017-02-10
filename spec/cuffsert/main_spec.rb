@@ -1,6 +1,7 @@
 require 'cuffsert/cfarguments'
 require 'cuffsert/main'
 require 'cuffsert/messages'
+require 'cuffsert/presenters'
 require 'rx'
 require 'rx-rspec'
 require 'spec_helpers'
@@ -264,6 +265,20 @@ describe 'CuffSert#execute' do
     expect(
       CuffSert.execute(meta, nil, :client => cfmock)
     ).to emit_exactly(CuffSert::Abort.new(/in progress/))
+  end
+end
+
+describe 'CuffSert#make_renderer' do
+  subject do |example|
+    CuffSert.make_renderer(example.metadata)
+  end
+  
+  it 'returns progressbar by default' do
+    should be_a(CuffSert::ProgressbarRenderer)
+  end
+  
+  it 'returns json renderer for :json', :output => :json do
+    should be_a(CuffSert::JsonRenderer)
   end
 end
 

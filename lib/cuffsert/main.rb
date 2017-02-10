@@ -135,6 +135,14 @@ module CuffSert
     Rx::Observable.concat(*sources)
   end
 
+  def self.make_renderer(cli_args)
+    if cli_args[:output] == :json
+      JsonRenderer.new(STDOUT, STDERR, cli_args)
+    else
+      ProgressbarRenderer.new(STDOUT, STDERR, cli_args)
+    end
+  end
+
   def self.run(argv)
     cli_args = CuffSert.parse_cli_args(argv)
     meta = CuffSert.build_meta(cli_args)
@@ -147,6 +155,7 @@ module CuffSert
       !CuffSert.need_confirmation(meta, action, change_set) ||
         CuffSert.ask_confirmation(STDIN, STDOUT)
     end)
-    RendererPresenter.new(events, ProgressbarRenderer.new(STDOUT, STDERR, cli_args))
+    renderer = CuffSert.make_renderer(cli_args)
+    RendererPresenter.new(events, renderer)
   end
 end

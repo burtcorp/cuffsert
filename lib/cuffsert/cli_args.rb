@@ -5,6 +5,7 @@ module CuffSert
 
   def self.parse_cli_args(argv)
     args = {
+      :output => :progressbar,
       :verbosity => 1,
       :dangerous_ok => false,
       :overrides => {
@@ -55,6 +56,10 @@ module CuffSert
           raise "cli args include duplicate tag #{key}"
         end
         args[:overrides][:tags][key] = val
+      end
+
+      opts.on('--json', 'Output events in JSON, no progressbar, colors') do
+        args[:output] = :json
       end
 
       opts.on('--verbose', '-v', 'More detailed output. Once will print all stack evwnts, twice will print debug info') do
