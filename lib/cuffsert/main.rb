@@ -34,14 +34,22 @@ module CuffSert
     stack_uri
   end
 
-  def self.need_confirmation(meta, change_set)
+  def self.need_confirmation(meta, action, desc)
     return false if meta.dangerous_ok
-    change_set[:changes].any? do |change|
-      rc = change[:resource_change]
-      rc[:action] == 'Delete' || (
-        rc[:action] == 'Modify' &&
-        ['Always', 'True', 'Conditional'].include?(rc[:replacement])
-      )
+    case action
+    when :update
+      change_set = desc
+      change_set[:changes].any? do |change|
+        rc = change[:resource_change]
+        rc[:action] == 'Delete' || (
+          rc[:action] == 'Modify' &&
+          ['Always', 'True', 'Conditional'].include?(rc[:replacement])
+        )
+      end
+    when :recreate
+      true
+    else
+      true # safety first
     end
   end
 
@@ -80,7 +88,7 @@ module CuffSert
           Rx::Observable.defer {
             if change_set[:status] == 'FAILED'
               Rx::Observable.empty
-            elsif confirm_update.call(change_set)
+            elsif confirm_update.call(meta, :update, change_set)
               client.update_stack(change_set[:stack_id], change_set[:change_set_id])
             else
               Abort.new('User abort!').as_observable
@@ -90,9 +98,22 @@ module CuffSert
       end
   end
 
-  def self.delete_stack(client, meta)
-    cfargs = CuffSert.as_delete_stack_args(meta)
-    client.delete_stack(cfargs)
+  def self.recreate_stack(client, stack, meta, confirm_recreate)
+    crt_args = CuffSert.as_create_stack_args(meta)
+    del_args = CuffSert.as_delete_stack_args(stack)
+    Rx::Observable.concat(
+      Rx::Observable.of([:recreate, stack]),
+      Rx::Observable.defer do
+        if confirm_recreate.call(meta, :recreate, stack)
+          Rx::Observable.concat(
+            client.delete_stack(del_args),
+            client.create_stack(crt_args)
+          )
+        else
+          CuffSert::Abort.new('User abort!').as_observable
+        end
+      end
+    )
   end
 
   def self.execute(meta, confirm_update, client: RxCFClient.new)
@@ -104,8 +125,7 @@ module CuffSert
     elsif found.nil?
       sources << self.create_stack(client, meta)
     elsif found[:stack_status] == 'ROLLBACK_COMPLETE'
-      sources << self.delete_stack(client, meta)
-      sources << self.create_stack(client, meta)
+      sources << self.recreate_stack(client, found, meta, confirm_update)
     else
       sources << self.update_stack(client, meta, confirm_update)
     end
@@ -120,8 +140,8 @@ module CuffSert
     end
     stack_path = cli_args[:stack_path][0]
     meta.stack_uri = CuffSert.validate_and_urlify(stack_path)
-    events = CuffSert.execute(meta, lambda do |change_set|
-      !CuffSert.need_confirmation(meta, change_set) ||
+    events = CuffSert.execute(meta, lambda do |meta, action, change_set|
+      !CuffSert.need_confirmation(meta, action, change_set) ||
         CuffSert.ask_confirmation(STDIN, STDOUT)
     end)
     RendererPresenter.new(events, ProgressbarRenderer.new)

@@ -37,6 +37,7 @@ end
 
 describe 'CuffSert#need_confirmation' do
   include_context 'metadata'
+  include_context 'stack states'
   include_context 'changesets'
 
   let :local_meta do
@@ -45,7 +46,7 @@ describe 'CuffSert#need_confirmation' do
   end
 
   subject do
-    CuffSert.need_confirmation(local_meta, change_set_ready)
+    CuffSert.need_confirmation(local_meta, :update, change_set_ready)
   end
 
   context 'with adds' do
@@ -86,6 +87,26 @@ describe 'CuffSert#need_confirmation' do
 
     context 'with delete' do
       let(:change_set_changes) { [r3_delete] }
+      it { should be(false) }
+    end
+  end
+
+  context 'given stack recreate' do
+    subject do
+      CuffSert.need_confirmation(
+        local_meta,
+        :recreate,
+        stack_rolled_back
+      )
+    end
+
+    it { should be(true) }
+    context 'with dangerous_ok' do
+      let :local_meta do
+        meta.dangerous_ok = true
+        meta
+      end
+
       it { should be(false) }
     end
   end
@@ -143,18 +164,52 @@ describe 'CuffSert#execute' do
     CuffSert.execute(meta, nil, :client => cfmock)
   end
 
-  it 'deletes rolledback stack before create' do
-    allow(cfmock).to receive(:find_stack_blocking)
-      .and_return(stack_rolled_back)
-    expect(cfmock).to receive(:delete_stack)
-      .with(CuffSert.as_delete_stack_args(meta))
-    expect(cfmock).to receive(:create_stack)
-      .with(CuffSert.as_create_stack_args(meta))
-    CuffSert.execute(meta, nil, :client => cfmock)
+  context 'finding rolled_back stack' do
+    let(:confirm_update) { lambda { |*_| true } }
+
+    let :cfmock do
+      mock = double(:cfclient)
+      allow(mock).to receive(:find_stack_blocking)
+        .and_return(stack_rolled_back)
+      mock
+    end
+
+    subject { CuffSert.execute(meta, confirm_update, :client => cfmock) }
+
+    context 'given user confirmation' do
+      it 'deletes rolledback stack before create' do
+        expect(cfmock).to receive(:delete_stack)
+          .with(CuffSert.as_delete_stack_args(stack_rolled_back))
+          .and_return(Rx::Observable.of(r1_deleted, r2_deleted))
+        expect(cfmock).to receive(:create_stack)
+          .with(CuffSert.as_create_stack_args(meta))
+          .and_return(Rx::Observable.of(r1_done, r2_done))
+        expect(subject).to emit_exactly(
+          [:recreate, stack_rolled_back],
+          r1_deleted,
+          r2_deleted,
+          r1_done,
+          r2_done
+        )
+      end
+    end
+
+    context 'given user rejection' do
+      let(:confirm_update) { lambda { |*_| false } }
+
+      it 'aborts with neither deletion nor creation' do
+        expect(cfmock).not_to receive(:delete_stack)
+        expect(cfmock).not_to receive(:create_stack)
+        expect(subject).to emit_exactly(
+          [:recreate, stack_rolled_back],
+          CuffSert::Abort.new(/.*/)
+        )
+      end
+    end
   end
 
   describe 'update' do
-    let(:confirm_update) { lambda { |_| true } }
+    let(:confirm_update) { lambda { |*_| true } }
     let(:change_set_stream) { Rx::Observable.of(change_set_ready) }
 
     let :cfmock do
@@ -189,7 +244,7 @@ describe 'CuffSert#execute' do
     end
 
     context 'given rejection' do
-      let(:confirm_update) { lambda { |_| false } }
+      let(:confirm_update) { lambda { |*_| false } }
 
       it 'does not update' do
         expect(cfmock).not_to receive(:update_stack)

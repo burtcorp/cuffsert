@@ -63,8 +63,9 @@ end
 
 describe '#as_delete_stack_args' do
   include_context 'metadata'
+  include_context 'stack states'
 
-  subject { CuffSert.as_delete_stack_args(meta) }
+  subject { CuffSert.as_delete_stack_args(stack_rolled_back) }
 
-  it { should include(:stack_name => stack_name) }
+  it { should include(:stack_name => stack_id) }
 end

@@ -146,4 +146,28 @@ describe CuffSert::RxCFClient do
 
     it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_done, s1_done) }
   end
+
+  describe '#delete_stack' do
+    let :aws_mock do
+      mock = double(:aws_mock)
+      expect(mock).to receive(:delete_stack)
+        .and_return(nil)
+      expect(mock).to receive(:describe_stack_events)
+        .with(:stack_name => stack_id)
+        .at_least(:twice)
+        .and_return(
+          [stack_deleting_events, too_old_events],
+          [stack_deleted_events, stack_deleting_events, too_old_events]
+        )
+      mock
+    end
+
+    context 'events when delete is succesful' do
+      let(:cfargs) { {:stack_name => stack_id} }
+
+      subject { described_class.new(aws_mock, pause: 0).delete_stack(cfargs) }
+
+      it { should emit_exactly(r1_deleted, r2_deleting, r2_deleted, s1_deleted) }
+    end
+  end
 end
