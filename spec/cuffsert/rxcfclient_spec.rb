@@ -156,8 +156,8 @@ describe CuffSert::RxCFClient do
         .with(:stack_name => stack_id)
         .at_least(:twice)
         .and_return(
-          [too_old_events, stack_deleting_events],
-          [stack_deleted_events]
+          [stack_deleting_events, too_old_events],
+          [stack_deleted_events, stack_deleting_events, too_old_events]
         )
       mock
     end

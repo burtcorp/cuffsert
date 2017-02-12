@@ -387,10 +387,10 @@ shared_context 'stack events' do
   end
 
   let :stack_deleting_events do
-    {:stack_events => [r1_deleted, r2_deleting] }
+    {:stack_events => [r2_deleting, r1_deleted] }
   end
 
   let :stack_deleted_events do
-    {:stack_events => [r1_deleted, r2_deleted, s1_deleted] }
+    {:stack_events => [s1_deleted, r2_deleted, r1_deleted] }
   end
 end
