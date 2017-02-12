@@ -71,8 +71,8 @@ describe CuffSert::RxCFClient do
     context 'events when create is succesful' do
       let :events_sequence do
         [
-          [too_old_events, stack_in_progress_events],
-          [stack_complete_events]
+          [stack_in_progress_events, too_old_events],
+          [stack_complete_events, stack_in_progress_events, too_old_events]
         ]
       end
 
@@ -85,7 +85,7 @@ describe CuffSert::RxCFClient do
       let :events_sequence do
         [
           [stack_in_progress_events],
-          [stack_rolled_back_events]
+          [stack_rolled_back_events, stack_in_progress_events]
         ]
       end
 
@@ -137,7 +137,7 @@ describe CuffSert::RxCFClient do
         .at_least(:twice)
         .and_return(
           [stack_in_progress_events],
-          [stack_complete_events]
+          [stack_complete_events, stack_in_progress_events]
         )
       mock
     end

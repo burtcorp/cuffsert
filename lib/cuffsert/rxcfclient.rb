@@ -21,7 +21,6 @@ module CuffSert
     end
 
     def create_stack(cfargs)
-      eventid_cache = Set.new
       Rx::Observable.create do |observer|
         start_time = record_start_time
         stack_id = @cf.create_stack(cfargs)[:stack_id]
@@ -29,9 +28,6 @@ module CuffSert
           observer.on_next(event)
         end
         observer.on_completed
-      end
-      .select do |event|
-        eventid_cache.add?(event[:event_id])
       end
     end
 
@@ -48,7 +44,6 @@ module CuffSert
     end
 
     def update_stack(stack_id, change_set_id)
-      eventid_cache = Set.new
       Rx::Observable.create do |observer|
         start_time = record_start_time
         @cf.execute_change_set(change_set_name: change_set_id)
@@ -56,9 +51,6 @@ module CuffSert
           observer.on_next(event)
         end
         observer.on_completed
-      end
-      .select do |event|
-        eventid_cache.add?(event[:event_id])
       end
     end
 
@@ -72,21 +64,32 @@ module CuffSert
       DateTime.now - 5.0 / 86400
     end
 
-    def stack_finished?(state)
-      !state.nil? && FINAL_STATES.include?(state[:resource_status])
+    def stack_finished?(stack_id, event)
+      event[:physical_resource_id] == stack_id &&
+        FINAL_STATES.include?(event[:resource_status])
+    end
+
+    def flatten_events(stack_id)
+      @cf.describe_stack_events(stack_name: stack_id).each do |events|
+        for event in events[:stack_events]
+          yield event
+        end
+      end
     end
 
     def stack_events(stack_id, start_time)
+      eventid_cache = Set.new
       loop do
-        stack_event = nil
-        @cf.describe_stack_events(stack_name: stack_id).each do |events|
-          for event in events[:stack_events]
-            next if event[:timestamp].to_datetime < start_time
-            yield event
-            stack_event = event if event[:physical_resource_id] == stack_id
-          end
+        events = []
+        done = false
+        flatten_events(stack_id) do |event|
+          break if event[:timestamp].to_datetime < start_time
+          next unless eventid_cache.add?(event[:event_id])
+          events.unshift(event)
+          done = true if stack_finished?(stack_id, event)
         end
-        break if stack_finished?(stack_event)
+        events.each { |event| yield event }
+        break if done
         sleep(@pause)
       end
     end

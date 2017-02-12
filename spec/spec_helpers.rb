@@ -289,7 +289,7 @@ shared_context 'stack events' do
       :timestamp => DateTime.rfc3339('2013-08-23T01:02:38.534Z').to_time,
     })
   end
-  
+
   let :s1_done do
     Aws::CloudFormation::Types::StackEvent.new({
       :event_id => 's1_done',
@@ -319,14 +319,14 @@ shared_context 'stack events' do
   end
 
   let :stack_in_progress_events do
-    { :stack_events => [r1_done, r2_progress] }
+    { :stack_events => [r2_progress, r1_done] }
   end
 
   let :stack_complete_events do
-    { :stack_events => [r1_done, r2_done, s1_done] }
+    { :stack_events => [s1_done, r2_done, r1_done] }
   end
 
   let :stack_rolled_back_events do
-    {:stack_events => [r1_done, r2_deleted, s1_rolled] }
+    {:stack_events => [s1_rolled, r2_deleted, r1_done] }
   end
 end
