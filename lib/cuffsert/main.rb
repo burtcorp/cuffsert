@@ -87,11 +87,14 @@ module CuffSert
           Rx::Observable.of(change_set),
           Rx::Observable.defer {
             if change_set[:status] == 'FAILED'
-              Rx::Observable.empty
+              client.abort_update(change_set[:change_set_id])
             elsif confirm_update.call(meta, :update, change_set)
               client.update_stack(change_set[:stack_id], change_set[:change_set_id])
             else
-              Abort.new('User abort!').as_observable
+              Rx::Observable.concat(
+                client.abort_update(change_set[:change_set_id]),
+                Abort.new('User abort!').as_observable
+              )
             end
           }
         )
