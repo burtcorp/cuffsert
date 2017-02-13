@@ -237,6 +237,8 @@ describe 'CuffSert#execute' do
       let(:change_set_stream) { Rx::Observable.of(change_set_failed) }
 
       it 'does not update' do
+        expect(cfmock).to receive(:abort_update)
+          .and_return(Rx::Observable.empty)
         expect(cfmock).not_to receive(:update_stack)
 
         expect(subject).to emit_exactly(change_set_failed)
@@ -247,6 +249,8 @@ describe 'CuffSert#execute' do
       let(:confirm_update) { lambda { |*_| false } }
 
       it 'does not update' do
+        expect(cfmock).to receive(:abort_update)
+          .and_return(Rx::Observable.empty)
         expect(cfmock).not_to receive(:update_stack)
 
         expect(subject).to emit_exactly(change_set_ready, CuffSert::Abort.new(/.*/))

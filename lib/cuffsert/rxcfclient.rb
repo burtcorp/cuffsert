@@ -53,6 +53,13 @@ module CuffSert
         observer.on_completed
       end
     end
+    
+    def abort_update(change_set_id)
+      Rx::Observable.create do |observer|
+        @cf.delete_change_set(change_set_name: change_set_id)
+        observer.on_completed
+      end
+    end
 
     def delete_stack(cfargs)
       eventid_cache = Set.new

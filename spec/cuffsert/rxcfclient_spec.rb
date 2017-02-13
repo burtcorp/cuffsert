@@ -147,6 +147,23 @@ describe CuffSert::RxCFClient do
     it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_done, s1_done) }
   end
 
+  describe '#abort_update' do
+    let :aws_mock do
+      mock = double(:aws_mock)
+
+      expect(mock).to receive(:delete_change_set)
+        .with(include(:change_set_name => change_set_id))
+        .and_return(nil)
+      mock
+    end
+    
+    subject { described_class.new(aws_mock, pause: 0).abort_update(change_set_id) }
+    
+    it 'returns observable which completes on change-set deletion' do
+      should emit_exactly()
+    end
+  end
+
   describe '#delete_stack' do
     let :aws_mock do
       mock = double(:aws_mock)
