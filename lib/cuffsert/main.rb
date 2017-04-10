@@ -1,9 +1,8 @@
+require 'cuff/metadata'
 require 'cuffsert/cfarguments'
 require 'cuffsert/cfstates'
 require 'cuffsert/cli_args'
 require 'cuffsert/confirmation'
-require 'cuffsert/messages'
-require 'cuffsert/metadata'
 require 'cuffsert/presenters'
 require 'cuffsert/rxcfclient'
 require 'rx'
@@ -112,10 +111,10 @@ module CuffSert
       ProgressbarRenderer.new(STDOUT, STDERR, cli_args)
     end
   end
-  
+
   def self.run(argv)
     cli_args = CuffSert.parse_cli_args(argv)
-    meta = CuffSert.build_meta(cli_args)
+    meta = Cuff.build_meta(cli_args)
     if cli_args[:stack_path].nil? || cli_args[:stack_path].size != 1
       raise 'Requires exactly one stack path'
     end

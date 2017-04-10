@@ -1,4 +1,3 @@
-require 'cuffsert/metadata'
 require 'cuffsert/rxcfclient'
 require 'date'
 require 'rx-rspec'

@@ -1,6 +1,6 @@
 require 'yaml'
 
-module CuffSert
+module Cuff
   class StackConfig
     attr_accessor :stackname, :selected_path, :op_mode, :stack_uri
     attr_accessor :suffix, :parameters, :tags
@@ -57,10 +57,10 @@ module CuffSert
 
   def self.build_meta(cli_args)
     io = open(cli_args[:metadata])
-    config = CuffSert.load_config(io)
+    config = Cuff.load_config(io)
     default = self.meta_defaults(cli_args)
-    meta = CuffSert.meta_for_path(config, cli_args[:selector], default)
-    CuffSert.cli_overrides(meta, cli_args)
+    meta = Cuff.meta_for_path(config, cli_args[:selector], default)
+    Cuff.cli_overrides(meta, cli_args)
   end
 
   private_class_method

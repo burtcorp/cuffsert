@@ -1,8 +1,8 @@
-require 'cuffsert/metadata'
+require 'cuff/metadata'
 require 'spec_helpers'
 require 'tempfile'
 
-describe CuffSert::StackConfig do
+describe Cuff::StackConfig do
   context 'update_from merges' do
     subject do
       config = described_class.new
@@ -37,12 +37,12 @@ describe CuffSert::StackConfig do
   end
 end
 
-describe CuffSert do
+describe Cuff do
   include_context 'yaml configs'
   context '#load_config' do
     subject do
       io = StringIO.new(config_yaml)
-      CuffSert.load_config(io)
+      Cuff.load_config(io)
     end
 
     it 'converts config keys to symbols' do
@@ -52,7 +52,7 @@ describe CuffSert do
   end
 
   context '#load_config fails on' do
-    subject { |example| CuffSert.load_config(example.metadata[:io]) }
+    subject { |example| Cuff.load_config(example.metadata[:io]) }
 
     it 'no data', :io => StringIO.new('') do
       expect { subject }.to raise_error(/hash/)
@@ -64,10 +64,10 @@ describe CuffSert do
   end
 
   context '#meta_for_path returned meta' do
-    let(:config) { CuffSert.load_config(StringIO.new(config_yaml)) }
+    let(:config) { Cuff.load_config(StringIO.new(config_yaml)) }
 
     subject do |example|
-      CuffSert.meta_for_path(config, example.metadata[:path])
+      Cuff.meta_for_path(config, example.metadata[:path])
     end
 
     it 'from empty path', :path => [] do
@@ -105,7 +105,7 @@ describe CuffSert do
     end
     let(:overrides) { {} }
 
-    subject { CuffSert.build_meta(cli_args) }
+    subject { Cuff.build_meta(cli_args) }
 
     context 'reads metadata file and allows overrides' do
       let(:overrides) { {:stackname => 'customname', :tags => {'another' => 'tag'}} }

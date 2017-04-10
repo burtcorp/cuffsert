@@ -1,3 +1,4 @@
+require 'cuff/metadata'
 require 'simplecov'
 
 SimpleCov.start
@@ -54,7 +55,7 @@ shared_context 'metadata' do
 
   let(:s3url) { 's3://foo/bar' }
   let :meta do
-    meta = CuffSert::StackConfig.new
+    meta = Cuff::StackConfig.new
     meta.selected_path = [stack_name.split(/-/)]
     meta.tags = {'k1' => 'v1', 'k2' => 'v2'}
     meta.stack_uri = URI.parse(s3url)

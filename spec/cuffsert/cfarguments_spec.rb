@@ -1,5 +1,5 @@
+require 'cuff/metadata'
 require 'cuffsert/cfarguments'
-require 'cuffsert/metadata'
 require 'spec_helpers'
 require 'tempfile'
 require 'uri'
@@ -34,7 +34,7 @@ describe '#as_create_stack_args' do
 
   context 'everything is a string' do
     let :meta do
-      meta = CuffSert::StackConfig.new
+      meta = Cuff::StackConfig.new
       meta.tags = {'numeric' => 1}
       meta.parameters = {'bool' => true}
       meta.stack_uri = URI.parse(s3url)
