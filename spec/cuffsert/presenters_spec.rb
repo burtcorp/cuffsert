@@ -254,6 +254,7 @@ describe CuffSert::ProgressbarRenderer do
         let(:change_set_changes) { [r1_modify] }
 
         it { should include('Modify'.colorize(:yellow)) }
+        it { should match(/Properties.*Foo/)}
       end
 
       context 'with an unconditional replacement' do

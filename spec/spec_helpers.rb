@@ -122,6 +122,15 @@ shared_context 'changesets' do
       :replacement => 'Never',
       :logical_resource_id => 'resource1_id',
       :resource_type => 'AWS::EC2::VPC',
+      :scope => ['Properties'],
+      :details => [
+        {
+          :target => {
+            :attribute => 'Properties',
+            :name => 'Foo',
+          },
+        }
+      ],
     })
   end
 

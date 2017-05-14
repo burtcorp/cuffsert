@@ -7,6 +7,10 @@ require 'rx'
 # - Introduce a Done message and stop printing in on_complete
 # - Present the error message in change_set properly - and abort
 # - badness goes to stderr
+# - change sets should present modification details indented under each entry
+#   - property direct modification
+#   - properties through parameter change
+#   - indirect change through other resource ("causing_entity": "Lb.DNSName")
 
 module CuffSert
   class BasePresenter
@@ -157,7 +161,7 @@ module CuffSert
           rc[:logical_resource_id],
           rc[:resource_type],
           action_color(action(rc)),
-          rc[:scope]
+          scope_desc(rc)
         )
       end.each { |row| @output.write(row) }
     end
@@ -186,6 +190,23 @@ module CuffSert
         else :red
         end
       )
+    end
+
+    def scope_desc(rc)
+      (rc[:scope] || []).map do |scope|
+        case scope
+        when 'Properties'
+          properties = rc[:details]
+            .select { |detail| detail[:target][:attribute] == 'Properties' }
+            .map { |detail| detail[:target][:name] }
+            .uniq
+            .join(", ")
+          sprintf("Properties: %s", properties)
+        else
+          rc[:scope]
+        end
+      end
+      .join("; ")
     end
 
     def event(event, resource)
