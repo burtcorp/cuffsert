@@ -110,9 +110,9 @@ module CuffSert
     end
 
     def update_resource_states(resource, event)
-      resource[:states] = resource[:states].reject do |state|
-        state == :progress
-      end << CuffSert.state_category(event[:resource_status])
+      resource[:states] = resource[:states]
+        .reject { |state| state == :progress }
+        .take(1) << CuffSert.state_category(event[:resource_status])
     end
   end
 

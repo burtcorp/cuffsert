@@ -325,7 +325,8 @@ shared_context 'stack events' do
     Aws::CloudFormation::Types::StackEvent.new({
       :event_id => 'r2_deleting',
       :stack_id => stack_id,
-      :logical_resource_id => 'resource2_id',
+      :logical_resource_id => 'resource2_name',
+      :physical_resource_id => 'resource2_id',
       :resource_status => 'DELETE_IN_PROGRESS',
       :timestamp => DateTime.rfc3339('2013-08-23T01:02:38.534Z').to_time,
     })
@@ -339,6 +340,30 @@ shared_context 'stack events' do
       :physical_resource_id => 'resource2_id',
       :resource_type => 'AWS::EC2::Instance',
       :resource_status => 'DELETE_COMPLETE',
+      :timestamp => DateTime.rfc3339('2013-08-23T01:02:38.534Z').to_time,
+    })
+  end
+
+  let :r2_updating do
+    Aws::CloudFormation::Types::StackEvent.new({
+      :event_id => 'r2_updating',
+      :stack_id => stack_id,
+      :logical_resource_id => 'resource2_name',
+      :physical_resource_id => 'resource2_id',
+      :resource_type => 'AWS::EC2::Instance',
+      :resource_status => 'UPDATE_IN_PROGRESS',
+      :timestamp => DateTime.rfc3339('2013-08-23T01:02:38.534Z').to_time,
+    })
+  end
+
+  let :r2_updated do
+    Aws::CloudFormation::Types::StackEvent.new({
+      :event_id => 'r2_updated',
+      :stack_id => stack_id,
+      :logical_resource_id => 'resource2_name',
+      :physical_resource_id => 'resource2_id',
+      :resource_type => 'AWS::EC2::Instance',
+      :resource_status => 'UPDATE_COMPLETE',
       :timestamp => DateTime.rfc3339('2013-08-23T01:02:38.534Z').to_time,
     })
   end

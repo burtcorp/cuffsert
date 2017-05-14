@@ -72,6 +72,20 @@ describe CuffSert::RendererPresenter do
     end
   end
 
+  context 'given a well-behaved resource with cleanup in a failed update' do
+    let(:events) { [r2_updated, r2_updated, r2_updating, r2_updated] }
+
+    it 'reverts second state position to :progress' do
+      should eq([
+        :clear, [:good],
+        :clear, [:good, :good],
+        :clear, [:good, :progress],
+        :clear, [:good, :good],
+        :done
+      ])
+    end
+  end
+
   context 'given recreate of a rolled-back stack' do
     let (:events) { [[:recreate, stack_rolled_back]] }
     subject { renderer.rendered }
