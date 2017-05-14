@@ -123,6 +123,7 @@ module CuffSert
       @verbosity = options[:verbosity] || 1
     end
 
+    def change_set(change_set) ; end
     def event(event, resource) ; end
     def clear ; end
     def resource(resource) ; end
@@ -131,6 +132,10 @@ module CuffSert
   end
 
   class JsonRenderer < BaseRenderer
+    def change_set(change_set)
+      @output.write(change_set.to_h.to_json) unless @verbosity < 1
+    end
+
     def event(event, resource)
       @output.write(event.to_h.to_json) unless @verbosity < 1
     end

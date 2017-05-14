@@ -90,10 +90,29 @@ end
 
 describe CuffSert::JsonRenderer do
   include_context 'stack events'
+  include_context 'changesets'
 
   let(:output) { StringIO.new }
   let(:error) { StringIO.new }
-  
+
+  describe '#change_set' do
+    let(:changeset) { change_set_ready }
+
+    subject do |example|
+      described_class.new(output, error, example.metadata).change_set(changeset)
+      output.string
+    end
+
+    context 'when silent', :verbosity => 0 do
+      it { should be_empty }
+    end
+
+    context 'when default verbosity' do
+      it { should match(/^{".*}$/) }
+      it { should include('"change_set_id":"ze-change-set-id"') }
+    end
+  end
+
   describe '#event' do
     let(:event) { r2_done }
 
