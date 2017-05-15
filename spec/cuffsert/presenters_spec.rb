@@ -72,6 +72,20 @@ describe CuffSert::RendererPresenter do
     end
   end
 
+  context 'given a well-behaved resource with cleanup in a failed update' do
+    let(:events) { [r2_updated, r2_updated, r2_updating, r2_updated] }
+
+    it 'reverts second state position to :progress' do
+      should eq([
+        :clear, [:good],
+        :clear, [:good, :good],
+        :clear, [:good, :progress],
+        :clear, [:good, :good],
+        :done
+      ])
+    end
+  end
+
   context 'given recreate of a rolled-back stack' do
     let (:events) { [[:recreate, stack_rolled_back]] }
     subject { renderer.rendered }
@@ -88,36 +102,163 @@ describe CuffSert::RendererPresenter do
   end
 end
 
+describe CuffSert::JsonRenderer do
+  include_context 'stack events'
+  include_context 'changesets'
+
+  let(:output) { StringIO.new }
+  let(:error) { StringIO.new }
+
+  describe '#change_set' do
+    let(:changeset) { change_set_ready }
+
+    subject do |example|
+      described_class.new(output, error, example.metadata).change_set(changeset)
+      output.string
+    end
+
+    context 'when silent', :verbosity => 0 do
+      it { should be_empty }
+    end
+
+    context 'when default verbosity' do
+      it { should match(/^{".*}$/) }
+      it { should include('"change_set_id":"ze-change-set-id"') }
+    end
+  end
+
+  describe '#event' do
+    let(:event) { r2_done }
+
+    subject do |example|
+      described_class.new(output, error, example.metadata).event(event, nil)
+      output.string
+    end
+
+    context 'when silent', :verbosity => 0 do
+      it { should be_empty }
+    end
+
+    context 'when default verbosity' do
+      it { should match(/^{".*}$/) }
+      it { should include('"event_id":"r2_done"') }
+    end
+  end
+  
+  describe '#abort' do
+    let(:message) { CuffSert::Abort.new('badness') }
+
+    subject do |example|
+      described_class.new(output, error, example.metadata).abort(message)
+      error.string
+    end
+
+    before { expect(output.string).to be_empty }
+
+    context 'when silent', :verbosity => 0 do
+      it { should be_empty }
+    end
+
+    context 'when default verbosity' do
+      it { should include('badness') }
+    end
+  end
+end
+
 describe CuffSert::ProgressbarRenderer do
   include_context 'stack states'
   include_context 'stack events'
 
-  describe '#event' do
-    subject do
-      output = StringIO.new
-      described_class.new(output).event(event, resource)
-      output.string
-    end
+  let(:resource) do
+    event.to_h.merge!(
+      :states => [CuffSert.state_category(event[:resource_status])]
+    )
+  end
 
-    context 'given an in_progress event' do
-      let(:event) { r2_progress }
-      let(:resource) { event.to_h.merge!(:states => [:progress]) }
-      it { should be_empty }
+  describe '#event' do
+    subject do |example|
+      output = StringIO.new
+      described_class.new(output, StringIO.new, example.metadata).event(event, resource)
+      output.string
     end
 
     context 'given an failed event' do
       let(:event) { r2_failed }
-      let(:resource) { event.to_h.merge!(:states => [:bad]) }
-      it { should match(/resource2_name/) }
-      it { should include('Insufficient permissions') }
+
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
+
+      context 'when default verbosity' do
+        it { should match(/resource2_name/) }
+        it { should include('Insufficient permissions') }
+      end
+
+      context 'when verbose', :verbosity => 2 do
+        it { should match(/resource2_name/) }
+        it { should include('Insufficient permissions') }
+      end
+    end
+
+    context 'given an in-progress event' do
+      let(:event) { r2_progress }
+
+      context 'when default verbosity' do
+        it { should be_empty }
+      end
+
+      context 'when verbose', :verbosity => 2 do
+        it { should match(/in.progress/i) }
+      end
+    end
+
+    context 'given a successful event' do
+      let(:event) { r2_done }
+
+      context 'when default verbosity' do
+        it { should be_empty }
+      end
+
+      context 'when verbose', :verbosity => 2 do
+        it { should match(/complete/i) }
+      end
     end
   end
 
-  describe '#resource' do
-    subject do
+  describe '#clear' do
+    subject do |example|
       output = StringIO.new
-      described_class.new(output).resource(resource)
+      described_class.new(output, StringIO.new, example.metadata).clear
       output.string
+    end
+
+    context 'when silent', :verbosity => 0 do
+      it { should be_empty }
+    end
+
+    context 'when default verbosity' do
+      it { should eq("\r") }
+    end
+  end
+
+
+  describe '#resource' do
+    subject do |example|
+      output = StringIO.new
+      described_class.new(output, StringIO.new, example.metadata).resource(resource)
+      output.string
+    end
+
+    context 'given a successful event' do
+      let(:resource) { r2_done.to_h.merge({:states => [:good]}) }
+
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
+
+      context 'when default verbosity' do
+        it { should_not be_empty }
+      end
     end
 
     context 'given bad :states' do
@@ -146,6 +287,7 @@ describe CuffSert::ProgressbarRenderer do
         let(:change_set_changes) { [r1_modify] }
 
         it { should include('Modify'.colorize(:yellow)) }
+        it { should match(/Properties.*Foo/)}
       end
 
       context 'with an unconditional replacement' do
@@ -170,15 +312,44 @@ describe CuffSert::ProgressbarRenderer do
   end
 
   describe '#abort' do
-    subject do
-      output = StringIO.new
-      described_class.new(output).abort(message)
-      output.string
+    let(:output) { StringIO.new }
+    let(:error) { StringIO.new }
+
+    subject do |example|
+      described_class.new(output, error, example.metadata).abort(message)
+      error.string
+    end
+
+    before do
+      expect(output.string).to be_empty
     end
 
     context 'given a simple abort message' do
       let(:message) { CuffSert::Abort.new('badness') }
-      it { should include('badness'.colorize(:red)) }
+
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
+
+      context 'whenn default verbosity' do
+        it { should include('badness'.colorize(:red)) }
+      end
+    end
+  end
+
+  describe '#done' do
+    subject do |example|
+      output = StringIO.new
+      described_class.new(output, StringIO.new, example.metadata).done
+      output.string
+    end
+
+    context 'when silent', :verbosity => 0 do
+      it { should be_empty }
+    end
+
+    context 'when default verbosity' do
+      it { should match(/done/i) }
     end
   end
 

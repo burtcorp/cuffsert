@@ -6,6 +6,11 @@ require 'rx'
 # TODO: Animate in-progress states
 # - Introduce a Done message and stop printing in on_complete
 # - Present the error message in change_set properly - and abort
+# - badness goes to stderr
+# - change sets should present modification details indented under each entry
+#   - property direct modification
+#   - properties through parameter change
+#   - indirect change through other resource ("causing_entity": "Lb.DNSName")
 
 module CuffSert
   class BasePresenter
@@ -105,19 +110,44 @@ module CuffSert
     end
 
     def update_resource_states(resource, event)
-      resource[:states] = resource[:states].reject do |state|
-        state == :progress
-      end << CuffSert.state_category(event[:resource_status])
+      resource[:states] = resource[:states]
+        .reject { |state| state == :progress }
+        .take(1) << CuffSert.state_category(event[:resource_status])
+    end
+  end
+
+  class BaseRenderer
+    def initialize(output = STDOUT, error = STDERR, options = {})
+      @output = output
+      @error = error
+      @verbosity = options[:verbosity] || 1
+    end
+
+    def change_set(change_set) ; end
+    def event(event, resource) ; end
+    def clear ; end
+    def resource(resource) ; end
+    def abort(message) ; end
+    def done ; end
+  end
+
+  class JsonRenderer < BaseRenderer
+    def change_set(change_set)
+      @output.write(change_set.to_h.to_json) unless @verbosity < 1
+    end
+
+    def event(event, resource)
+      @output.write(event.to_h.to_json) unless @verbosity < 1
+    end
+
+    def abort(event)
+      @error.write(event.message + "\n") unless @verbosity < 1
     end
   end
 
   ACTION_ORDER = ['Add', 'Modify', 'Replace?', 'Replace!', 'Delete']
 
-  class ProgressbarRenderer
-    def initialize(output = STDOUT)
-      @output = output
-    end
-
+  class ProgressbarRenderer < BaseRenderer
     def change_set(change_set)
       @output.write(sprintf("Updating %s\n", change_set[:stack_name]))
       change_set[:changes].sort do |l, r|
@@ -136,7 +166,7 @@ module CuffSert
           rc[:logical_resource_id],
           rc[:resource_type],
           action_color(action(rc)),
-          rc[:scope]
+          scope_desc(rc)
         )
       end.each { |row| @output.write(row) }
     end
@@ -167,16 +197,35 @@ module CuffSert
       )
     end
 
-    def event(event, resource)
-      if resource[:states][-1] == :bad
-        message = sprintf('%s  %s[%s] %s',
-          event[:timestamp].strftime('%H:%M:%S%z'),
-          event[:logical_resource_id],
-          event[:resource_type],
-          event[:resource_status_reason]
-        ).colorize(:red)
-        @output.write("\r#{message}\n")
+    def scope_desc(rc)
+      (rc[:scope] || []).map do |scope|
+        case scope
+        when 'Properties'
+          properties = rc[:details]
+            .select { |detail| detail[:target][:attribute] == 'Properties' }
+            .map { |detail| detail[:target][:name] }
+            .uniq
+            .join(", ")
+          sprintf("Properties: %s", properties)
+        else
+          rc[:scope]
+        end
       end
+      .join("; ")
+    end
+
+    def event(event, resource)
+      return if @verbosity == 0
+      return if resource[:states][-1] != :bad && @verbosity <= 1
+      color, _ = interpret_states(resource)
+      message = sprintf('%s %s  %s[%s] %s',
+        event[:resource_status],
+        event[:timestamp].strftime('%H:%M:%S%z'),
+        event[:logical_resource_id],
+        event[:resource_type],
+        event[:resource_status_reason] || ""
+      ).colorize(color)
+      @output.write("\r#{message}\n")
     end
 
     def stack(event, stack)
@@ -193,11 +242,37 @@ module CuffSert
     end
 
     def clear
-      @output.write("\r")
+      @output.write("\r") unless @verbosity < 1
     end
 
     def resource(resource)
-      color, symbol = case resource[:states]
+      return if @verbosity < 1
+      color, symbol = interpret_states(resource)
+      table = {
+        :check => "+",
+        :tripple_dot => ".", # "\u2026"
+        :cross  => "!",
+        :qmark => "?",
+      }
+
+      @output.write(table[symbol].colorize(
+        :color => :white,
+        :background => color
+      ))
+    end
+
+    def abort(event)
+      @error.write(event.message.colorize(:red) + "\n") unless @verbosity < 1
+    end
+
+    def done
+      @output.write("\nDone.\n".colorize(:green)) unless @verbosity < 1
+    end
+
+    private
+
+    def interpret_states(resource)
+      case resource[:states]
       when [:progress]
         [:yellow, :tripple_dot]
       when [:good]
@@ -215,26 +290,6 @@ module CuffSert
       else
         raise "Unexpected :states in #{resource.inspect}"
       end
-
-      table = {
-        :check => "+",
-        :tripple_dot => ".", # "\u2026"
-        :cross  => "!",
-        :qmark => "?",
-      }
-
-      @output.write(table[symbol].colorize(
-        :color => :white,
-        :background => color
-      ))
-    end
-
-    def abort(event)
-      @output.write(event.message.colorize(:red) + "\n")
-    end
-
-    def done
-      @output.write("\nDone.\n".colorize(:green))
     end
   end
 end

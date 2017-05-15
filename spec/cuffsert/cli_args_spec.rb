@@ -13,12 +13,21 @@ describe 'CuffSert#parse_cli_args' do
     CuffSert.parse_cli_args(argv)
   end
 
+  context 'defaulsts' do
+    it { should include(:verbosity => 1) }
+    it { should include(:output => :progressbar) }
+  end
+
   it ['--metadata',  metadata.path] { should include(:metadata => metadata.path) }
   it ['--metadata', '-'] { should include(:metadata => '/dev/stdin') }
   it ['--selector', 'foo/bar/baz'] { should include(:selector => ['foo', 'bar', 'baz']) }
   it ['--tag=foo=bar'] { should have_overrides(:tags => {'foo' => 'bar'}) }
   it ['--name=foo'] { should have_overrides(:stackname => 'foo') }
   it ['--parameter', 'foo=bar'] { should have_overrides(:parameters => {'foo' => 'bar'}) }
+  it ['--json'] { should include(:output => :json) }
+  it ['--verbose'] { should include(:verbosity => 2) }
+  it ['-v', '-v'] { should include(:verbosity => 3) }
+  it ['--quiet'] { should include(:verbosity => 0) }
   it ['--yes'] { should include(:dangerous_ok => true) }
 
   it 'stack argument as array beacuse future', :argv => [stack.path] do
