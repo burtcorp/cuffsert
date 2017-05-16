@@ -163,7 +163,7 @@ shared_context 'changesets' do
 
   let :r3_delete do
     Aws::CloudFormation::Types::ResourceChange.new({
-      :action => 'Delete',
+      :action => 'Remove',
       :replacement => 'False',
       :logical_resource_id => 'resource3_id',
       :resource_type => 'AWS::EC2::VPC',

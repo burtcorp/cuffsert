@@ -144,7 +144,7 @@ describe CuffSert::JsonRenderer do
       it { should include('"event_id":"r2_done"') }
     end
   end
-  
+
   describe '#abort' do
     let(:message) { CuffSert::Abort.new('badness') }
 
@@ -302,10 +302,10 @@ describe CuffSert::ProgressbarRenderer do
         it { should include('Replace?'.colorize(:red)) }
       end
 
-      context 'with two changes' do
-        let(:change_set_changes) { [r1_replace, r2_add, r1_conditional_replace] }
+      context 'with several changes' do
+        let(:change_set_changes) { [r3_delete, r1_replace, r2_add, r1_conditional_replace] }
         it('sorts according to action') do
-          should match(/add.*replace\?.*replace!/im)
+          should match(/add.*replace\?.*replace!.*remove/im)
         end
       end
     end

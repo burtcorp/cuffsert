@@ -41,7 +41,7 @@ module CuffSert
       change_set = desc
       change_set[:changes].any? do |change|
         rc = change[:resource_change]
-        rc[:action] == 'Delete' || (
+        rc[:action] == 'Remove' || (
           rc[:action] == 'Modify' &&
           ['Always', 'True', 'Conditional'].include?(rc[:replacement])
         )

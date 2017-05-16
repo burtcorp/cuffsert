@@ -145,7 +145,7 @@ module CuffSert
     end
   end
 
-  ACTION_ORDER = ['Add', 'Modify', 'Replace?', 'Replace!', 'Delete']
+  ACTION_ORDER = ['Add', 'Modify', 'Replace?', 'Replace!', 'Remove']
 
   class ProgressbarRenderer < BaseRenderer
     def change_set(change_set)
@@ -222,7 +222,7 @@ module CuffSert
         event[:resource_status],
         event[:timestamp].strftime('%H:%M:%S%z'),
         event[:logical_resource_id],
-        event[:resource_type],
+        event[:resource_type].sub(/.*::/, ''),
         event[:resource_status_reason] || ""
       ).colorize(color)
       @output.write("\r#{message}\n")
