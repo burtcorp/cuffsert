@@ -1,0 +1,36 @@
+#!/usr/bin/env ruby
+
+require 'yaml'
+
+module CuffUp
+  def self.parameters(io)
+    template = YAML.load(io)
+    (template['Parameters'] || [])
+      .map do |key, data|
+        {
+          'Name' => key,
+          'Value' => data['Default'],
+        }
+      end
+  end
+
+  def self.dump(input, output)
+    result = {
+      'Format' => 'v1',
+      'Parameters' => input
+    }
+    YAML.dump(result, output)
+  end
+
+  def self.run(template)
+    self.dump(self.parameters(open(template)), STDOUT)
+  end
+end
+
+template = ARGV[0]
+unless template
+  STDERR.puts("Usage: #{__FILE__} <template>")
+  exit(1)
+end
+
+CuffUp.run(template)

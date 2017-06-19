@@ -6,7 +6,7 @@ require 'open-uri'
 # - creation change-set: cfargs[:change_set_type] = 'CREATE'
 
 module CuffSert
-  TIMEOUT = 5
+  TIMEOUT = 10
 
   def self.as_cloudformation_args(meta)
     cfargs = {

@@ -1,0 +1,46 @@
+#!/usr/bin/env ruby
+
+require 'yaml'
+
+module CuffDown
+  def self.parameters(stack)
+    stack['Parameters'].map do |param|
+      {
+        'Name' => param['ParameterKey'],
+        'Value' => param['ParameterValue'],
+      }
+    end
+  end
+
+  def self.tags(stack)
+    stack['Tags'].map do |param|
+      {
+        'Name' => param['Key'],
+        'Value' => param['Value'],
+      }
+    end
+  end
+
+  def self.dump(name, params, tags, output)
+    result = {
+      'Format' => 'v1',
+      'Suffix' => name,
+      'Parameters' => params,
+      'Tags' => tags,
+    }
+    YAML.dump(result, output)
+  end
+
+  def self.run(args)
+    stack = YAML.load(STDIN)['Stacks'][0]
+
+    self.dump(
+      stack['StackName'],
+      self.parameters(stack),
+      self.tags(stack),
+      STDOUT
+    )
+  end
+end
+
+CuffDown.run(ARGV)
