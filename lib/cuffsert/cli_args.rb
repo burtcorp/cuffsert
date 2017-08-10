@@ -7,7 +7,7 @@ module CuffSert
     args = {
       :output => :progressbar,
       :verbosity => 1,
-      :dangerous_ok => false,
+      :op_mode => :normal,
       :overrides => {
         :parameters => {},
         :tags => {},
@@ -71,13 +71,20 @@ module CuffSert
       end
 
       opts.on('--yes', '-y', 'Don\'t ask to replace and delete stack resources') do
-        args[:dangerous_ok] = true
+        raise 'You cannot do --yes and --dry-run at the same time' unless args[:op_mode] == :normal
+        args[:op_mode] = :dangerous_ok
+      end
+      
+      opts.on('--dry-run', 'Describe what would be done') do
+        raise 'You cannot do --yes and --dry-run at the same time' unless args[:op_mode] == :normal
+        args[:op_mode] = :dry_run
       end
 
       opts.on('--help', '-h', 'Produce this message') do
         abort(opts.to_s)
       end
     end
+    
     args[:stack_path] = parser.parse(argv)
     args
   end
