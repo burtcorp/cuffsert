@@ -46,7 +46,7 @@ describe 'CuffSert#execute' do
   end
 
   context 'not finding a matching stack' do
-    let(:confirm_update) { lambda { |*_| false } }
+    let(:confirmation) { lambda { |*_| true } }
 
     before do
       allow(cfmock).to receive(:find_stack_blocking)
@@ -54,21 +54,19 @@ describe 'CuffSert#execute' do
         .and_return(nil)
     end
 
+    subject do 
+      CuffSert.execute(meta, confirmation, :client => cfmock)
+    end
+
     it 'creates it' do
       expect(cfmock).to receive(:create_stack)
         .with(CuffSert.as_create_stack_args(meta))
-      CuffSert.execute(meta, confirm_update, :client => cfmock)
+      expect(subject).to emit_exactly()
     end
     
-    context 'given op_mode dry_run' do
-      let :meta do
-        super().tap { |m| m.op_mode = :dry_run }
-      end
-      
-      subject do 
-        CuffSert.execute(meta, confirm_update, :client => cfmock)
-      end
-      
+    context 'given rejection' do
+      let(:confirmation) { lambda { |*_| false } }
+
       it 'takes no action' do
         expect(subject).to emit_exactly(
           CuffSert::Abort.new(/.*/)
@@ -107,7 +105,7 @@ describe 'CuffSert#execute' do
       end
     end
 
-    context 'given user rejection' do
+    context 'given rejection' do
       let(:confirm_update) { lambda { |*_| false } }
 
       it 'aborts with neither deletion nor creation' do
@@ -116,21 +114,6 @@ describe 'CuffSert#execute' do
         expect(subject).to emit_exactly(
           [:recreate, stack_rolled_back],
           CuffSert::Abort.new(/.*/)
-        )
-      end
-    end
-    
-    context 'given dry-run' do
-      let :meta do
-        super().tap { |m| m.op_mode = :dry_run }
-      end
-
-      it 'aborts with neither deletion nor creation' do
-        expect(cfmock).not_to receive(:delete_stack)
-        expect(cfmock).not_to receive(:create_stack)
-        expect(subject).to emit_exactly(
-          [:recreate, stack_rolled_back],
-          CuffSert::Abort.new(/.*dry-run.*/)
         )
       end
     end
@@ -182,23 +165,6 @@ describe 'CuffSert#execute' do
         expect(cfmock).not_to receive(:update_stack)
 
         expect(subject).to emit_exactly(change_set_ready, CuffSert::Abort.new(/.*/))
-      end
-    end
-    
-    context 'given dry-run' do
-      let :meta do
-        super().tap { |m| m.op_mode = :dry_run }
-      end
-
-      it 'does not update' do
-        expect(cfmock).to receive(:abort_update)
-          .and_return(Rx::Observable.empty)
-        expect(cfmock).not_to receive(:update_stack)
-
-        expect(subject).to emit_exactly(
-          change_set_ready, 
-          CuffSert::Abort.new(/.*dry-run.*/)
-        )
       end
     end
   end

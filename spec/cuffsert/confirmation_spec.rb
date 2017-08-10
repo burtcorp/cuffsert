@@ -117,3 +117,22 @@ describe 'CuffSert#ask_confirmation' do
   #   it { should be(false) }
   # end
 end
+
+describe 'CuffSert#confirmation' do
+  include_context 'metadata'
+  subject { CuffSert.confirmation(meta, :create, nil) }
+  
+  it 'yields true for :create' do
+    expect(subject).to be(true)
+  end
+  
+  context 'given dry_run' do
+    let :meta do
+      super().tap { |m| m.op_mode = :dry_run }
+    end
+  
+    it 'always yields false' do
+      expect(subject).to be(false)
+    end
+  end
+end

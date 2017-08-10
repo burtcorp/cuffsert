@@ -41,4 +41,10 @@ module CuffSert
       Termios.tcsetattr(input, Termios::TCSANOW, state)
     end
   end
+  
+  def self.confirmation(meta, action, change_set)
+    return false if meta.op_mode == :dry_run
+    return true unless CuffSert.need_confirmation(meta, action, change_set)
+    return CuffSert.ask_confirmation(STDIN, STDOUT)
+  end
 end

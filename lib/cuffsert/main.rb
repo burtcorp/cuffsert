@@ -109,7 +109,7 @@ module CuffSert
       ProgressbarRenderer.new(STDOUT, STDERR, cli_args)
     end
   end
-
+  
   def self.run(argv)
     cli_args = CuffSert.parse_cli_args(argv)
     meta = CuffSert.build_meta(cli_args)
@@ -118,11 +118,7 @@ module CuffSert
     end
     stack_path = cli_args[:stack_path][0]
     meta.stack_uri = CuffSert.validate_and_urlify(stack_path)
-    events = CuffSert.execute(meta, lambda do |meta, action, change_set|
-      return false if meta.op_mode == :dry_run
-      return true unless CuffSert.need_confirmation(meta, action, change_set)
-      return CuffSert.ask_confirmation(STDIN, STDOUT)
-    end)
+    events = CuffSert.execute(meta, CuffSert.method(:confirmation))
     renderer = CuffSert.make_renderer(cli_args)
     RendererPresenter.new(events, renderer)
   end
