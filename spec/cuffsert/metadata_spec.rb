@@ -119,13 +119,13 @@ describe CuffSert do
     end
 
     context 'safe by default' do
-      it { should have_attributes(:dangerous_ok => false) }
+      it { should_not have_attributes(:op_mode => :dangerous_ok) }
     end
 
     context 'given cil arg' do
-      let(:cli_args) { super().merge({:dangerous_ok => true }) }
+      let(:cli_args) { super().merge({:op_mode => :dangerous_ok}) }
 
-      it { should have_attributes(:dangerous_ok => true) }
+      it { should have_attributes(:op_mode => :dangerous_ok) }
     end
   end
 end

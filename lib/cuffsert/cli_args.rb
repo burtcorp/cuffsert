@@ -7,7 +7,7 @@ module CuffSert
     args = {
       :output => :progressbar,
       :verbosity => 1,
-      :op_mode => :normal,
+      :op_mode => nil,
       :overrides => {
         :parameters => {},
         :tags => {},
@@ -71,12 +71,12 @@ module CuffSert
       end
 
       opts.on('--yes', '-y', 'Don\'t ask to replace and delete stack resources') do
-        raise 'You cannot do --yes and --dry-run at the same time' unless args[:op_mode] == :normal
+        raise 'You cannot do --yes and --dry-run at the same time' if args[:op_mode]
         args[:op_mode] = :dangerous_ok
       end
       
       opts.on('--dry-run', 'Describe what would be done') do
-        raise 'You cannot do --yes and --dry-run at the same time' unless args[:op_mode] == :normal
+        raise 'You cannot do --yes and --dry-run at the same time' if args[:op_mode]
         args[:op_mode] = :dry_run
       end
 

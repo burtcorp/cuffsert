@@ -35,8 +35,10 @@ module CuffSert
   end
 
   def self.need_confirmation(meta, action, desc)
-    return false if meta.dangerous_ok
+    return false if meta.op_mode == :dangerous_ok
     case action
+    when :create
+      false
     when :update
       change_set = desc
       change_set[:changes].any? do |change|
@@ -73,9 +75,15 @@ module CuffSert
     end
   end
 
-  def self.create_stack(client, meta)
+  def self.create_stack(client, meta, confirm_create)
     cfargs = CuffSert.as_create_stack_args(meta)
-    client.create_stack(cfargs)
+    Rx::Observable.defer {
+      if confirm_create.call(meta, :create, nil)
+        client.create_stack(cfargs)
+      else
+        Abort.new('User abort!').as_observable
+      end
+    }
   end
 
   def self.update_stack(client, meta, confirm_update)
@@ -126,7 +134,7 @@ module CuffSert
     if found && INPROGRESS_STATES.include?(found[:stack_status])
       sources << Abort.new('Stack operation already in progress').as_observable
     elsif found.nil?
-      sources << self.create_stack(client, meta)
+      sources << self.create_stack(client, meta, confirm_update)
     elsif found[:stack_status] == 'ROLLBACK_COMPLETE'
       sources << self.recreate_stack(client, found, meta, confirm_update)
     else
@@ -152,8 +160,9 @@ module CuffSert
     stack_path = cli_args[:stack_path][0]
     meta.stack_uri = CuffSert.validate_and_urlify(stack_path)
     events = CuffSert.execute(meta, lambda do |meta, action, change_set|
-      !CuffSert.need_confirmation(meta, action, change_set) ||
-        CuffSert.ask_confirmation(STDIN, STDOUT)
+      return false if meta.op_mode == :dry_run
+      return true unless CuffSert.need_confirmation(meta, action, change_set)
+      return CuffSert.ask_confirmation(STDIN, STDOUT)
     end)
     renderer = CuffSert.make_renderer(cli_args)
     RendererPresenter.new(events, renderer)
