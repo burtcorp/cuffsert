@@ -36,13 +36,16 @@ module CuffSert
 
   def self.create_stack(client, meta, confirm_create)
     cfargs = CuffSert.as_create_stack_args(meta)
-    Rx::Observable.defer {
-      if confirm_create.call(meta, :create, nil)
-        client.create_stack(cfargs)
-      else
-        Abort.new('User abort!').as_observable
+    Rx::Observable.concat(
+      Rx::Observable.of([:create, meta.stackname]),
+      Rx::Observable.defer do
+        if confirm_create.call(meta, :create, nil)
+          client.create_stack(cfargs)
+        else
+          Abort.new('User abort!').as_observable
+        end
       end
-    }
+    )
   end
 
   def self.update_stack(client, meta, confirm_update)

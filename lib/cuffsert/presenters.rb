@@ -230,6 +230,8 @@ module CuffSert
 
     def stack(event, stack)
       case event
+      when :create
+        @output.write("Will create new stack #{stack}")
       when :recreate
         message = sprintf(
           "Will delete and re-create %s",

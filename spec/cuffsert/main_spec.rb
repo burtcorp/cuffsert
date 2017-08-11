@@ -61,7 +61,12 @@ describe 'CuffSert#execute' do
     it 'creates it' do
       expect(cfmock).to receive(:create_stack)
         .with(CuffSert.as_create_stack_args(meta))
-      expect(subject).to emit_exactly()
+        .and_return(Rx::Observable.of(r1_done, r2_done))
+      expect(subject).to emit_exactly(
+        [:create, stack_name],
+        r1_done,
+        r2_done
+      )
     end
     
     context 'given rejection' do
@@ -69,6 +74,7 @@ describe 'CuffSert#execute' do
 
       it 'takes no action' do
         expect(subject).to emit_exactly(
+          [:create, stack_name],
           CuffSert::Abort.new(/.*/)
         )
       end

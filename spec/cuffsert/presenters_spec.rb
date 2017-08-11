@@ -353,6 +353,17 @@ describe CuffSert::ProgressbarRenderer do
     end
   end
 
+  context 'given a stack rreate' do
+    subject do
+      output = StringIO.new
+      described_class.new(output).stack(:create, stack_name)
+      output.string
+    end
+
+    it { should include(' create ') }
+  end
+
+
   context 'given a stack recreate' do
     subject do
       output = StringIO.new
