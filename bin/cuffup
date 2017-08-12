@@ -1,5 +1,6 @@
 #!/usr/bin/env ruby
 
+require 'optparse'
 require 'yaml'
 
 module CuffUp
@@ -14,23 +15,32 @@ module CuffUp
       end
   end
 
-  def self.dump(input, output)
+  def self.dump(args, input, output)
     result = {
       'Format' => 'v1',
-      'Parameters' => input
     }
+    result['Parameters'] = input if input.size > 0
+    result['Suffix'] = args[:selector].join('-') if args.include?(:selector)
     YAML.dump(result, output)
   end
 
-  def self.run(template)
-    self.dump(self.parameters(open(template)), STDOUT)
+  def self.run(args, template)
+    self.dump(args, self.parameters(open(template)), STDOUT)
   end
 end
 
-template = ARGV[0]
+args = {}
+parser = OptionParser.new do |opts|
+  opts.on('--selector selector', '-s selector', 'Set as sufflx in the generated output') do |selector|
+    args[:selector] = selector.split(/[-,\/]/)
+  end
+end
+
+template = parser.parse(ARGV)
+
 unless template
   STDERR.puts("Usage: #{__FILE__} <template>")
   exit(1)
 end
 
-CuffUp.run(template)
+CuffUp.run(args, template[0])

@@ -1,22 +1,24 @@
 #!/usr/bin/env ruby
 
+require 'cuffsert/metadata'
+require 'cuffsert/rxcfclient'
 require 'yaml'
 
 module CuffDown
   def self.parameters(stack)
-    stack['Parameters'].map do |param|
+    stack[:parameters].map do |param|
       {
-        'Name' => param['ParameterKey'],
-        'Value' => param['ParameterValue'],
+        'Name' => param[:parameter_key],
+        'Value' => param[:parameter_value],
       }
     end
   end
 
   def self.tags(stack)
-    stack['Tags'].map do |param|
+    stack[:tags].map do |param|
       {
-        'Name' => param['Key'],
-        'Value' => param['Value'],
+        'Name' => param[:key],
+        'Value' => param[:value],
       }
     end
   end
@@ -32,10 +34,17 @@ module CuffDown
   end
 
   def self.run(args)
-    stack = YAML.load(STDIN)['Stacks'][0]
-
+    meta = CuffSert::StackConfig.new
+    meta.stackname = args[0]
+    client = CuffSert::RxCFClient.new
+    stack = client.find_stack_blocking(meta)
+    unless stack
+      STDERR.puts "No such stack #{meta.stackname}"
+      exit(1)
+    end
+    stack = stack.to_h
     self.dump(
-      stack['StackName'],
+      stack[:stack_name],
       self.parameters(stack),
       self.tags(stack),
       STDOUT
