@@ -28,7 +28,8 @@ describe 'CuffSert#parse_cli_args' do
   it ['--verbose'] { should include(:verbosity => 2) }
   it ['-v', '-v'] { should include(:verbosity => 3) }
   it ['--quiet'] { should include(:verbosity => 0) }
-  it ['--yes'] { should include(:dangerous_ok => true) }
+  it ['--yes'] { should include(:op_mode => :dangerous_ok) }
+  it ['--dry-run'] { should include(:op_mode => :dry_run) }
 
   it 'stack argument as array beacuse future', :argv => [stack.path] do
     should include(:stack_path => [stack.path])
@@ -52,6 +53,10 @@ describe 'CuffSert#parse_cli_args' do
 
   it 'rejects bad stackname', :argv => ['-n', '*foo'] do
     expect { subject }.to raise_error(/--name.*\*foo/)
+  end
+  
+  it 'rejects --yes --dry-run', :argv => ['--yes', '--dry-run'] do
+    expect { subject }.to raise_error(/--yes and --dry-run/)
   end
 
   context '--help exit code' do

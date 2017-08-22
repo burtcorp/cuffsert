@@ -149,7 +149,7 @@ module CuffSert
 
   class ProgressbarRenderer < BaseRenderer
     def change_set(change_set)
-      @output.write(sprintf("Updating %s\n", change_set[:stack_name]))
+      @output.write(sprintf("Updating stack %s\n", change_set[:stack_name]))
       change_set[:changes].sort do |l, r|
         lr = l[:resource_change]
         rr = r[:resource_change]
@@ -230,9 +230,11 @@ module CuffSert
 
     def stack(event, stack)
       case event
+      when :create
+        @output.write("Creating stack #{stack}\n")
       when :recreate
         message = sprintf(
-          "Will delete and re-create %s",
+          "Deleting and re-creating stack %s",
           stack[:stack_name]
         )
         @output.write(message.colorize(:red) + "\n")

@@ -280,7 +280,7 @@ describe CuffSert::ProgressbarRenderer do
       let(:changeset) { change_set_ready }
       let(:change_set_changes) { [r2_add] }
 
-      it { should include('Updating ze-stack') }
+      it { should match(/Updating.*ze-stack/) }
       it { should include('resource2_id') }
 
       context 'with a non-replacing changeset' do
@@ -353,6 +353,17 @@ describe CuffSert::ProgressbarRenderer do
     end
   end
 
+  context 'given a stack rreate' do
+    subject do
+      output = StringIO.new
+      described_class.new(output).stack(:create, stack_name)
+      output.string
+    end
+
+    it { should match(/Creating.*ze-stack/) }
+  end
+
+
   context 'given a stack recreate' do
     subject do
       output = StringIO.new
@@ -360,6 +371,6 @@ describe CuffSert::ProgressbarRenderer do
       output.string
     end
 
-    it { should include('re-create') }
+    it { should include('re-creating') }
   end
 end

@@ -5,7 +5,6 @@ require 'cuffsert/presenters'
 require 'rx'
 require 'rx-rspec'
 require 'spec_helpers'
-require 'stringio'
 require 'tempfile'
 
 describe 'CuffSert#validate_and_urlify' do
@@ -36,116 +35,6 @@ describe 'CuffSert#validate_and_urlify' do
   end
 end
 
-describe 'CuffSert#need_confirmation' do
-  include_context 'metadata'
-  include_context 'stack states'
-  include_context 'changesets'
-
-  let :local_meta do
-    meta.dangerous_ok = false
-    meta
-  end
-
-  subject do
-    CuffSert.need_confirmation(local_meta, :update, change_set_ready)
-  end
-
-  context 'with adds' do
-    let(:change_set_changes) { [r2_add] }
-    it { should be(false) }
-  end
-
-  context 'with non-replace modify' do
-    let(:change_set_changes) { [r1_modify] }
-    it { should be(false) }
-  end
-
-  context 'with conditional replace' do
-    let(:change_set_changes) { [r1_conditional_replace] }
-    it { should be(true) }
-  end
-
-  context 'with known replacement' do
-    let(:change_set_changes) { [r1_replace] }
-    it { should be(true) }
-  end
-
-  context 'with delete' do
-    let(:change_set_changes) { [r3_delete] }
-    it { should be(true) }
-  end
-
-  context 'given dangerous_ok' do
-    let :local_meta do
-      meta.dangerous_ok = true
-      meta
-    end
-
-    context 'with known replacement' do
-      let(:change_set_changes) { [r1_replace] }
-      it { should be(false) }
-    end
-
-    context 'with delete' do
-      let(:change_set_changes) { [r3_delete] }
-      it { should be(false) }
-    end
-  end
-
-  context 'given stack recreate' do
-    subject do
-      CuffSert.need_confirmation(
-        local_meta,
-        :recreate,
-        stack_rolled_back
-      )
-    end
-
-    it { should be(true) }
-    context 'with dangerous_ok' do
-      let :local_meta do
-        meta.dangerous_ok = true
-        meta
-      end
-
-      it { should be(false) }
-    end
-  end
-end
-
-describe 'CuffSert#ask_confirmation' do
-  let(:output) { StringIO.new }
-
-  subject { CuffSert.ask_confirmation(input, output) }
-
-  context 'given non-tty' do
-    let(:input) { StringIO.new }
-
-    it { should be(false) }
-    it { expect(output.string).to eq('') }
-  end
-
-  # context 'given a tty saying yea' do
-  #   let(:input) { double(:stdin, :isatty => true, :getc => 'Y') }
-  #
-  #   it { should be(true) }
-  #   it { expect(output.string).to match(/continue/) }
-  # end
-  #
-  # context 'given a tty saying nay' do
-  #   let(:input) { double(:stdin, :isatty => true, :getc => 'n') }
-  #
-  #   it { should be(false) }
-  #   it { expect(output.string).to match(/continue/) }
-  # end
-  #
-  # context 'given a tty saying foo' do
-  #   let(:input) { double(:stdin, :isatty => true, :getc => 'f') }
-  #
-  #   it { should be(false) }
-  # end
-end
-
 describe 'CuffSert#execute' do
   include_context 'changesets'
   include_context 'metadata'
@@ -156,13 +45,40 @@ describe 'CuffSert#execute' do
     double(:cfclient)
   end
 
-  it 'creates stacks unknown to cf' do
-    allow(cfmock).to receive(:find_stack_blocking)
-      .with(meta)
-      .and_return(nil)
-    expect(cfmock).to receive(:create_stack)
-      .with(CuffSert.as_create_stack_args(meta))
-    CuffSert.execute(meta, nil, :client => cfmock)
+  context 'not finding a matching stack' do
+    let(:confirmation) { lambda { |*_| true } }
+
+    before do
+      allow(cfmock).to receive(:find_stack_blocking)
+        .with(meta)
+        .and_return(nil)
+    end
+
+    subject do 
+      CuffSert.execute(meta, confirmation, :client => cfmock)
+    end
+
+    it 'creates it' do
+      expect(cfmock).to receive(:create_stack)
+        .with(CuffSert.as_create_stack_args(meta))
+        .and_return(Rx::Observable.of(r1_done, r2_done))
+      expect(subject).to emit_exactly(
+        [:create, stack_name],
+        r1_done,
+        r2_done
+      )
+    end
+    
+    context 'given rejection' do
+      let(:confirmation) { lambda { |*_| false } }
+
+      it 'takes no action' do
+        expect(subject).to emit_exactly(
+          [:create, stack_name],
+          CuffSert::Abort.new(/.*/)
+        )
+      end
+    end
   end
 
   context 'finding rolled_back stack' do
@@ -195,7 +111,7 @@ describe 'CuffSert#execute' do
       end
     end
 
-    context 'given user rejection' do
+    context 'given rejection' do
       let(:confirm_update) { lambda { |*_| false } }
 
       it 'aborts with neither deletion nor creation' do
