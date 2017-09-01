@@ -1,6 +1,7 @@
 require 'aws-sdk'
 require 'colorize'
 require 'cuffsert/cfstates'
+require 'cuffsert/messages'
 require 'rx'
 
 # TODO: Animate in-progress states
@@ -138,6 +139,10 @@ module CuffSert
 
     def event(event, resource)
       @output.write(event.to_h.to_json) unless @verbosity < 1
+    end
+
+    def stack(event, stack)
+      @output.write(stack.to_json) unless @verbosity < 1
     end
 
     def abort(event)

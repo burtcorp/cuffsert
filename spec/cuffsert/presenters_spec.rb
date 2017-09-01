@@ -105,6 +105,7 @@ end
 describe CuffSert::JsonRenderer do
   include_context 'stack events'
   include_context 'changesets'
+  include_context 'stack states'
 
   let(:output) { StringIO.new }
   let(:error) { StringIO.new }
@@ -142,6 +143,24 @@ describe CuffSert::JsonRenderer do
     context 'when default verbosity' do
       it { should match(/^{".*}$/) }
       it { should include('"event_id":"r2_done"') }
+    end
+  end
+
+  describe '#stack' do
+    let(:stack) { stack_complete }
+
+    subject do |example|
+      described_class.new(output, error, example.metadata).stack(:create, stack)
+      output.string
+    end
+
+    context 'when silent', :verbosity => 0 do
+      it { should be_empty }
+    end
+
+    context 'when default verbosity' do
+      it { should match(/^{".*}$/) }
+      it { should match(/"stack_id":"#{stack_id}"/) }
     end
   end
 
