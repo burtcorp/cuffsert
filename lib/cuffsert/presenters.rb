@@ -89,6 +89,7 @@ module CuffSert
       @renderer.event(event, resource)
       @renderer.clear
       @resources.each { |resource| @renderer.resource(resource) }
+      clear_resources if is_completed_stack_event(event)
     end
 
     def on_stack(event, stack)
@@ -114,6 +115,16 @@ module CuffSert
       resource[:states] = resource[:states]
         .reject { |state| state == :progress }
         .take(1) << CuffSert.state_category(event[:resource_status])
+    end
+
+    def is_completed_stack_event(event)
+      event[:resource_type] == 'AWS::CloudFormation::Stack' &&
+        FINAL_STATES.include?(event[:resource_status])
+    end
+
+    def clear_resources
+      @resources.clear
+      @index.clear
     end
   end
 

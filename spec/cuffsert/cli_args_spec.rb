@@ -16,6 +16,7 @@ describe 'CuffSert#parse_cli_args' do
   context 'defaulsts' do
     it { should include(:verbosity => 1) }
     it { should include(:output => :progressbar) }
+    it { should include(:force_replace => false) }
   end
 
   it ['--metadata',  metadata.path] { should include(:metadata => metadata.path) }
@@ -28,6 +29,7 @@ describe 'CuffSert#parse_cli_args' do
   it ['--verbose'] { should include(:verbosity => 2) }
   it ['-v', '-v'] { should include(:verbosity => 3) }
   it ['--quiet'] { should include(:verbosity => 0) }
+  it ['--replace'] { should include(:force_replace => true) }
   it ['--yes'] { should include(:op_mode => :dangerous_ok) }
   it ['--dry-run'] { should include(:op_mode => :dry_run) }
 
@@ -54,7 +56,7 @@ describe 'CuffSert#parse_cli_args' do
   it 'rejects bad stackname', :argv => ['-n', '*foo'] do
     expect { subject }.to raise_error(/--name.*\*foo/)
   end
-  
+
   it 'rejects --yes --dry-run', :argv => ['--yes', '--dry-run'] do
     expect { subject }.to raise_error(/--yes and --dry-run/)
   end

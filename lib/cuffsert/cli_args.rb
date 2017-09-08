@@ -7,6 +7,7 @@ module CuffSert
     args = {
       :output => :progressbar,
       :verbosity => 1,
+      :force_replace => false,
       :op_mode => nil,
       :overrides => {
         :parameters => {},
@@ -68,6 +69,10 @@ module CuffSert
 
       opts.on('--quiet', '-q', 'Output only fatal errors') do
         args[:verbosity] = 0
+      end
+
+      opts.on('--replace', 'Re-create the stack if it already exist') do
+        args[:force_replace] = true
       end
 
       opts.on('--yes', '-y', 'Don\'t ask to replace and delete stack resources') do

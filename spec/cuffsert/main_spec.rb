@@ -125,6 +125,55 @@ describe 'CuffSert#execute' do
     end
   end
 
+  describe 'replace' do
+    let(:confirm_update) { lambda { |*_| true } }
+
+    let :cfmock do
+      mock = double(:cfclient)
+      allow(mock).to receive(:find_stack_blocking)
+        .and_return(stack_complete)
+      mock
+    end
+
+    subject do
+      CuffSert.execute(meta, confirm_update,
+        :force_replace => true,
+        :client => cfmock
+      )
+    end
+
+    context 'given user confirmation' do
+      it 'deletes complete stack before create' do
+        expect(cfmock).to receive(:delete_stack)
+          .with(CuffSert.as_delete_stack_args(stack_rolled_back))
+          .and_return(Rx::Observable.of(r1_deleted, r2_deleted))
+        expect(cfmock).to receive(:create_stack)
+          .with(CuffSert.as_create_stack_args(meta))
+          .and_return(Rx::Observable.of(r1_done, r2_done))
+        expect(subject).to emit_exactly(
+          [:recreate, stack_complete],
+          r1_deleted,
+          r2_deleted,
+          r1_done,
+          r2_done
+        )
+      end
+    end
+
+    context 'given rejection' do
+      let(:confirm_update) { lambda { |*_| false } }
+
+      it 'aborts with neither deletion nor creation' do
+        expect(cfmock).not_to receive(:delete_stack)
+        expect(cfmock).not_to receive(:create_stack)
+        expect(subject).to emit_exactly(
+          [:recreate, stack_complete],
+          CuffSert::Abort.new(/.*/)
+        )
+      end
+    end
+  end
+
   describe 'update' do
     let(:confirm_update) { lambda { |*_| true } }
     let(:change_set_stream) { Rx::Observable.of(change_set_ready) }

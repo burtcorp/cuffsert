@@ -87,11 +87,21 @@ describe CuffSert::RendererPresenter do
   end
 
   context 'given recreate of a rolled-back stack' do
-    let (:events) { [[:recreate, stack_rolled_back]] }
+    let (:events) do
+      [[:recreate, stack_rolled_back], r1_done, s1_deleted, r1_done, s1_done]
+    end
+
     subject { renderer.rendered }
 
     it 'pass it to renderer' do
-      should eq([[:recreate, stack_rolled_back], :done])
+      should eq([
+        [:recreate, stack_rolled_back],
+        :clear, [:good],
+        :clear, [:good], [:good],
+        :clear, [:good],
+        :clear, [:good], [:good],
+        :done
+      ])
     end
   end
 

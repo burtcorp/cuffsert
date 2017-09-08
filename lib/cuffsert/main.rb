@@ -89,7 +89,7 @@ module CuffSert
     )
   end
 
-  def self.execute(meta, confirm_update, client: RxCFClient.new)
+  def self.execute(meta, confirm_update, force_replace: false, client: RxCFClient.new)
     sources = []
     found = client.find_stack_blocking(meta)
 
@@ -97,7 +97,7 @@ module CuffSert
       sources << Abort.new('Stack operation already in progress').as_observable
     elsif found.nil?
       sources << self.create_stack(client, meta, confirm_update)
-    elsif found[:stack_status] == 'ROLLBACK_COMPLETE'
+    elsif found[:stack_status] == 'ROLLBACK_COMPLETE' || force_replace
       sources << self.recreate_stack(client, found, meta, confirm_update)
     else
       sources << self.update_stack(client, meta, confirm_update)
@@ -121,7 +121,8 @@ module CuffSert
     end
     stack_path = cli_args[:stack_path][0]
     meta.stack_uri = CuffSert.validate_and_urlify(stack_path)
-    events = CuffSert.execute(meta, CuffSert.method(:confirmation))
+    events = CuffSert.execute(meta, CuffSert.method(:confirmation),
+      force_replace: cli_args[:force_replace])
     renderer = CuffSert.make_renderer(cli_args)
     RendererPresenter.new(events, renderer)
   end
