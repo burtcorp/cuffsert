@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require 'cuffsert/metadata'
+require 'cuff/metadata'
 require 'cuffsert/rxcfclient'
 require 'yaml'
 
@@ -34,7 +34,7 @@ module CuffDown
   end
 
   def self.run(args)
-    meta = CuffSert::StackConfig.new
+    meta = Cuff::StackConfig.new
     meta.stackname = args[0]
     client = CuffSert::RxCFClient.new
     stack = client.find_stack_blocking(meta)
