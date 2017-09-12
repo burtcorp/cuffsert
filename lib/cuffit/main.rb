@@ -1,5 +1,5 @@
 require 'cuff/metadata'
-require 'cuff/rxcfclient'
+require 'cuffsert/rxcfclient'
 require 'cuffit/cli_args'
 
 module Cuff
