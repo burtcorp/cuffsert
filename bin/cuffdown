@@ -6,7 +6,7 @@ require 'yaml'
 
 module CuffDown
   def self.parameters(stack)
-    stack[:parameters].map do |param|
+    (stack[:parameters] || []).map do |param|
       {
         'Name' => param[:parameter_key],
         'Value' => param[:parameter_value],
@@ -15,7 +15,7 @@ module CuffDown
   end
 
   def self.tags(stack)
-    stack[:tags].map do |param|
+    (stack[:tags] || []).map do |param|
       {
         'Name' => param[:key],
         'Value' => param[:value],
