@@ -9,23 +9,24 @@ Cuffsert allows encoding the metadata and commandline arguments needed to load a
 Given the file cuffsert.yml:
 ```yaml
 Format: v1
+Suffix: webserver
 Tags:
   - Name: Role
     Value: webserver
 Variants:
-  Production:
+  production:
     Tags:
       - Name: Environment
         Value: production
     Variants:
-      Eu1:
+      eu1:
         Tags:
           - Name: DC
           - Value: eu1
         Parameters:
           - Name: ElasticIP
             Value: 1.2.3.4
-      Us1:
+      us1:
         Tags:
           - Name: DC
             Value: us1
@@ -35,24 +36,20 @@ Variants:
 ```
 you can invoke cuffsert like so:
 ```
-cuffsert --metadata=./cuffsert.yml \
-  --metadata-path=production-us1 \
+cuffsert --metadata=./nginx-parameters.yml \
+  --selector=production-us1 \
   ./nginx.yml
 ```
 
-If the positional argument is a directory, stack will be read from `stack.yml` (or `.json`) and metadata will be read from `cuffsert.yml` if `--metadata` is not specified.
-
-### Multiple metadata files
-
-If `--metadata` points to a directory (or if no `--metadata` is given and there is a directory `./cuffsert` in the same directory as the stack), all `.yml` files in that directory will be recursively read and each file will be assumed to be at a path matching its path relative to the supplied path. For example, if `./foo/bar.yml` has a variant called `baz` it will match `--metadata-path=foo/bar/baz`. This may be useful if you have very frequent changes to metadata or if you have a lot of variants.
+This will select tags `Role=webserver, Environment=production, DC=us1` and parameter `ElasticIP=5.6.7.8` and create or update the stack `production-us1-webserver` as necessary.
 
 ## Metadata file format
 
-The metadata file consists of a hierarchy of configuration sections called "variants". Cuffsert splits the metadata-path by [/-] and starts at the top of the metadata and tries to match the path elements against each  variants sections.
+The metadata file consists of a hierarchy of configuration sections called "variants". Cuffsert splits the selector by [/-] and starts at the top of the metadata and tries to match the path elements against each  variants sections.
 
 Each level can contain the following keys:
 
-- **StackName**: Stack name used for creating a new stack and finding existing stack to update. If no StackName parameter is found, one will be constructed by joining lowercase variants values and basename of stack file. From the example at the top, stack name will be `production-eu1-nginx`. When stack definition is passed on stdin, StackName must be given in metadata (or on commandline).
+- **StackName**: Stack name used for creating a new stack and finding existing stack to update. If no StackName parameter is found, one will be constructed by joining lowercase variants values and basename of stack file. From the example at the top, stack name will be `production-eu1-webserver`.
 - **Tags**: Tags applied at stack level.
 - **Parameters**: Provide values for parameters that the stack needs.
 - **Variations**: Each sub-key is a possible path element whose value is the hash for the next level.
@@ -74,9 +71,9 @@ All values set in the metadata file can be overridden on commandline.
 
 `--parameter=key:value (-p)` Override (or set) the value for a specific parameter that is passed on template creation.
 
-`--metadata=file-or-directory (-m)` File or directory to read metadata from. Defaults to `cufsert/` or `cufsert.yml` relative to stack file.
+`--metadata=file (-m)` File or directory to read metadata from. Defaults to `cufsert/` or `cufsert.yml` relative to stack file.
 
-`--metadata-path=path-through-metadata (-P)` Path through variant keys to apply metadata from.
+`--selector=path-through-metadata (-P)` Path through variant keys to apply metadata from.
 
 ## AWS authentication
 
@@ -86,3 +83,4 @@ cuffsert assumes that the aws client library can authenticate your access via th
 
 - Stack policies and policy overrides
 - Find and delete resources that block delete or update
+- provide detailed diffs on changes
