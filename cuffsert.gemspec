@@ -5,11 +5,13 @@ Gem::Specification.new do |spec|
   spec.description = 'Cuffsert allows encoding the metadata and commandline arguments needed to load a template in a versionable file which takes CloudFormation the last mile to really become an infrastructure-as-code platform.'
   spec.authors     = ['Anders Qvist']
   spec.email       = 'quest@lysator.liu.se'
-  spec.homepage    = 'http://rubygems.org/gems/cuffsert'
+  spec.homepage    = 'https://github.com/bittrance/cuffsert'
   spec.license     = 'MIT'
 
   spec.executables = ['cuffsert']
   spec.files       = `git ls-files -z`.split("\x0").reject { |f| f.match(/^spec/) }
+
+  spec.required_ruby_version = '>= 2.0.0'
 
   spec.add_runtime_dependency 'aws-sdk'
   spec.add_runtime_dependency 'colorize'
