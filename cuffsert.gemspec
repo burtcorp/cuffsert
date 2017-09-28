@@ -1,6 +1,6 @@
 Gem::Specification.new do |spec|
   spec.name        = 'cuffsert'
-  spec.version     = '0.9.0'
+  spec.version     = '0.9.1'
   spec.summary     = 'Cuffsert provides a quick up-arrow-enter loading of a CloudFormation stack with good feedback'
   spec.description = 'Cuffsert allows encoding the metadata and commandline arguments needed to load a template in a versionable file which takes CloudFormation the last mile to really become an infrastructure-as-code platform.'
   spec.authors     = ['Anders Qvist']
@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.homepage    = 'https://github.com/bittrance/cuffsert'
   spec.license     = 'MIT'
 
-  spec.executables = ['cuffsert']
+  spec.executables = ['cuffsert', 'cuffup', 'cuffdown']
   spec.files       = `git ls-files -z`.split("\x0").reject { |f| f.match(/^spec/) }
 
   spec.required_ruby_version = '>= 2.0.0'

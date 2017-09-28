@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    cuffsert (0.9.0)
+    cuffsert (0.9.1)
       aws-sdk
       colorize
       ruby-termios
