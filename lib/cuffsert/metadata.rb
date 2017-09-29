@@ -56,6 +56,7 @@ module CuffSert
   end
 
   def self.build_meta(cli_args)
+    raise 'Requires --metadata' unless cli_args[:metadata]
     io = open(cli_args[:metadata])
     config = CuffSert.load_config(io)
     default = self.meta_defaults(cli_args)
