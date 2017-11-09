@@ -32,6 +32,18 @@ describe '#as_create_stack_args' do
     it { should_not include(:template_uri) }
   end
 
+  context 'when meta parameters have no value' do
+    let :meta do
+      super().tap do |meta|
+        meta.parameters = { 'ze-key' => nil }
+      end
+    end
+    
+    it do
+      expect { subject }.to raise_error(/supply value for.*ze-key/i)
+    end
+  end
+
   context 'everything is a string' do
     let :meta do
       meta = CuffSert::StackConfig.new
@@ -59,6 +71,21 @@ describe '#as_update_change_set' do
   it { should include(:use_previous_template => false) }
   it { should include(:change_set_type => 'UPDATE') }
   it { should_not include(:timeout_in_minutes) }
+  
+  context 'when meta parameters have no value' do
+    let :meta do
+      super().tap do |meta|
+        meta.parameters = { 'ze-key' => nil }
+      end
+    end
+    
+    it 'should use previous value' do
+      should include(:parameters => include({
+        :parameter_key => 'ze-key',
+        :use_previous_value => true
+      }))
+    end
+  end
 end
 
 describe '#as_delete_stack_args' do

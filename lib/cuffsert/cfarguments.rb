@@ -19,7 +19,11 @@ module CuffSert
 
     unless meta.parameters.empty?
       cfargs[:parameters] = meta.parameters.map do |k, v|
-        {:parameter_key => k, :parameter_value => v.to_s}
+        if v.nil?
+          {:parameter_key => k, :use_previous_value => true}
+        else
+          {:parameter_key => k, :parameter_value => v.to_s}
+        end
       end
     end
 
@@ -41,6 +45,9 @@ module CuffSert
   end
 
   def self.as_create_stack_args(meta)
+    no_value = meta.parameters.select {|_, v| v.nil? }.keys
+    raise "Supply value for #{no_value.join(', ')}" unless no_value.empty?
+
     cfargs = self.as_cloudformation_args(meta)
     cfargs[:timeout_in_minutes] = TIMEOUT
     cfargs[:on_failure] = 'DELETE'
