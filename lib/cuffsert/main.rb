@@ -115,10 +115,8 @@ module CuffSert
   
   def self.run(argv)
     cli_args = CuffSert.parse_cli_args(argv)
+    CuffSert.validate_cli_args(cli_args)
     meta = CuffSert.build_meta(cli_args)
-    if cli_args[:stack_path].nil? || cli_args[:stack_path].size != 1
-      raise 'Requires exactly one stack path'
-    end
     stack_path = cli_args[:stack_path][0]
     meta.stack_uri = CuffSert.validate_and_urlify(stack_path)
     events = CuffSert.execute(meta, CuffSert.method(:confirmation),
