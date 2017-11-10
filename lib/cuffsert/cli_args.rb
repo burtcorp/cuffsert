@@ -1,4 +1,5 @@
 require 'optparse'
+require 'cuffsert/version'
 
 module CuffSert
   STACKNAME_RE = /^[A-Za-z0-9_-]+$/
@@ -15,7 +16,7 @@ module CuffSert
       }
     }
     parser = OptionParser.new do |opts|
-      opts.banner = 'Upsert a CloudFormation template, reading creation options and metadata from a yaml file. Currently, parameter values, stack name and stack tags are read from metadata file.'
+      opts.banner = "Upsert a CloudFormation template, reading creation options and metadata from a yaml file. Currently, parameter values, stack name and stack tags are read from metadata file. Version #{CuffSert::VERSION}."
       opts.separator('')
       opts.separator('Usage: cuffsert --selector production/us stack.json')
       opts.on('--metadata path', '-m path', 'Yaml file to read stack metadata from') do |path|
@@ -79,7 +80,7 @@ module CuffSert
         raise 'You cannot do --yes and --dry-run at the same time' if args[:op_mode]
         args[:op_mode] = :dangerous_ok
       end
-      
+
       opts.on('--dry-run', 'Describe what would be done') do
         raise 'You cannot do --yes and --dry-run at the same time' if args[:op_mode]
         args[:op_mode] = :dry_run
@@ -89,7 +90,7 @@ module CuffSert
         abort(opts.to_s)
       end
     end
-    
+
     args[:stack_path] = parser.parse(argv)
     args
   end

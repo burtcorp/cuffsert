@@ -1,6 +1,8 @@
+require File.expand_path('../lib/cuffsert/version', __FILE__)
+
 Gem::Specification.new do |spec|
   spec.name        = 'cuffsert'
-  spec.version     = '0.9.1'
+  spec.version     = CuffSert::VERSION
   spec.summary     = 'Cuffsert provides a quick up-arrow-enter loading of a CloudFormation stack with good feedback'
   spec.description = 'Cuffsert allows encoding the metadata and commandline arguments needed to load a template in a versionable file which takes CloudFormation the last mile to really become an infrastructure-as-code platform.'
   spec.authors     = ['Anders Qvist']
