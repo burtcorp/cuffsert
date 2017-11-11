@@ -5,35 +5,6 @@ require 'cuffsert/presenters'
 require 'rx'
 require 'rx-rspec'
 require 'spec_helpers'
-require 'tempfile'
-
-describe 'CuffSert#validate_and_urlify' do
-  let(:s3url) { 's3://ze-bucket/some/url' }
-  let(:httpurl) { 'http://some.host/some/file' }
-
-  it 'urlifies and normalizes files' do
-    stack = Tempfile.new('stack')
-    path = '/..' + stack.path
-    result = CuffSert.validate_and_urlify(path)
-    expect(result).to eq(URI.parse("file://#{stack.path}"))
-  end
-
-  it 'respects s3 urls' do
-    expect(CuffSert.validate_and_urlify(s3url)).to eq(URI.parse(s3url))
-  end
-
-  it 'borks on non-existent local files' do
-    expect {
-      CuffSert.validate_and_urlify('/no/such/file')
-    }.to raise_error(/local.*not exist/i)
-  end
-
-  it 'borks on unkown schemas' do
-    expect {
-      CuffSert.validate_and_urlify(httpurl)
-    }.to raise_error(/.*http.*not supported/)
-  end
-end
 
 describe 'CuffSert#execute' do
   include_context 'changesets'

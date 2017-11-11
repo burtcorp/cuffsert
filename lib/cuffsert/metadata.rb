@@ -29,6 +29,22 @@ module CuffSert
     end
   end
 
+  def self.validate_and_urlify(stack_path)
+    if stack_path =~ /^[A-Za-z0-9]+:/
+      stack_uri = URI.parse(stack_path)
+    else
+      normalized = File.expand_path(stack_path)
+      unless File.exist?(normalized)
+        raise "Local file #{normalized} does not exist"
+      end
+      stack_uri = URI.join('file:///', normalized)
+    end
+    unless ['s3', 'file'].include?(stack_uri.scheme)
+      raise "Uri #{stack_uri.scheme} is not supported"
+    end
+    stack_uri
+  end
+
   def self.load_config(io)
     config = YAML.load(io)
     raise 'config does not seem to be a YAML hash?' unless config.is_a?(Hash)
@@ -75,6 +91,8 @@ module CuffSert
   def self.cli_overrides(meta, cli_args)
     meta.update_from(cli_args[:overrides])
     meta.op_mode = cli_args[:op_mode] || meta.op_mode
+    stack_path = cli_args[:stack_path][0]
+    meta.stack_uri = CuffSert.validate_and_urlify(stack_path)
     meta
   end
 

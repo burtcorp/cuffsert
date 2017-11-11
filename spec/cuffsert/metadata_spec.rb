@@ -37,6 +37,34 @@ describe CuffSert::StackConfig do
   end
 end
 
+describe 'CuffSert.validate_and_urlify' do
+  let(:s3url) { 's3://ze-bucket/some/url' }
+  let(:httpurl) { 'http://some.host/some/file' }
+
+  it 'urlifies and normalizes files' do
+    stack = Tempfile.new('stack')
+    path = '/..' + stack.path
+    result = CuffSert.validate_and_urlify(path)
+    expect(result).to eq(URI.parse("file://#{stack.path}"))
+  end
+
+  it 'respects s3 urls' do
+    expect(CuffSert.validate_and_urlify(s3url)).to eq(URI.parse(s3url))
+  end
+
+  it 'borks on non-existent local files' do
+    expect {
+      CuffSert.validate_and_urlify('/no/such/file')
+    }.to raise_error(/local.*not exist/i)
+  end
+
+  it 'borks on unkown schemas' do
+    expect {
+      CuffSert.validate_and_urlify(httpurl)
+    }.to raise_error(/.*http.*not supported/)
+  end
+end
+
 describe CuffSert do
   include_context 'yaml configs'
   context '#load_config' do
@@ -95,17 +123,21 @@ describe CuffSert do
 
   describe '#build_meta' do
     include_context 'yaml configs'
+    include_context 'templates'
 
     let :cli_args do
       {
         :metadata => config_file.path,
         :selector => ['level1_a'],
-        :overrides => overrides
+        :overrides => overrides,
+        :stack_path => [template_body.path],
       }
     end
     let(:overrides) { {} }
 
     subject { CuffSert.build_meta(cli_args) }
+    
+    it { should have_attributes(:stack_uri => URI.parse("file://#{template_body.path}")) }
 
     context 'reads metadata file and allows overrides' do
       let(:overrides) { {:stackname => 'customname', :tags => {'another' => 'tag'}} }
