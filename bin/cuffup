@@ -1,46 +1,12 @@
 #!/usr/bin/env ruby
 
+require 'cuffup'
 require 'optparse'
-require 'yaml'
 
-module CuffUp
-  def self.parameters(io)
-    template = YAML.load(io)
-    (template['Parameters'] || [])
-      .map do |key, data|
-        {
-          'Name' => key,
-          'Value' => data['Default'],
-        }
-      end
-  end
-
-  def self.dump(args, input, output)
-    result = {
-      'Format' => 'v1',
-    }
-    result['Parameters'] = input if input.size > 0
-    result['Suffix'] = args[:selector].join('-') if args.include?(:selector)
-    YAML.dump(result, output)
-  end
-
-  def self.run(args, template)
-    self.dump(args, self.parameters(open(template)), STDOUT)
-  end
-end
-
-args = {}
-parser = OptionParser.new do |opts|
-  opts.on('--selector selector', '-s selector', 'Set as sufflx in the generated output') do |selector|
-    args[:selector] = selector.split(/[-,\/]/)
-  end
-end
-
-template = parser.parse(ARGV)
-
-unless template
+args = CuffUp.parse_cli_args(ARGV)
+unless args[:template]
   STDERR.puts("Usage: #{__FILE__} <template>")
   exit(1)
 end
-
-CuffUp.run(args, template[0])
+args[:template] = args[:template][0]
+CuffUp.run(args)
