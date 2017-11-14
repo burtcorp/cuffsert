@@ -1,12 +1,14 @@
 #!/usr/bin/env ruby
 
 require 'cuffup'
-require 'optparse'
 
 args = CuffUp.parse_cli_args(ARGV)
 unless args[:template]
   STDERR.puts("Usage: #{__FILE__} <template>")
   exit(1)
 end
-args[:template] = args[:template][0]
-CuffUp.run(args)
+
+input = open(args[:template][0])
+output = open(args[:output], 'w')
+
+CuffUp.run(args, input, output)

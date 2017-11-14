@@ -4,7 +4,7 @@ module CuffBase
   def self.empty_from_template(io)
     self.template_parameters(io) {|_| nil }
   end
-  
+
   def self.defaults_from_template(io)
     self.template_parameters(io) {|data| data['Default'] }
   end
@@ -14,7 +14,7 @@ module CuffBase
   def self.template_parameters(io, &block)
     template = YAML.load(io)
     parameters = {}
-    (template['Parameters'] || []).map do |key, data|
+    (template['Parameters'] || []).each do |key, data|
       parameters[key] = block.call(data)
     end
     parameters

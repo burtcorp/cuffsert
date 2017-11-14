@@ -1,4 +1,5 @@
 require 'cuffbase'
+require 'optparse'
 
 module CuffUp
   def self.parse_cli_args(argv)
@@ -24,16 +25,16 @@ module CuffUp
     .map {|k, v| {'Name' => k, 'Value' => v} }
   end
 
-  def self.dump(args, input)
+  def self.dump(args, input, output)
     result = {
       'Format' => 'v1',
     }
     result['Parameters'] = input if input.size > 0
     result['Suffix'] = args[:selector].join('-') if args.include?(:selector)
-    YAML.dump(result, open(args[:output], 'w'))
+    YAML.dump(result, output)
   end
 
-  def self.run(args)
-    self.dump(args, self.parameters(open(args[:template])))
+  def self.run(args, input, output)
+    self.dump(args, self.parameters(input), output)
   end
 end

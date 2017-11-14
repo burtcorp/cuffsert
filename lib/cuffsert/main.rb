@@ -9,13 +9,6 @@ require 'cuffsert/rxcfclient'
 require 'rx'
 require 'uri'
 
-# TODO:
-# - Stop using file: that we anyway need to special-case in cfarguments
-# - default value for meta.metadata when stack_path is local file
-# - selector and metadata are mandatory and need guards accordingly
-# - execute should use helpers and not know details of statuses
-# - update 'abort' should delete cheangeset and emit the result
-
 module CuffSert
   def self.create_stack(client, meta, confirm_create)
     cfargs = CuffSert.as_create_stack_args(meta)
@@ -95,7 +88,7 @@ module CuffSert
       ProgressbarRenderer.new(STDOUT, STDERR, cli_args)
     end
   end
-  
+
   def self.run(argv)
     cli_args = CuffSert.parse_cli_args(argv)
     CuffSert.validate_cli_args(cli_args)

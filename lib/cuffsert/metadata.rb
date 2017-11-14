@@ -1,3 +1,4 @@
+require 'cuffbase'
 require 'yaml'
 
 module CuffSert
@@ -72,10 +73,8 @@ module CuffSert
   end
 
   def self.build_meta(cli_args)
-    raise 'Requires --metadata' unless cli_args[:metadata]
-    io = open(cli_args[:metadata])
-    config = CuffSert.load_config(io)
     default = self.meta_defaults(cli_args)
+    config = self.metadata_if_present(cli_args)
     meta = CuffSert.meta_for_path(config, cli_args[:selector], default)
     CuffSert.cli_overrides(meta, cli_args)
   end
@@ -83,9 +82,20 @@ module CuffSert
   private_class_method
 
   def self.meta_defaults(cli_args)
+    nil_params = CuffBase.empty_from_template(open(cli_args[:stack_path][0]))
     default = StackConfig.new
-    default.suffix = File.basename(cli_args[:metadata], '.yml')
+    default.update_from({:parameters => nil_params})
+    default.suffix = File.basename(cli_args[:metadata], '.yml') if cli_args[:metadata]
     default
+  end
+
+  def self.metadata_if_present(cli_args)
+    if cli_args[:metadata]
+      io = open(cli_args[:metadata])
+      CuffSert.load_config(io)
+    else
+      {}
+    end
   end
 
   def self.cli_overrides(meta, cli_args)
