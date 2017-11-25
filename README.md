@@ -2,9 +2,27 @@
 
 The primary goal of cuffsert is to provide a quick "up-arrow-enter" loading of a CloudFormation stack with good feedback, removing the need to click through three pesky screens each time. It figures out whether the stack needs to be created or rolled-back and whether it needs to be deleted first.
 
-Cuffsert allows encoding the metadata and commandline arguments needed to load a template in a versionable file which takes CloudFormation the last mile to really become an infrastructure-as-code platform.
+## Getting started
 
-## Usage
+Update a stack from a provided template without changing any parameters on the stack:
+
+```bash
+cuffsert -n my-stack ./my-template.json
+```
+
+If `./my-template.json` has no parameters the above command would create the stack if it did not already exist (so make sure you spell the stack name correctly :).
+
+If you also want to provide a value for a stack parameter (whether on creation or update), you can use `-p key=value` to pass parameters. For all other parameters, cuffsert will tell CloudFormation to use the existing value.
+
+Cuffsert can not (yet) be executed without a template in order to only change parameters.
+
+## Parameters under version control
+
+Cuffsert also allows encoding the parameters (and some commandline arguments) needed to load a template in a YAML file which you can put under versiin control. This takes CloudFormation the last mile to really become an infrastructure-as-code platform.
+
+## Usage with file
+
+cuffsert supports two basic use cases
 
 Given the file cuffsert.yml:
 ```yaml
@@ -61,7 +79,7 @@ Values from deeper levels merged onto values from higher levels to produce a con
 
     cuffsert [--stack-name=name] [--tag=k:v ...] [--parameter=k:v ...]
       [--metadata=directory | yml-file] [--metadata-path=path/to]
-      cloudformation-file | cloudformation-directory
+      cloudformation-file | cloudformation-template
 
 All values set in the metadata file can be overridden on commandline.
 
