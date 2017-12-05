@@ -86,3 +86,23 @@ describe 'CuffSert#parse_cli_args' do
     end.to output(/Usage:/).to_stderr
   end
 end
+
+describe 'CuffSert#validate_cli_args' do
+  let(:cli_args) { {:overrides => {}} }
+
+  subject { CuffSert.validate_cli_args(cli_args) }
+
+  context 'when no --metadata and no --name' do
+    it { expect { subject }.to raise_error(/supply --name/i) }
+  end
+  
+  context 'when no --metadata and --selector' do
+    let(:cli_args) { super().merge({:selector => '/foo'}) }
+    it { expect { subject }.to raise_error(/cannot use --selector.*without --metadata/i) }
+  end
+
+  context 'when no stack path' do
+    let(:cli_args) { super().merge({:stack_path => []}) }
+    it { expect { subject }.to raise_error(/exactly one.*template/i) }
+  end
+end

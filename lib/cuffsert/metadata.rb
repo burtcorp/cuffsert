@@ -1,3 +1,4 @@
+require 'cuffbase'
 require 'yaml'
 
 module CuffSert
@@ -29,6 +30,22 @@ module CuffSert
     end
   end
 
+  def self.validate_and_urlify(stack_path)
+    if stack_path =~ /^[A-Za-z0-9]+:/
+      stack_uri = URI.parse(stack_path)
+    else
+      normalized = File.expand_path(stack_path)
+      unless File.exist?(normalized)
+        raise "Local file #{normalized} does not exist"
+      end
+      stack_uri = URI.join('file:///', normalized)
+    end
+    unless ['s3', 'file'].include?(stack_uri.scheme)
+      raise "Uri #{stack_uri.scheme} is not supported"
+    end
+    stack_uri
+  end
+
   def self.load_config(io)
     config = YAML.load(io)
     raise 'config does not seem to be a YAML hash?' unless config.is_a?(Hash)
@@ -56,10 +73,8 @@ module CuffSert
   end
 
   def self.build_meta(cli_args)
-    raise 'Requires --metadata' unless cli_args[:metadata]
-    io = open(cli_args[:metadata])
-    config = CuffSert.load_config(io)
     default = self.meta_defaults(cli_args)
+    config = self.metadata_if_present(cli_args)
     meta = CuffSert.meta_for_path(config, cli_args[:selector], default)
     CuffSert.cli_overrides(meta, cli_args)
   end
@@ -67,14 +82,27 @@ module CuffSert
   private_class_method
 
   def self.meta_defaults(cli_args)
+    nil_params = CuffBase.empty_from_template(open(cli_args[:stack_path][0]))
     default = StackConfig.new
-    default.suffix = File.basename(cli_args[:metadata], '.yml')
+    default.update_from({:parameters => nil_params})
+    default.suffix = File.basename(cli_args[:metadata], '.yml') if cli_args[:metadata]
     default
+  end
+
+  def self.metadata_if_present(cli_args)
+    if cli_args[:metadata]
+      io = open(cli_args[:metadata])
+      CuffSert.load_config(io)
+    else
+      {}
+    end
   end
 
   def self.cli_overrides(meta, cli_args)
     meta.update_from(cli_args[:overrides])
     meta.op_mode = cli_args[:op_mode] || meta.op_mode
+    stack_path = cli_args[:stack_path][0]
+    meta.stack_uri = CuffSert.validate_and_urlify(stack_path)
     meta
   end
 

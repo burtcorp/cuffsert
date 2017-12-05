@@ -37,6 +37,34 @@ describe CuffSert::StackConfig do
   end
 end
 
+describe 'CuffSert.validate_and_urlify' do
+  let(:s3url) { 's3://ze-bucket/some/url' }
+  let(:httpurl) { 'http://some.host/some/file' }
+
+  it 'urlifies and normalizes files' do
+    stack = Tempfile.new('stack')
+    path = '/..' + stack.path
+    result = CuffSert.validate_and_urlify(path)
+    expect(result).to eq(URI.parse("file://#{stack.path}"))
+  end
+
+  it 'respects s3 urls' do
+    expect(CuffSert.validate_and_urlify(s3url)).to eq(URI.parse(s3url))
+  end
+
+  it 'borks on non-existent local files' do
+    expect {
+      CuffSert.validate_and_urlify('/no/such/file')
+    }.to raise_error(/local.*not exist/i)
+  end
+
+  it 'borks on unkown schemas' do
+    expect {
+      CuffSert.validate_and_urlify(httpurl)
+    }.to raise_error(/.*http.*not supported/)
+  end
+end
+
 describe CuffSert do
   include_context 'yaml configs'
   context '#load_config' do
@@ -95,27 +123,54 @@ describe CuffSert do
 
   describe '#build_meta' do
     include_context 'yaml configs'
+    include_context 'templates'
+
+    let :template_json do
+      JSON.dump({'Parameters' => {'from_template' => {'Default' => 'ze-default'}}})
+    end
 
     let :cli_args do
       {
-        :metadata => config_file.path,
-        :selector => ['level1_a'],
-        :overrides => overrides
+        :overrides => overrides,
+        :stack_path => [template_body.path],
       }
     end
     let(:overrides) { {} }
 
     subject { CuffSert.build_meta(cli_args) }
+    
+    it { should have_attributes(:stack_uri => URI.parse("file://#{template_body.path}")) }
+    it { should have_attributes(:parameters => include('from_template' => nil)) }
+    
+    context 'given a parameter override' do
+      let(:overrides) do 
+        {:parameters => {:stackname => 'customname', 'from_template' => 'overridden'}}
+      end
 
-    context 'reads metadata file and allows overrides' do
-      let(:overrides) { {:stackname => 'customname', :tags => {'another' => 'tag'}} }
-      it { should have_attributes(:stackname => 'customname') }
-      it { should have_attributes(:tags => include('tlevel' => 'level1_a')) }
-      it { should have_attributes(:tags => include('another' => 'tag')) }
+      it { should have_attributes(:parameters => include('from_template' => 'overridden')) }
     end
 
-    context 'defaults suffix from config file name because level1_a has no declared suffix' do
-      it { should have_attributes(:stackname => "level1_a-#{File.basename(config_file.path, '.yml')}") }
+    context 'given a metadata file, selector and tag override' do
+      let :cli_args do
+        super().merge({:metadata => config_file.path, :selector => ['level1_a']})
+      end
+
+      it { should have_attributes(:tags => include('tlevel' => 'level1_a')) }
+
+      it 'defaults suffix from file name because level1_a has no declared suffix' do
+        should have_attributes(:stackname => "level1_a-#{File.basename(config_file.path, '.yml')}")
+      end
+      
+      context 'with a tag override' do
+        let(:overrides) { {:tags => {'another' => 'tag'}} }
+        it { should have_attributes(:tags => include('tlevel' => 'level1_a')) }
+        it { should have_attributes(:tags => include('another' => 'tag')) }
+      end
+      
+      context 'with a stackname override' do
+        let(:overrides) { {:stackname => 'customname'} }
+        it { should have_attributes(:stackname => 'customname') }
+      end
     end
 
     context 'safe by default' do

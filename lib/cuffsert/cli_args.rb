@@ -94,4 +94,21 @@ module CuffSert
     args[:stack_path] = parser.parse(argv)
     args
   end
+  
+  def self.validate_cli_args(cli_args)
+    errors = []
+    if cli_args[:stack_path].nil? || cli_args[:stack_path].size != 1
+      errors << 'Requires exactly one template'
+    end
+
+    if cli_args[:metadata].nil? && cli_args[:overrides][:stackname].nil?
+      errors << 'Without --metadata, you must supply --name to identify stack to update'
+    end
+    
+    if cli_args[:selector] && cli_args[:metadata].nil?
+      errors << 'You cannot use --selector without --metadata'
+    end
+    
+    raise errors.join(', ') unless errors.empty?
+  end
 end
