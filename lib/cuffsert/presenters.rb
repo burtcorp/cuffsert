@@ -1,4 +1,4 @@
-require 'aws-sdk'
+require 'aws-sdk-cloudformation'
 require 'colorize'
 require 'cuffsert/cfstates'
 require 'cuffsert/messages'

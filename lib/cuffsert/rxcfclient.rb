@@ -1,4 +1,4 @@
-require 'aws-sdk'
+require 'aws-sdk-cloudformation'
 require 'cuffsert/cfstates'
 require 'rx'
 
