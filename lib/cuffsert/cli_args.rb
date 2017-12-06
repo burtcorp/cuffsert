@@ -38,7 +38,7 @@ module CuffSert
         args[:overrides][:stackname] = stackname
       end
 
-      opts.on('--parameter kv', '-p kv', 'Set the value of a particular parameter, overriding any file metadata') do |kv|
+      opts.on('--parameter k=v', '-p k=v', 'Set the value of a particular parameter, overriding any file metadata') do |kv|
         key, val = kv.split(/=/, 2)
         if val.nil?
           raise "--parameter #{kv} should be key=value"
@@ -49,7 +49,7 @@ module CuffSert
         args[:overrides][:parameters][key] = val
       end
 
-      opts.on('--tag kv', '-t kv', 'Set a stack tag, overriding any file metadata') do |kv|
+      opts.on('--tag k=v', '-t k=v', 'Set a stack tag, overriding any file metadata') do |kv|
         key, val = kv.split(/=/, 2)
         if val.nil?
           raise "--tag #{kv} should be key=value"
