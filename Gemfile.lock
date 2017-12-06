@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    cuffsert (0.10.0)
+    cuffsert (0.10.1)
       aws-sdk-cloudformation (~> 1.3.0)
       colorize
       ruby-termios
@@ -10,7 +10,7 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    aws-partitions (1.44.0)
+    aws-partitions (1.45.0)
     aws-sdk-cloudformation (1.3.0)
       aws-sdk-core (~> 3)
       aws-sigv4 (~> 1.0)
