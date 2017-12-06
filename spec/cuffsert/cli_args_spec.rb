@@ -9,11 +9,12 @@ describe 'CuffSert#parse_cli_args' do
   stack = Tempfile.new('stack')
 
   subject do |example|
-    argv = example.metadata[:argv] || example.metadata[:description_args][0]
+    dummy_nonempty_argv = ['-y']
+    argv = example.metadata[:argv] || example.metadata[:description_args][0] || dummy_nonempty_argv
     CuffSert.parse_cli_args(argv)
   end
 
-  context 'defaulsts' do
+  context 'defaults' do
     it { should include(:verbosity => 1) }
     it { should include(:output => :progressbar) }
     it { should include(:force_replace => false) }
@@ -81,6 +82,15 @@ describe 'CuffSert#parse_cli_args' do
     expect do
       begin
         CuffSert.parse_cli_args(['-h'])
+      rescue SystemExit
+      end
+    end.to output(/Usage:/).to_stderr
+  end
+
+  it 'no args prints usage' do
+    expect do
+      begin
+        CuffSert.parse_cli_args([])
       rescue SystemExit
       end
     end.to output(/Usage:/).to_stderr
