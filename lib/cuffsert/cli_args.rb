@@ -91,7 +91,11 @@ module CuffSert
       end
     end
 
-    args[:stack_path] = parser.parse(argv)
-    args
+    if argv.empty?
+      abort(parser.to_s)
+    else
+      args[:stack_path] = parser.parse(argv)
+      args
+    end
   end
 end
