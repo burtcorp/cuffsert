@@ -31,7 +31,7 @@ module CuffSert
         args[:selector] = selector.split(/[-,\/]/)
       end
 
-      opts.on('--name stackname', '-n name', 'Alternative stackname (default is to construct the name from the selector') do |stackname|
+      opts.on('--name stackname', '-n name', 'Alternative stackname (default is to construct the name from the selector)') do |stackname|
         unless stackname =~ STACKNAME_RE
           raise "--name #{stackname} is expected to be #{STACKNAME_RE.inspect}"
         end
@@ -64,7 +64,7 @@ module CuffSert
         args[:output] = :json
       end
 
-      opts.on('--verbose', '-v', 'More detailed output. Once will print all stack evwnts, twice will print debug info') do
+      opts.on('--verbose', '-v', 'More detailed output. Once will print all stack events, twice will print debug info') do
         args[:verbosity] += 1
       end
 
