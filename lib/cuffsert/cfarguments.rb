@@ -8,6 +8,35 @@ require 'open-uri'
 module CuffSert
   TIMEOUT = 10
 
+  def self.s3_uri_to_https(uri)
+    region = ENV['AWS_REGION'] || ENV['AWS_DEFAULT_REGION'] || 'us-east-1'
+    bucket = uri.host
+    key = uri.path
+    host = region == 'us-east-1' ? 's3.amazonaws.com' : "s3-#{region}.amazonaws.com"
+    "https://#{host}/#{bucket}#{key}"
+  end
+
+  def self.template_parameters(meta)
+    template_parameters = {}
+
+    if meta.stack_uri.scheme == 's3'
+      template_parameters[:template_url] = self.s3_uri_to_https(meta.stack_uri)
+    elsif meta.stack_uri.scheme == 'https'
+      if meta.stack_uri.host.end_with?('amazonaws.com')
+        template_parameters[:template_url] = meta.stack_uri.to_s
+      else
+        raise 'Only HTTP URLs pointing to amazonaws.com supported.'
+      end
+    elsif meta.stack_uri.scheme == 'file'
+      file = meta.stack_uri.to_s.sub(/^file:\/+/, '/')
+      template_parameters[:template_body] = open(file).read
+    else
+      raise "Unsupported scheme #{meta.stack_uri.scheme}"
+    end
+
+    template_parameters
+  end
+
   def self.as_cloudformation_args(meta)
     cfargs = {
       :stack_name => meta.stackname,
@@ -33,15 +62,7 @@ module CuffSert
       end
     end
 
-    if meta.stack_uri.scheme == 's3'
-      cfargs[:template_url] = meta.stack_uri.to_s
-    elsif meta.stack_uri.scheme == 'file'
-      file = meta.stack_uri.to_s.sub(/^file:\/+/, '/')
-      cfargs[:template_body] = open(file).read
-    else
-      raise "Unsupported scheme #{meta.stack_uri.scheme}"
-    end
-    cfargs
+    cfargs.merge!(self.template_parameters(meta))
   end
 
   def self.as_create_stack_args(meta)

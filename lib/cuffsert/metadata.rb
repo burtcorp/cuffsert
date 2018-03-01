@@ -82,7 +82,11 @@ module CuffSert
   private_class_method
 
   def self.meta_defaults(cli_args)
-    nil_params = CuffBase.empty_from_template(open(cli_args[:stack_path][0]))
+    if File.exists?(cli_args[:stack_path][0])
+      nil_params = CuffBase.empty_from_template(open(cli_args[:stack_path][0]))
+    else
+      nil_params = {}
+    end
     default = StackConfig.new
     default.update_from({:parameters => nil_params})
     default.suffix = File.basename(cli_args[:metadata], '.yml') if cli_args[:metadata]
