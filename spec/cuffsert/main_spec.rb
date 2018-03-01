@@ -12,21 +12,24 @@ describe 'CuffSert#execute' do
   include_context 'stack events'
   include_context 'stack states'
 
+  let(:confirm_update) { lambda { |*_| true } }
+  let(:force_replace) { false }
+
   let :cfmock do
     double(:cfclient)
   end
 
-  context 'not finding a matching stack' do
-    let(:confirmation) { lambda { |*_| true } }
+  subject do
+    CuffSert.execute(meta, :force_replace => force_replace, :cfclient => cfmock) do |action|
+      action.confirmation = confirm_update
+    end
+  end
 
+  context 'not finding a matching stack' do
     before do
       allow(cfmock).to receive(:find_stack_blocking)
         .with(meta)
         .and_return(nil)
-    end
-
-    subject do 
-      CuffSert.execute(meta, confirmation, :client => cfmock)
     end
 
     it 'creates it' do
@@ -39,9 +42,9 @@ describe 'CuffSert#execute' do
         r2_done
       )
     end
-    
+
     context 'given rejection' do
-      let(:confirmation) { lambda { |*_| false } }
+      let(:confirm_update) { lambda { |*_| false } }
 
       it 'takes no action' do
         expect(subject).to emit_exactly(
@@ -53,16 +56,12 @@ describe 'CuffSert#execute' do
   end
 
   context 'finding rolled_back stack' do
-    let(:confirm_update) { lambda { |*_| true } }
-
     let :cfmock do
       mock = double(:cfclient)
       allow(mock).to receive(:find_stack_blocking)
         .and_return(stack_rolled_back)
       mock
     end
-
-    subject { CuffSert.execute(meta, confirm_update, :client => cfmock) }
 
     context 'given user confirmation' do
       it 'deletes rolledback stack before create' do
@@ -97,20 +96,13 @@ describe 'CuffSert#execute' do
   end
 
   describe 'replace' do
-    let(:confirm_update) { lambda { |*_| true } }
+    let(:force_replace) { true }
 
     let :cfmock do
       mock = double(:cfclient)
       allow(mock).to receive(:find_stack_blocking)
         .and_return(stack_complete)
       mock
-    end
-
-    subject do
-      CuffSert.execute(meta, confirm_update,
-        :force_replace => true,
-        :client => cfmock
-      )
     end
 
     context 'given user confirmation' do
@@ -146,7 +138,6 @@ describe 'CuffSert#execute' do
   end
 
   describe 'update' do
-    let(:confirm_update) { lambda { |*_| true } }
     let(:change_set_stream) { Rx::Observable.of(change_set_ready) }
 
     let :cfmock do
@@ -158,8 +149,6 @@ describe 'CuffSert#execute' do
         .and_return(change_set_stream)
       mock
     end
-
-    subject { CuffSert.execute(meta, confirm_update, :client => cfmock) }
 
     context 'given confirmation' do
       it 'updates an existing stack' do
@@ -199,7 +188,7 @@ describe 'CuffSert#execute' do
     allow(cfmock).to receive(:find_stack_blocking)
       .and_return(stack_in_progress)
     expect(
-      CuffSert.execute(meta, nil, :client => cfmock)
+      CuffSert.execute(meta, cfclient: cfmock)
     ).to emit_exactly(CuffSert::Abort.new(/in progress/))
   end
 end
@@ -208,11 +197,11 @@ describe 'CuffSert#make_renderer' do
   subject do |example|
     CuffSert.make_renderer(example.metadata)
   end
-  
+
   it 'returns progressbar by default' do
     should be_a(CuffSert::ProgressbarRenderer)
   end
-  
+
   it 'returns json renderer for :json', :output => :json do
     should be_a(CuffSert::JsonRenderer)
   end
