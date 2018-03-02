@@ -1,3 +1,4 @@
+require 'cuffsert/actions'
 require 'cuffsert/cfstates'
 require 'cuffsert/cli_args'
 require 'cuffsert/confirmation'
@@ -9,7 +10,7 @@ require 'rx'
 require 'uri'
 
 module CuffSert
-  def self.execute(meta, force_replace: false, cfclient: RxCFClient.new)
+  def self.determine_action(meta, force_replace: false, cfclient: RxCFClient.new)
     found = cfclient.find_stack_blocking(meta)
 
     if found && INPROGRESS_STATES.include?(found[:stack_status])
@@ -25,7 +26,7 @@ module CuffSert
       action.cfclient = cfclient
       yield action
     end
-    action.as_observable
+    action
   end
 
   def self.make_renderer(cli_args)
@@ -40,10 +41,10 @@ module CuffSert
     cli_args = CuffSert.parse_cli_args(argv)
     CuffSert.validate_cli_args(cli_args)
     meta = CuffSert.build_meta(cli_args)
-    events = CuffSert.execute(meta, force_replace: cli_args[:force_replace]) do |action|
-      action.confirmation = CuffSert.method(:confirmation)
+    action = CuffSert.determine_action(meta, force_replace: cli_args[:force_replace]) do |a|
+      a.confirmation = CuffSert.method(:confirmation)
     end
     renderer = CuffSert.make_renderer(cli_args)
-    RendererPresenter.new(events, renderer)
+    RendererPresenter.new(action.as_observable, renderer)
   end
 end

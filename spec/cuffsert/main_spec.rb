@@ -1,4 +1,3 @@
-require 'cuffsert/cfarguments'
 require 'cuffsert/main'
 require 'cuffsert/messages'
 require 'cuffsert/presenters'
@@ -6,7 +5,7 @@ require 'rx'
 require 'rx-rspec'
 require 'spec_helpers'
 
-describe 'CuffSert#execute' do
+describe 'CuffSert#determine_action' do
   include_context 'changesets'
   include_context 'metadata'
   include_context 'stack events'
@@ -19,177 +18,56 @@ describe 'CuffSert#execute' do
     double(:cfclient)
   end
 
+  before do
+    allow(cfmock).to receive(:find_stack_blocking)
+      .with(meta)
+      .and_return(stack)
+  end
+
   subject do
-    CuffSert.execute(meta, :force_replace => force_replace, :cfclient => cfmock) do |action|
-      action.confirmation = confirm_update
-    end
+    CuffSert.determine_action(meta, :force_replace => force_replace, :cfclient => cfmock) { |_| }
   end
 
   context 'not finding a matching stack' do
-    before do
-      allow(cfmock).to receive(:find_stack_blocking)
-        .with(meta)
-        .and_return(nil)
-    end
+    let(:stack) { nil }
 
     it 'creates it' do
-      expect(cfmock).to receive(:create_stack)
-        .with(CuffSert.as_create_stack_args(meta))
-        .and_return(Rx::Observable.of(r1_done, r2_done))
-      expect(subject).to emit_exactly(
-        [:create, stack_name],
-        r1_done,
-        r2_done
-      )
-    end
-
-    context 'given rejection' do
-      let(:confirm_update) { lambda { |*_| false } }
-
-      it 'takes no action' do
-        expect(subject).to emit_exactly(
-          [:create, stack_name],
-          CuffSert::Abort.new(/.*/)
-        )
-      end
+      expect(subject).to be_a(CuffSert::CreateStackAction)
     end
   end
 
-  context 'finding rolled_back stack' do
-    let :cfmock do
-      mock = double(:cfclient)
-      allow(mock).to receive(:find_stack_blocking)
-        .and_return(stack_rolled_back)
-      mock
-    end
+  context 'finding rolled-back stack' do
+    let(:stack) { stack_rolled_back }
 
-    context 'given user confirmation' do
-      it 'deletes rolledback stack before create' do
-        expect(cfmock).to receive(:delete_stack)
-          .with(CuffSert.as_delete_stack_args(stack_rolled_back))
-          .and_return(Rx::Observable.of(r1_deleted, r2_deleted))
-        expect(cfmock).to receive(:create_stack)
-          .with(CuffSert.as_create_stack_args(meta))
-          .and_return(Rx::Observable.of(r1_done, r2_done))
-        expect(subject).to emit_exactly(
-          [:recreate, stack_rolled_back],
-          r1_deleted,
-          r2_deleted,
-          r1_done,
-          r2_done
-        )
-      end
-    end
-
-    context 'given rejection' do
-      let(:confirm_update) { lambda { |*_| false } }
-
-      it 'aborts with neither deletion nor creation' do
-        expect(cfmock).not_to receive(:delete_stack)
-        expect(cfmock).not_to receive(:create_stack)
-        expect(subject).to emit_exactly(
-          [:recreate, stack_rolled_back],
-          CuffSert::Abort.new(/.*/)
-        )
-      end
+    it 'recreates the stack' do
+      expect(subject).to be_a(CuffSert::RecreateStackAction)
     end
   end
 
-  describe 'replace' do
+  context 'finding a completed stack but is explicitly asked to replace it' do
     let(:force_replace) { true }
+    let(:stack) { stack_complete }
 
-    let :cfmock do
-      mock = double(:cfclient)
-      allow(mock).to receive(:find_stack_blocking)
-        .and_return(stack_complete)
-      mock
-    end
-
-    context 'given user confirmation' do
-      it 'deletes complete stack before create' do
-        expect(cfmock).to receive(:delete_stack)
-          .with(CuffSert.as_delete_stack_args(stack_rolled_back))
-          .and_return(Rx::Observable.of(r1_deleted, r2_deleted))
-        expect(cfmock).to receive(:create_stack)
-          .with(CuffSert.as_create_stack_args(meta))
-          .and_return(Rx::Observable.of(r1_done, r2_done))
-        expect(subject).to emit_exactly(
-          [:recreate, stack_complete],
-          r1_deleted,
-          r2_deleted,
-          r1_done,
-          r2_done
-        )
-      end
-    end
-
-    context 'given rejection' do
-      let(:confirm_update) { lambda { |*_| false } }
-
-      it 'aborts with neither deletion nor creation' do
-        expect(cfmock).not_to receive(:delete_stack)
-        expect(cfmock).not_to receive(:create_stack)
-        expect(subject).to emit_exactly(
-          [:recreate, stack_complete],
-          CuffSert::Abort.new(/.*/)
-        )
-      end
+    it 'recreates the stack' do
+      expect(subject).to be_a(CuffSert::RecreateStackAction)
     end
   end
 
-  describe 'update' do
+  describe 'finding a completed stack' do
     let(:change_set_stream) { Rx::Observable.of(change_set_ready) }
+    let(:stack) { stack_complete }
 
-    let :cfmock do
-      mock = double(:cfmock)
-      allow(mock).to receive(:find_stack_blocking)
-        .and_return(stack_complete)
-      expect(mock).to receive(:prepare_update)
-        .with(CuffSert.as_update_change_set(meta))
-        .and_return(change_set_stream)
-      mock
-    end
-
-    context 'given confirmation' do
-      it 'updates an existing stack' do
-        expect(cfmock).to receive(:update_stack)
-          .and_return(Rx::Observable.of(r1_done, r2_done))
-
-        expect(subject).to emit_exactly(change_set_ready, r1_done, r2_done)
-      end
-    end
-
-    context 'when change set failed' do
-      let(:change_set_stream) { Rx::Observable.of(change_set_failed) }
-
-      it 'does not update' do
-        expect(cfmock).to receive(:abort_update)
-          .and_return(Rx::Observable.empty)
-        expect(cfmock).not_to receive(:update_stack)
-
-        expect(subject).to emit_exactly(change_set_failed)
-      end
-    end
-
-    context 'given rejection' do
-      let(:confirm_update) { lambda { |*_| false } }
-
-      it 'does not update' do
-        expect(cfmock).to receive(:abort_update)
-          .and_return(Rx::Observable.empty)
-        expect(cfmock).not_to receive(:update_stack)
-
-        expect(subject).to emit_exactly(change_set_ready, CuffSert::Abort.new(/.*/))
-      end
+    it 'updates the stack' do
+      expect(subject).to be_a(CuffSert::UpdateStackAction)
     end
   end
 
-  it 'bails on stack already in progress' do
-    allow(cfmock).to receive(:find_stack_blocking)
-      .and_return(stack_in_progress)
-    expect(
-      CuffSert.execute(meta, cfclient: cfmock)
-    ).to emit_exactly(CuffSert::Abort.new(/in progress/))
+  context 'when a stack operation is already in progress' do
+    let(:stack) { stack_in_progress }
+
+    it 'it aborts' do
+      expect(subject).to be_a(CuffSert::Abort)
+    end
   end
 end
 
@@ -211,9 +89,14 @@ describe 'CuffSert#main' do
   include_context 'yaml configs'
   include_context 'templates'
 
+  let(:action) do
+    double(:action).tap do |action|
+      allow(action).to receive(:as_observable).and_return(Rx::Observable.from([]))
+    end
+  end
+
   it 'works' do
-    expect(CuffSert).to receive(:execute)
-      .and_return(Rx::Observable.from_array([]))
+    expect(CuffSert).to receive(:determine_action).and_return(action)
     CuffSert.run(['--metadata', config_file.path, '--selector', 'level1_a', template_body.path])
   end
 end

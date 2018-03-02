@@ -1,3 +1,4 @@
+require 'aws-sdk-cloudformation'
 require 'simplecov'
 
 SimpleCov.start
