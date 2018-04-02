@@ -3,6 +3,7 @@ PATH
   specs:
     cuffsert (0.10.1)
       aws-sdk-cloudformation (~> 1.3.0)
+      aws-sdk-s3 (~> 1.8.0)
       colorize
       ruby-termios
       rx
@@ -10,14 +11,21 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    aws-partitions (1.45.0)
+    aws-partitions (1.68.0)
     aws-sdk-cloudformation (1.3.0)
       aws-sdk-core (~> 3)
       aws-sigv4 (~> 1.0)
-    aws-sdk-core (3.11.0)
+    aws-sdk-core (3.17.0)
       aws-partitions (~> 1.0)
       aws-sigv4 (~> 1.0)
       jmespath (~> 1.0)
+    aws-sdk-kms (1.5.0)
+      aws-sdk-core (~> 3)
+      aws-sigv4 (~> 1.0)
+    aws-sdk-s3 (1.8.2)
+      aws-sdk-core (~> 3)
+      aws-sdk-kms (~> 1)
+      aws-sigv4 (~> 1.0)
     aws-sigv4 (1.0.2)
     byebug (9.0.6)
     colorize (0.8.1)
@@ -40,7 +48,7 @@ GEM
     rspec-support (3.5.0)
     ruby-termios (1.0.2)
     rx (0.0.3)
-    rx-rspec (0.3.1)
+    rx-rspec (0.4.3)
       rx
     simplecov (0.12.0)
       docile (~> 1.1.0)
@@ -56,7 +64,7 @@ DEPENDENCIES
   byebug
   cuffsert!
   rspec (~> 3.0)
-  rx-rspec (~> 0.3.1)
+  rx-rspec (~> 0.4.3)
   simplecov
 
 BUNDLED WITH
