@@ -39,7 +39,14 @@ describe '#as_create_stack_args' do
     let(:meta) { super().tap { |meta| meta.stack_uri = URI.join('file:///', template_body.path) } }
 
     it { should include(:template_body => template_json) }
-    it { should_not include(:template_uri) }
+    it { should_not include(:template_url) }
+
+    context 'which points to a large template' do
+      let(:template_json) { format('{"key": "%s"}', '*' * 51201) }
+
+      it { should_not include(:template_url) }
+      it { should_not include(:template_body) }
+    end
   end
 
   context 'when meta parameters have no value' do
