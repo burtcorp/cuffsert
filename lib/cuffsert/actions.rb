@@ -5,20 +5,33 @@ require 'rx'
 
 module CuffSert
   class BaseAction
-    attr_accessor :cfclient, :confirmation
+    attr_accessor :cfclient, :confirmation, :s3client
 
     def initialize(meta, stack)
       @cfclient = nil
       @confirmation = nil
       @meta = meta
+      @s3client = nil
       @stack = stack
+    end
+
+    def upload_template_if_oversized(cfargs)
+      if cfargs[:template_body].nil? && cfargs[:template_url].nil?
+        raise 'Template bigger than 51200; please supply --s3-upload-prefix' unless @s3client
+        uri, progress = @s3client.upload(@meta.stack_uri)
+        [CuffSert.s3_uri_to_https(uri), progress]
+      else
+        [nil, Rx::Observable.empty]
+      end
     end
   end
 
   class CreateStackAction < BaseAction
     def as_observable
       cfargs = CuffSert.as_create_stack_args(@meta)
-      Rx::Observable.concat(
+      upload_uri, maybe_upload = upload_template_if_oversized(cfargs)
+      cfargs[:template_url] = upload_uri if upload_uri
+      maybe_upload.concat(
         Rx::Observable.of([:create, @meta.stackname]),
         Rx::Observable.defer do
           if @confirmation.call(@meta, :create, nil)
@@ -34,7 +47,10 @@ module CuffSert
   class UpdateStackAction < BaseAction
     def as_observable
       cfargs = CuffSert.as_update_change_set(@meta)
-      @cfclient.prepare_update(cfargs)
+      upload_uri, maybe_upload = upload_template_if_oversized(cfargs)
+      cfargs[:template_url] = upload_uri if upload_uri
+      maybe_upload
+        .concat(@cfclient.prepare_update(cfargs))
         .last
         .flat_map do |change_set|
           Rx::Observable.concat(
@@ -60,7 +76,9 @@ module CuffSert
     def as_observable
       crt_args = CuffSert.as_create_stack_args(@meta)
       del_args = CuffSert.as_delete_stack_args(@stack)
-      Rx::Observable.concat(
+      upload_uri, maybe_upload = upload_template_if_oversized(crt_args)
+      crt_args[:template_url] = upload_uri if upload_uri
+      maybe_upload.concat(
         Rx::Observable.of([:recreate, @stack]),
         Rx::Observable.defer do
           if @confirmation.call(@meta, :recreate, @stack)

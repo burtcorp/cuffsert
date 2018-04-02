@@ -60,6 +60,13 @@ module CuffSert
         args[:overrides][:tags][key] = val
       end
 
+      opts.on('--s3-upload-prefix=prefix', 'Templates > 51200 bytes are uploaded here. Format: s3://bucket-name/[pre/fix]') do |prefix|
+        unless prefix.start_with?('s3://')
+          raise "Upload prefix #{prefix} must start with s3://"
+        end
+        args[:s3_upload_prefix] = prefix
+      end
+
       opts.on('--json', 'Output events in JSON, no progressbar, colors') do
         args[:output] = :json
       end
