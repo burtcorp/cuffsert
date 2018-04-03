@@ -116,6 +116,7 @@ describe 'CuffSert#main' do
   end
 
   before do
+    allow(Aws::S3::Client).to receive(:new).and_return(double(:s3))
     expect(CuffSert).to receive(:determine_action).and_yield(action).and_return(action)
   end
 
