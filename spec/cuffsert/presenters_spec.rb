@@ -29,6 +29,10 @@ describe CuffSert::RendererPresenter do
       @rendered << resource[:states]
     end
 
+    def report(event)
+      @rendered << event
+    end
+
     def abort(event)
       @rendered << event
     end
@@ -105,6 +109,12 @@ describe CuffSert::RendererPresenter do
     end
   end
 
+  context 'given a report message' do
+    let(:events) { [CuffSert::Report.new('goodness'), :done] }
+
+    it { should eq(events) }
+  end
+
   context 'given an abort message' do
     let(:events) { [CuffSert::Abort.new('badness'), :done] }
 
@@ -171,6 +181,25 @@ describe CuffSert::JsonRenderer do
     context 'when default verbosity' do
       it { should match(/^{".*}$/) }
       it { should match(/"stack_id":"#{stack_id}"/) }
+    end
+  end
+
+  describe '#report' do
+    let(:message) { CuffSert::Report.new('goodness') }
+
+    subject do |example|
+      described_class.new(output, error, example.metadata).report(message)
+      error.string
+    end
+
+    before { expect(output.string).to be_empty }
+
+    context 'when silent', :verbosity => 0 do
+      it { should be_empty }
+    end
+
+    context 'when default verbosity' do
+      it { should include('goodness') }
     end
   end
 
@@ -339,6 +368,33 @@ describe CuffSert::ProgressbarRenderer do
       end
     end
   end
+
+  describe '#report' do
+    let(:output) { StringIO.new }
+    let(:error) { StringIO.new }
+
+    subject do |example|
+      described_class.new(output, error, example.metadata).abort(message)
+      error.string
+    end
+
+    before do
+      expect(output.string).to be_empty
+    end
+
+    context 'given a simple report message' do
+      let(:message) { CuffSert::Abort.new('goodness') }
+
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
+
+      context 'whenn default verbosity' do
+        it { should include('goodness'.colorize(:red)) }
+      end
+    end
+  end
+
 
   describe '#abort' do
     let(:output) { StringIO.new }

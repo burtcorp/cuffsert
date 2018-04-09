@@ -25,11 +25,12 @@ describe CuffSert::RxS3Client do
     end
 
     it 'returns an observable which completes' do
-      expect(observable).to emit_exactly()
+      s3url = "#{s3_upload_prefix}/#{File.basename(template_body.path)}"
+      expect(observable).to emit_exactly(CuffSert::Report.new(/#{s3url}/))
     end
 
     it 'uploads the referenced file to S3' do
-      expect(observable).to emit_exactly()
+      expect(observable).to complete
       expect(s3mock).to have_received(:put_object).with({
         body: template_json,
         bucket: 'ze-bucket',
@@ -52,7 +53,7 @@ describe CuffSert::RxS3Client do
       end
 
       it 'the observable errors' do
-        expect(observable).to emit_error(RuntimeError, /.*/)
+        expect(observable.ignore_elements).to emit_error(RuntimeError, /.*/)
       end
     end
   end

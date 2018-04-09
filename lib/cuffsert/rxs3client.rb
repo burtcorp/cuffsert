@@ -11,9 +11,11 @@ module CuffSert
     def upload(stack_uri)
       file = stack_uri.to_s.sub(/^file:\/+/, '/')
       name = File.basename(file)
+      s3_uri = "s3://#{@bucket}/#{@path_prefix}#{name}"
       observable = Rx::Observable.create do |observer|
         body = open(file).read
         begin
+          observer.on_next(Report.new("Uploading template to #{s3_uri}"))
           @client.put_object({
             body: body,
             bucket: @bucket,
@@ -24,7 +26,7 @@ module CuffSert
           observer.on_error(e)
         end
       end
-      ["s3://#{@bucket}/#{@path_prefix}#{name}", observable]
+      [s3_uri, observable]
     end
 
     private

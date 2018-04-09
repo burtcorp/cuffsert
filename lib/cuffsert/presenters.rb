@@ -66,6 +66,8 @@ module CuffSert
       # when [:recreate, Aws::CloudFormation::Types::Stack]
       when Array
         on_stack(*event)
+      when ::CuffSert::Report
+        @renderer.report(event)
       when ::CuffSert::Abort
         @renderer.abort(event)
       else
@@ -139,6 +141,7 @@ module CuffSert
     def event(event, resource) ; end
     def clear ; end
     def resource(resource) ; end
+    def report(message) ; end
     def abort(message) ; end
     def done ; end
   end
@@ -154,6 +157,10 @@ module CuffSert
 
     def stack(event, stack)
       @output.write(stack.to_json) unless @verbosity < 1
+    end
+
+    def report(event)
+      @error.write(event.message + "\n") unless @verbosity < 1
     end
 
     def abort(event)
@@ -277,6 +284,10 @@ module CuffSert
         :color => :white,
         :background => color
       ))
+    end
+
+    def report(event)
+      @error.write(event.message.colorize(:light_white) + "\n") unless @verbosity < 1
     end
 
     def abort(event)
