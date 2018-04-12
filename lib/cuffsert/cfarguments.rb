@@ -1,4 +1,5 @@
 require 'open-uri'
+require 'yaml'
 
 # TODO:
 # - propagate timeout here (from config?)

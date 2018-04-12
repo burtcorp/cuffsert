@@ -47,6 +47,13 @@ describe '#as_create_stack_args' do
       it { should_not include(:template_url) }
       it { should_not include(:template_body) }
     end
+
+    context 'which points to a template with lots of whitespace' do
+      let(:template_json) { format('{"key": %s""}', ' ' * 51201) }
+
+      it { should_not include(:template_url) }
+      it { should include(:template_body => '{"key":""}') }
+    end
   end
 
   context 'when meta parameters have no value' do
