@@ -35,7 +35,7 @@ shared_examples 'uploading' do
 
     context 'and is given an s3 client (i.e. with --s3-upload-prefix)' do
       before do
-        allow(s3mock).to receive(:upload).and_return(['s3://some-bucket/some-prefix.json', Rx::Observable.just('OK')])
+        allow(s3mock).to receive(:upload).and_return([URI('s3://some-bucket/some-prefix.json'), Rx::Observable.just('OK')])
       end
 
       it 'uploads template' do

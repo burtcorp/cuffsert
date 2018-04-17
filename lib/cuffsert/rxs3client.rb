@@ -26,7 +26,7 @@ module CuffSert
           observer.on_error(e)
         end
       end
-      [s3_uri, observable]
+      [URI(s3_uri), observable]
     end
 
     private

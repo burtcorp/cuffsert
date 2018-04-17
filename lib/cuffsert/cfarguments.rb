@@ -59,7 +59,6 @@ module CuffSert
   end
 
   def self.s3_uri_to_https(uri)
-    uri = URI(uri)
     region = ENV['AWS_REGION'] || ENV['AWS_DEFAULT_REGION'] || 'us-east-1'
     bucket = uri.host
     key = uri.path

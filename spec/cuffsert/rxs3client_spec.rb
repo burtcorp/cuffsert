@@ -20,7 +20,7 @@ describe CuffSert::RxS3Client do
     end
 
     it 'returns the S3 URI of the newly uploaded object' do
-      s3url = "#{s3_upload_prefix}/#{File.basename(template_body.path)}"
+      s3url = URI("#{s3_upload_prefix}/#{File.basename(template_body.path)}")
       expect(result_url).to eq(s3url)
     end
 
@@ -42,7 +42,7 @@ describe CuffSert::RxS3Client do
       let(:s3_upload_prefix) { 's3://ze-bucket/' }
 
       it 'constructs a well-formed S3 URI' do
-        s3url = "#{s3_upload_prefix}#{File.basename(template_body.path)}"
+        s3url = URI("#{s3_upload_prefix}#{File.basename(template_body.path)}")
         expect(result_url).to eq(s3url)
       end
     end
