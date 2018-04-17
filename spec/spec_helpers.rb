@@ -54,6 +54,7 @@ shared_context 'metadata' do
   include_context 'basic parameters'
 
   let(:s3url) { 's3://foo/bar' }
+  let(:amazonaws_url) { 'https://s3.amazonaws.com/foo/bar' }
   let :meta do
     meta = CuffSert::StackConfig.new
     meta.selected_path = [stack_name.split(/-/)]

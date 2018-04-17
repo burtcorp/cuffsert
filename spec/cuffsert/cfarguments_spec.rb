@@ -20,13 +20,23 @@ describe '#as_create_stack_args' do
   end
 
   context 'when stack uri is an s3 url' do
-    it { should include(:template_url => s3url) }
+    it { should include(:template_url => amazonaws_url) }
     it { should_not include(:template_body) }
   end
 
-  context 'when stack uri is file' do
-    before { meta.stack_uri = URI.join('file:///', template_body.path) }
-    subject { CuffSert.as_create_stack_args(meta) }
+  context 'when stack uri is an amazonaws https uri' do
+    let(:meta) { super().tap { |meta| meta.stack_uri = URI.parse(amazonaws_url) } }
+    it { should include(:template_url => amazonaws_url) }
+    it { should_not include(:template_body) }
+  end
+
+  context 'when stack uri is some other https uri' do
+    let(:meta) { super().tap { |meta| meta.stack_uri = URI.parse('https://www.google.com') } }
+    it { expect { subject }.to raise_error(/amazonaws.com/) }
+  end
+
+  context 'when stack uri scheme is file:' do
+    let(:meta) { super().tap { |meta| meta.stack_uri = URI.join('file:///', template_body.path) } }
 
     it { should include(:template_body => template_json) }
     it { should_not include(:template_uri) }
@@ -38,7 +48,7 @@ describe '#as_create_stack_args' do
         meta.parameters = { 'ze-key' => nil }
       end
     end
-    
+
     it do
       expect { subject }.to raise_error(/supply value for.*ze-key/i)
     end
@@ -71,14 +81,14 @@ describe '#as_update_change_set' do
   it { should include(:use_previous_template => false) }
   it { should include(:change_set_type => 'UPDATE') }
   it { should_not include(:timeout_in_minutes) }
-  
+
   context 'when meta parameters have no value' do
     let :meta do
       super().tap do |meta|
         meta.parameters = { 'ze-key' => nil }
       end
     end
-    
+
     it 'should use previous value' do
       should include(:parameters => include({
         :parameter_key => 'ze-key',
