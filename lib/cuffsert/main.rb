@@ -6,6 +6,7 @@ require 'cuffsert/messages'
 require 'cuffsert/metadata'
 require 'cuffsert/presenters'
 require 'cuffsert/rxcfclient'
+require 'cuffsert/rxs3client'
 require 'rx'
 require 'uri'
 
@@ -43,6 +44,7 @@ module CuffSert
     meta = CuffSert.build_meta(cli_args)
     action = CuffSert.determine_action(meta, force_replace: cli_args[:force_replace]) do |a|
       a.confirmation = CuffSert.method(:confirmation)
+      a.s3client = RxS3Client.new(cli_args[:s3_upload_prefix]) if cli_args[:s3_upload_prefix] 
     end
     renderer = CuffSert.make_renderer(cli_args)
     RendererPresenter.new(action.as_observable, renderer)

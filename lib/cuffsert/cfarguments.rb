@@ -1,8 +1,8 @@
 require 'open-uri'
+require 'yaml'
 
 # TODO:
 # - propagate timeout here (from config?)
-# - fail on template body > 51200 bytes
 # - creation change-set: cfargs[:change_set_type] = 'CREATE'
 
 module CuffSert
@@ -58,14 +58,19 @@ module CuffSert
     { :stack_name => stack[:stack_id] }
   end
 
-  private_class_method
-
   def self.s3_uri_to_https(uri)
     region = ENV['AWS_REGION'] || ENV['AWS_DEFAULT_REGION'] || 'us-east-1'
     bucket = uri.host
     key = uri.path
     host = region == 'us-east-1' ? 's3.amazonaws.com' : "s3-#{region}.amazonaws.com"
     "https://#{host}/#{bucket}#{key}"
+  end
+
+  private_class_method
+
+  def self.load_minified_template(file)
+    template = open(file).read
+    YAML.load(template).to_json
   end
 
   def self.template_parameters(meta)
@@ -81,7 +86,10 @@ module CuffSert
       end
     elsif meta.stack_uri.scheme == 'file'
       file = meta.stack_uri.to_s.sub(/^file:\/+/, '/')
-      template_parameters[:template_body] = open(file).read
+      template = self.load_minified_template(file)
+      if template.size <= 51200
+        template_parameters[:template_body] = template
+      end
     else
       raise "Unsupported scheme #{meta.stack_uri.scheme}"
     end

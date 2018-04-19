@@ -26,6 +26,7 @@ describe 'CuffSert#parse_cli_args' do
   it ['--tag=foo=bar'] { should have_overrides(:tags => {'foo' => 'bar'}) }
   it ['--name=foo'] { should have_overrides(:stackname => 'foo') }
   it ['--parameter', 'foo=bar'] { should have_overrides(:parameters => {'foo' => 'bar'}) }
+  it ['--s3-upload-prefix', 's3://foo/bar'] { should include(:s3_upload_prefix => 's3://foo/bar')}
   it ['--json'] { should include(:output => :json) }
   it ['--verbose'] { should include(:verbosity => 2) }
   it ['-v', '-v'] { should include(:verbosity => 3) }
@@ -60,6 +61,10 @@ describe 'CuffSert#parse_cli_args' do
 
   it 'rejects --yes --dry-run', :argv => ['--yes', '--dry-run'] do
     expect { subject }.to raise_error(/--yes and --dry-run/)
+  end
+
+  it 'rejects s3 upload prefix not starting with s3:', :argv => ['--s3-upload-prefix', 'foobar'] do
+    expect { subject }.to raise_error(/foobar.*s3:/)
   end
 
   context '--help exit code' do
