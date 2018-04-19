@@ -36,8 +36,10 @@ module CuffSert
         change_set_id = @cf.create_change_set(cfargs)[:id]
         loop do
           change_set = @cf.describe_change_set(change_set_name: change_set_id)
-          observer.on_next(change_set)
-          break if FINAL_STATES.include?(change_set[:status])
+          if FINAL_STATES.include?(change_set[:status])
+            observer.on_next(change_set)
+            break
+          end
         end
         observer.on_completed
       end
@@ -53,7 +55,7 @@ module CuffSert
         observer.on_completed
       end
     end
-    
+
     def abort_update(change_set_id)
       Rx::Observable.create do |observer|
         @cf.delete_change_set(change_set_name: change_set_id)

@@ -51,23 +51,26 @@ module CuffSert
       cfargs[:template_url] = upload_uri if upload_uri
       maybe_upload
         .concat(@cfclient.prepare_update(cfargs))
-        .last
         .flat_map do |change_set|
-          Rx::Observable.concat(
-            Rx::Observable.of(change_set),
-            Rx::Observable.defer {
-              if change_set[:status] == 'FAILED'
-                @cfclient.abort_update(change_set[:change_set_id])
-              elsif @confirmation.call(@meta, :update, change_set)
-                @cfclient.update_stack(change_set[:stack_id], change_set[:change_set_id])
-              else
-                Rx::Observable.concat(
-                  @cfclient.abort_update(change_set[:change_set_id]),
-                  Abort.new('User abort!').as_observable
-                )
-              end
-            }
-          )
+          if change_set.is_a? Aws::CloudFormation::Types::DescribeChangeSetOutput
+            Rx::Observable.concat(
+              Rx::Observable.of(change_set),
+              Rx::Observable.defer {
+                if change_set[:status] == 'FAILED'
+                  @cfclient.abort_update(change_set[:change_set_id])
+                elsif @confirmation.call(@meta, :update, change_set)
+                  @cfclient.update_stack(change_set[:stack_id], change_set[:change_set_id])
+                else
+                  Rx::Observable.concat(
+                    @cfclient.abort_update(change_set[:change_set_id]),
+                    Abort.new('User abort!').as_observable
+                  )
+                end
+              }
+            )
+          else
+            Rx::Observable.just(change_set)
+          end
         end
     end
   end
