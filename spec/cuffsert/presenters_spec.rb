@@ -189,7 +189,7 @@ describe CuffSert::JsonRenderer do
 
     subject do |example|
       described_class.new(output, error, example.metadata).report(message)
-      error.string
+      output.string
     end
 
     before { expect(output.string).to be_empty }
@@ -199,6 +199,10 @@ describe CuffSert::JsonRenderer do
     end
 
     context 'when default verbosity' do
+      it { should be_empty }
+    end
+
+    context 'when verbose', :verbosity => 2 do
       it { should include('goodness') }
     end
   end

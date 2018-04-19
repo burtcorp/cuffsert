@@ -160,7 +160,7 @@ module CuffSert
     end
 
     def report(event)
-      @error.write(event.message + "\n") unless @verbosity < 1
+      @output.write(event.message + "\n") unless @verbosity < 2
     end
 
     def abort(event)
@@ -287,7 +287,7 @@ module CuffSert
     end
 
     def report(event)
-      @error.write(event.message.colorize(:light_white) + "\n") unless @verbosity < 1
+      @output.write(event.message.colorize(:white) + "\n") unless @verbosity < 2
     end
 
     def abort(event)
