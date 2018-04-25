@@ -57,7 +57,10 @@ module CuffSert
               Rx::Observable.of(change_set),
               Rx::Observable.defer {
                 if change_set[:status] == 'FAILED'
-                  @cfclient.abort_update(change_set[:change_set_id])
+                  Rx::Observable.concat(
+                    @cfclient.abort_update(change_set[:change_set_id]),
+                    Abort.new("Update failed: #{change_set[:status_reason]}").as_observable
+                  )
                 elsif @confirmation.call(@meta, :update, change_set)
                   @cfclient.update_stack(change_set[:stack_id], change_set[:change_set_id])
                 else

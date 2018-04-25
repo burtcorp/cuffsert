@@ -166,7 +166,7 @@ describe CuffSert::UpdateStackAction do
         .and_return(Rx::Observable.empty)
       expect(cfmock).not_to receive(:update_stack)
 
-      expect(subject).to emit_exactly(change_set_failed)
+      expect(subject).to emit_exactly(change_set_failed, CuffSert::Abort.new(/update failed:.*didn't contain/i))
     end
   end
 
