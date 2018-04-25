@@ -35,7 +35,10 @@ module CuffSert
         Rx::Observable.of([:create, @meta.stackname]),
         Rx::Observable.defer do
           if @confirmation.call(@meta, :create, nil)
-            @cfclient.create_stack(cfargs)
+            Rx::Observable.concat(
+              @cfclient.create_stack(cfargs),
+              Done.new.as_observable
+            )
           else
             Abort.new('User abort!').as_observable
           end
@@ -62,7 +65,10 @@ module CuffSert
                     Abort.new("Update failed: #{change_set[:status_reason]}").as_observable
                   )
                 elsif @confirmation.call(@meta, :update, change_set)
-                  @cfclient.update_stack(change_set[:stack_id], change_set[:change_set_id])
+                  Rx::Observable.concat(
+                    @cfclient.update_stack(change_set[:stack_id], change_set[:change_set_id]),
+                    Done.new.as_observable
+                  )
                 else
                   Rx::Observable.concat(
                     @cfclient.abort_update(change_set[:change_set_id]),
@@ -90,7 +96,8 @@ module CuffSert
           if @confirmation.call(@meta, :recreate, @stack)
             Rx::Observable.concat(
               @cfclient.delete_stack(del_args),
-              @cfclient.create_stack(crt_args)
+              @cfclient.create_stack(crt_args),
+              Done.new.as_observable
             )
           else
             CuffSert::Abort.new('User abort!').as_observable

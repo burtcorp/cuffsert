@@ -37,7 +37,7 @@ describe CuffSert::RendererPresenter do
       @rendered << event
     end
 
-    def done
+    def done(event)
       @rendered << :done
     end
   end
@@ -57,7 +57,6 @@ describe CuffSert::RendererPresenter do
         :clear, [:good],
         :clear, [:good], [:progress],
         :clear, [:good], [:good],
-        :done
       ])
     end
   end
@@ -71,7 +70,6 @@ describe CuffSert::RendererPresenter do
         :error, :clear, [:bad],
         :clear, [:bad, :progress],
         :clear, [:bad, :good],
-        :done
       ])
     end
   end
@@ -85,7 +83,6 @@ describe CuffSert::RendererPresenter do
         :clear, [:good, :good],
         :clear, [:good, :progress],
         :clear, [:good, :good],
-        :done
       ])
     end
   end
@@ -104,19 +101,18 @@ describe CuffSert::RendererPresenter do
         :clear, [:good], [:good],
         :clear, [:good],
         :clear, [:good], [:good],
-        :done
       ])
     end
   end
 
   context 'given a report message' do
-    let(:events) { [CuffSert::Report.new('goodness'), :done] }
+    let(:events) { [CuffSert::Report.new('goodness')] }
 
     it { should eq(events) }
   end
 
   context 'given an abort message' do
-    let(:events) { [CuffSert::Abort.new('badness'), :done] }
+    let(:events) { [CuffSert::Abort.new('badness')] }
 
     it { should eq(events) }
   end
@@ -223,6 +219,18 @@ describe CuffSert::JsonRenderer do
 
     context 'when default verbosity' do
       it { should include('badness') }
+    end
+  end
+
+  describe '#done' do
+    subject do |example|
+      output = StringIO.new
+      described_class.new(output, StringIO.new, example.metadata).done(CuffSert::Done.new)
+      output.string
+    end
+
+    context 'when verbose', :verbosity => 2 do
+      it { should be_empty }
     end
   end
 end
@@ -429,7 +437,7 @@ describe CuffSert::ProgressbarRenderer do
   describe '#done' do
     subject do |example|
       output = StringIO.new
-      described_class.new(output, StringIO.new, example.metadata).done
+      described_class.new(output, StringIO.new, example.metadata).done(CuffSert::Done.new)
       output.string
     end
 
