@@ -11,7 +11,7 @@ require 'rx'
 require 'uri'
 
 module CuffSert
-  def self.determine_action(meta, force_replace: false, cfclient: RxCFClient.new)
+  def self.determine_action(meta, cfclient, force_replace: false)
     found = cfclient.find_stack_blocking(meta)
 
     if found && INPROGRESS_STATES.include?(found[:stack_status])
@@ -24,7 +24,6 @@ module CuffSert
       else
         action = UpdateStackAction.new(meta, found)
       end
-      action.cfclient = cfclient
       yield action
     end
     action
@@ -42,9 +41,11 @@ module CuffSert
     cli_args = CuffSert.parse_cli_args(argv)
     CuffSert.validate_cli_args(cli_args)
     meta = CuffSert.build_meta(cli_args)
-    action = CuffSert.determine_action(meta, force_replace: cli_args[:force_replace]) do |a|
+    cfclient = RxCFClient.new(cli_args)
+    action = CuffSert.determine_action(meta, cfclient, force_replace: cli_args[:force_replace]) do |a|
       a.confirmation = CuffSert.method(:confirmation)
-      a.s3client = RxS3Client.new(cli_args[:s3_upload_prefix]) if cli_args[:s3_upload_prefix] 
+      a.s3client = RxS3Client.new(cli_args) if cli_args[:s3_upload_prefix]
+      a.cfclient = cfclient
     end
     renderer = CuffSert.make_renderer(cli_args)
     RendererPresenter.new(action.as_observable, renderer)

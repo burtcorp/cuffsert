@@ -15,6 +15,10 @@ describe CuffSert::RxCFClient do
       .and_return(DateTime.rfc3339('2013-08-23T01:02:00.000Z'))
   end
 
+  let :cli_args do
+    {}
+  end
+
   let :cfargs do
     {}
   end
@@ -29,7 +33,7 @@ describe CuffSert::RxCFClient do
         mock
       end
 
-      subject { described_class.new(aws_mock, pause: 0).find_stack_blocking(meta) }
+      subject { described_class.new(cli_args, aws_cf: aws_mock, pause: 0).find_stack_blocking(meta) }
 
       it { should include(:stack_name => stack_name) }
     end
@@ -48,7 +52,7 @@ describe CuffSert::RxCFClient do
         mock
       end
 
-      subject { described_class.new(aws_mock, pause: 0).find_stack_blocking(meta) }
+      subject { described_class.new(cli_args, aws_cf: aws_mock, pause: 0).find_stack_blocking(meta) }
 
       it { should be(nil) }
     end
@@ -76,7 +80,7 @@ describe CuffSert::RxCFClient do
         ]
       end
 
-      subject { described_class.new(aws_mock, pause: 0).create_stack(cfargs) }
+      subject { described_class.new(cli_args, aws_cf: aws_mock, pause: 0).create_stack(cfargs) }
 
       it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_done, s1_done) }
     end
@@ -89,7 +93,7 @@ describe CuffSert::RxCFClient do
         ]
       end
 
-      subject { described_class.new(aws_mock, pause: 0).create_stack(cfargs) }
+      subject { described_class.new(cli_args, aws_cf: aws_mock, pause: 0).create_stack(cfargs) }
 
       it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_deleted, s1_rolled) }
     end
@@ -103,7 +107,7 @@ describe CuffSert::RxCFClient do
       mock
     end
 
-    subject { described_class.new(aws_mock, pause: 0).prepare_update(cfargs) }
+    subject { described_class.new(cli_args, aws_cf: aws_mock, pause: 0).prepare_update(cfargs) }
 
     it 'returns change_set when ready' do
       expect(aws_mock).to receive(:describe_change_set)
@@ -142,7 +146,7 @@ describe CuffSert::RxCFClient do
       mock
     end
 
-    subject { described_class.new(aws_mock, pause: 0).update_stack(stack_id, change_set_id) }
+    subject { described_class.new(cli_args, aws_cf: aws_mock, pause: 0).update_stack(stack_id, change_set_id) }
 
     it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_done, s1_done) }
   end
@@ -157,7 +161,7 @@ describe CuffSert::RxCFClient do
       mock
     end
     
-    subject { described_class.new(aws_mock, pause: 0).abort_update(change_set_id) }
+    subject { described_class.new(cli_args, aws_cf: aws_mock, pause: 0).abort_update(change_set_id) }
     
     it 'returns observable which completes on change-set deletion' do
       should emit_exactly()
@@ -182,7 +186,7 @@ describe CuffSert::RxCFClient do
     context 'events when delete is succesful' do
       let(:cfargs) { {:stack_name => stack_id} }
 
-      subject { described_class.new(aws_mock, pause: 0).delete_stack(cfargs) }
+      subject { described_class.new(cli_args, aws_cf: aws_mock, pause: 0).delete_stack(cfargs) }
 
       it { should emit_exactly(r1_deleted, r2_deleting, r2_deleted, s1_deleted) }
     end

@@ -25,13 +25,7 @@ describe 'CuffSert#determine_action' do
   end
 
   subject do
-    CuffSert.determine_action(meta, :force_replace => force_replace, :cfclient => cfmock) { |_| }
-  end
-
-  shared_examples 'looking at the action' do
-    it 'gets a cloudformation client' do
-      expect(subject.cfclient).to eq(cfmock)
-    end
+    CuffSert.determine_action(meta, cfmock, :force_replace => force_replace) { |_| }
   end
 
   context 'not finding a matching stack' do
@@ -40,8 +34,6 @@ describe 'CuffSert#determine_action' do
     it 'creates it' do
       expect(subject).to be_a(CuffSert::CreateStackAction)
     end
-
-    include_examples 'looking at the action'
   end
 
   context 'finding rolled-back stack' do
@@ -50,8 +42,6 @@ describe 'CuffSert#determine_action' do
     it 'recreates the stack' do
       expect(subject).to be_a(CuffSert::RecreateStackAction)
     end
-
-    include_examples 'looking at the action'
   end
 
   context 'finding a completed stack but is explicitly asked to replace it' do
@@ -61,8 +51,6 @@ describe 'CuffSert#determine_action' do
     it 'recreates the stack' do
       expect(subject).to be_a(CuffSert::RecreateStackAction)
     end
-
-    include_examples 'looking at the action'
   end
 
   describe 'finding a completed stack' do
@@ -72,8 +60,6 @@ describe 'CuffSert#determine_action' do
     it 'updates the stack' do
       expect(subject).to be_a(CuffSert::UpdateStackAction)
     end
-
-    include_examples 'looking at the action'
   end
 
   context 'when a stack operation is already in progress' do
@@ -112,10 +98,12 @@ describe 'CuffSert#main' do
       allow(action).to receive(:as_observable).and_return(Rx::Observable.from([]))
       allow(action).to receive(:confirmation=)
       allow(action).to receive(:s3client=)
+      allow(action).to receive(:cfclient=)
     end
   end
 
   before do
+    allow(Aws::CloudFormation::Client).to receive(:new).and_return(double(:cf))
     allow(Aws::S3::Client).to receive(:new).and_return(double(:s3))
     expect(CuffSert).to receive(:determine_action).and_yield(action).and_return(action)
   end
@@ -124,6 +112,7 @@ describe 'CuffSert#main' do
     CuffSert.run(cli_args)
     expect(action).to have_received(:confirmation=)
     expect(action).not_to have_received(:s3client=)
+    expect(action).to have_received(:cfclient=)
   end
 
   context 'given --s3-upload-prefix' do

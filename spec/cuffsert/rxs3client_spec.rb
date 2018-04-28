@@ -8,9 +8,14 @@ describe CuffSert::RxS3Client do
   let(:s3_upload_prefix) { 's3://ze-bucket/ze/path' }
   let(:s3mock) { double(:s3mock) }
   let(:stack_uri) { URI.join('file:///', template_body.path) }
+  let(:cli_args) do 
+    {
+      s3_upload_prefix: s3_upload_prefix
+    }
+  end
 
   describe '#upload' do
-    subject { described_class.new(s3_upload_prefix, client: s3mock).upload(stack_uri) }
+    subject { described_class.new(cli_args, client: s3mock).upload(stack_uri) }
 
     let(:result_url) { subject[0] }
     let(:observable) { subject[1] }
