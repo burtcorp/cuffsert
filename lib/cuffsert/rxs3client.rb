@@ -3,9 +3,9 @@ require 'rx'
 
 module CuffSert
   class RxS3Client
-    def initialize(cli_args, client: Aws::S3::Client.new)
+    def initialize(cli_args, client: nil)
       @bucket, @path_prefix = split_prefix(cli_args[:s3_upload_prefix])
-      @client = client
+      @client = client || Aws::S3::Client.new(region: cli_args[:aws_region])
     end
 
     def upload(stack_uri)

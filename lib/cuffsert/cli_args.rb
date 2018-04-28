@@ -60,6 +60,10 @@ module CuffSert
         args[:overrides][:tags][key] = val
       end
 
+      opts.on('--region=aws_region', 'AWS region, overrides env variable AWS_REGION') do |region|
+        args[:aws_region] = region
+      end
+
       opts.on('--s3-upload-prefix=prefix', 'Templates > 51200 bytes are uploaded here. Format: s3://bucket-name/[pre/fix]') do |prefix|
         unless prefix.start_with?('s3://')
           raise "Upload prefix #{prefix} must start with s3://"

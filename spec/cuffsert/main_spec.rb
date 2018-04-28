@@ -108,19 +108,35 @@ describe 'CuffSert#main' do
     expect(CuffSert).to receive(:determine_action).and_yield(action).and_return(action)
   end
 
+  subject! { CuffSert.run(cli_args) }
+
   it 'works' do
-    CuffSert.run(cli_args)
     expect(action).to have_received(:confirmation=)
     expect(action).not_to have_received(:s3client=)
     expect(action).to have_received(:cfclient=)
+  end
+
+  context 'given --region' do
+    let(:cli_args) { super() + ['--region', 'eu-west-1'] }
+
+    it 'pass region to cloudformation client' do
+      expect(Aws::CloudFormation::Client).to have_received(:new).with(hash_including(:region => 'eu-west-1'))
+    end
   end
 
   context 'given --s3-upload-prefix' do
     let(:cli_args) { super() + ['--s3-upload-prefix', 's3://some-bucket'] }
 
     it 'assigns an S3 client' do
-      CuffSert.run(cli_args)
       expect(action).to have_received(:s3client=)
+    end
+  end
+
+  context 'given --s3-upload-prefix and --region' do
+    let(:cli_args) { super() + ['--region', 'eu-west-1', '--s3-upload-prefix', 's3://some-bucket'] }
+
+    it 'pass region to cloudformation client' do
+      expect(Aws::S3::Client).to have_received(:new).with(hash_including(:region => 'eu-west-1'))
     end
   end
 end

@@ -5,7 +5,7 @@ require 'rx'
 module CuffSert
   class RxCFClient
     def initialize(cli_args, **options)
-      @cf = options[:aws_cf] || Aws::CloudFormation::Client.new(retry_limit: 8)
+      @cf = options[:aws_cf] || Aws::CloudFormation::Client.new(region: cli_args[:aws_region], retry_limit: 8)
       @max_items = options[:max_items] || 1000
       @pause = options[:pause] || 5
     end
