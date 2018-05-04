@@ -55,9 +55,6 @@ module CuffSert
     end
 
     def on_event(event)
-      # Workaround for now
-      event = event.data if event.class == Seahorse::Client::Response
-
       case event
       when Aws::CloudFormation::Types::StackEvent
         on_stack_event(event)

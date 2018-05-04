@@ -110,8 +110,8 @@ describe CuffSert::RxCFClient do
         .at_least(:twice)
         .with(:change_set_name => change_set_id)
         .and_return(
-          change_set_in_progress,
-          change_set_ready
+          double(:seahorse_response, data: change_set_in_progress),
+          double(:seahorse_response, data: change_set_ready)
         )
       expect(subject).to emit_include(change_set_ready)
     end
@@ -120,7 +120,7 @@ describe CuffSert::RxCFClient do
       expect(aws_mock).to receive(:describe_change_set)
         .once
         .with(:change_set_name => change_set_id)
-        .and_return(change_set_failed)
+        .and_return(double(:seahorse_response, data: change_set_failed))
       expect(subject).to emit_include(change_set_failed)
     end
   end

@@ -36,8 +36,8 @@ module CuffSert
         change_set_id = @cf.create_change_set(cfargs)[:id]
         loop do
           change_set = @cf.describe_change_set(change_set_name: change_set_id)
-          if FINAL_STATES.include?(change_set[:status])
-            observer.on_next(change_set)
+          if FINAL_STATES.include?(change_set.data[:status])
+            observer.on_next(change_set.data)
             break
           end
         end
