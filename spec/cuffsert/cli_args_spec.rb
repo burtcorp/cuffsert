@@ -26,6 +26,7 @@ describe 'CuffSert#parse_cli_args' do
   it ['--tag=foo=bar'] { should have_overrides(:tags => {'foo' => 'bar'}) }
   it ['--name=foo'] { should have_overrides(:stackname => 'foo') }
   it ['--parameter', 'foo=bar'] { should have_overrides(:parameters => {'foo' => 'bar'}) }
+  it ['--region', 'eu-west-1'] { should include(:aws_region => 'eu-west-1') }
   it ['--s3-upload-prefix', 's3://foo/bar'] { should include(:s3_upload_prefix => 's3://foo/bar')}
   it ['--json'] { should include(:output => :json) }
   it ['--verbose'] { should include(:verbosity => 2) }

@@ -4,13 +4,12 @@ require 'rx'
 
 module CuffSert
   class RxCFClient
-    def initialize(
-        aws_cf = Aws::CloudFormation::Client.new(retry_limit: 8),
-        pause: 5,
-        max_items: 1000)
-      @cf = aws_cf
-      @max_items = max_items
-      @pause = pause
+    def initialize(cli_args, **options)
+      initargs = {retry_limit: 8}
+      initargs[:region] = cli_args[:aws_region] if cli_args[:aws_region]
+      @cf = options[:aws_cf] || Aws::CloudFormation::Client.new(initargs)
+      @max_items = options[:max_items] || 1000
+      @pause = options[:pause] || 5
     end
 
     def find_stack_blocking(meta)
