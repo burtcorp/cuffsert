@@ -18,4 +18,9 @@ module CuffSert
 
   class Abort < Message ; end
   class Report < Message ; end
+  class Done < Message
+    def initialize
+      super('Done.')
+    end
+  end
 end

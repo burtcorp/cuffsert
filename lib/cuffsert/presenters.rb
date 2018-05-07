@@ -5,7 +5,6 @@ require 'cuffsert/messages'
 require 'rx'
 
 # TODO: Animate in-progress states
-# - Introduce a Done message and stop printing in on_complete
 # - Present the error message in change_set properly - and abort
 # - badness goes to stderr
 # - change sets should present modification details indented under each entry
@@ -67,13 +66,14 @@ module CuffSert
         @renderer.report(event)
       when ::CuffSert::Abort
         @renderer.abort(event)
+      when ::CuffSert::Done
+        @renderer.done(event)
       else
         puts event
       end
     end
 
     def on_complete
-      @renderer.done
     end
 
     private
@@ -140,7 +140,7 @@ module CuffSert
     def resource(resource) ; end
     def report(message) ; end
     def abort(message) ; end
-    def done ; end
+    def done(event) ; end
   end
 
   class JsonRenderer < BaseRenderer
@@ -291,8 +291,8 @@ module CuffSert
       @error.write(event.message.colorize(:red) + "\n") unless @verbosity < 1
     end
 
-    def done
-      @output.write("\nDone.\n".colorize(:green)) unless @verbosity < 1
+    def done(event)
+      @output.write(event.message.colorize(:green) + "\n") unless @verbosity < 1
     end
 
     private
