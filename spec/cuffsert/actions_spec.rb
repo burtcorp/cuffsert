@@ -154,7 +154,7 @@ describe CuffSert::UpdateStackAction do
         .and_return(Rx::Observable.of(r1_done, r2_done))
 
       expect(subject).to emit_exactly(
-        change_set_ready, 
+        CuffSert::ChangeSet.new(change_set_ready), 
         r1_done, 
         r2_done, 
         CuffSert::Done.new
@@ -173,7 +173,10 @@ describe CuffSert::UpdateStackAction do
         .and_return(Rx::Observable.empty)
       expect(cfmock).not_to receive(:update_stack)
 
-      expect(subject).to emit_exactly(change_set_failed, CuffSert::Abort.new(/update failed:.*didn't contain/i))
+      expect(subject).to emit_exactly(
+        CuffSert::ChangeSet.new(change_set_failed), 
+        CuffSert::Abort.new(/update failed:.*didn't contain/i)
+      )
     end
   end
 
@@ -188,7 +191,10 @@ describe CuffSert::UpdateStackAction do
         .and_return(Rx::Observable.empty)
       expect(cfmock).not_to receive(:update_stack)
 
-      expect(subject).to emit_exactly(change_set_ready, CuffSert::Abort.new(/.*/))
+      expect(subject).to emit_exactly(
+        CuffSert::ChangeSet.new(change_set_ready), 
+        CuffSert::Abort.new(/.*/)
+      )
     end
   end
 end

@@ -53,7 +53,7 @@ module CuffSert
       upload_uri, maybe_upload = upload_template_if_oversized(cfargs)
       cfargs[:template_url] = upload_uri if upload_uri
       maybe_upload
-        .concat(@cfclient.prepare_update(cfargs))
+        .concat(@cfclient.prepare_update(cfargs).map {|change_set| CuffSert::ChangeSet.new(change_set) })
         .flat_map(&method(:on_event))
     end
 
@@ -62,8 +62,9 @@ module CuffSert
     def on_event(event)
       Rx::Observable.concat(
         Rx::Observable.just(event),
-        if event.is_a? Aws::CloudFormation::Types::DescribeChangeSetOutput
-          on_changeset(event)
+        case event
+        when CuffSert::ChangeSet
+          on_changeset(event.message)
         else
           Rx::Observable.empty
         end
