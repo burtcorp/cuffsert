@@ -162,6 +162,7 @@ end
 
 describe CuffSert::UpdateStackAction do
   include_context 'action setup'
+  include_context 'templates'
 
   let(:stack) { stack_complete }
   let(:change_set_stream) { Rx::Observable.of(change_set_ready) }
@@ -195,6 +196,7 @@ describe CuffSert::UpdateStackAction do
 
   before do
     allow(cfmock).to receive(:prepare_update).and_return(change_set_stream)
+    allow(cfmock).to receive(:get_template).and_return(Rx::Observable.just(template_source))
     allow(cfmock).to receive(:update_stack).and_return(Rx::Observable.empty)
   end
 
@@ -209,11 +211,14 @@ describe CuffSert::UpdateStackAction do
         .and_return(Rx::Observable.of(r1_done, r2_done))
 
       expect(subject.as_observable).to emit_exactly(
-        CuffSert::ChangeSet.new(change_set_ready), 
-        r1_done, 
-        r2_done, 
+        CuffSert::ChangeSet.new(change_set_ready),
+        CuffSert::CurrentTemplate.new(template_source),
+        r1_done,
+        r2_done,
         CuffSert::Done.new
       )
+      expect(cfmock).to have_received(:get_template)
+        .with(meta)
     end
 
     context 'but no template' do
@@ -244,7 +249,8 @@ describe CuffSert::UpdateStackAction do
       expect(cfmock).not_to receive(:update_stack)
 
       expect(subject.as_observable).to emit_exactly(
-        CuffSert::ChangeSet.new(change_set_failed), 
+        CuffSert::ChangeSet.new(change_set_failed),
+        CuffSert::CurrentTemplate.new(template_source),
         CuffSert::Abort.new(/update failed:.*didn't contain/i)
       )
     end
@@ -262,7 +268,8 @@ describe CuffSert::UpdateStackAction do
       expect(cfmock).not_to receive(:update_stack)
 
       expect(subject.as_observable).to emit_exactly(
-        CuffSert::ChangeSet.new(change_set_ready), 
+        CuffSert::ChangeSet.new(change_set_ready),
+        CuffSert::CurrentTemplate.new(template_source),
         CuffSert::Abort.new(/.*/)
       )
     end

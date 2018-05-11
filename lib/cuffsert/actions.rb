@@ -75,11 +75,24 @@ module CuffSert
       upload_uri, maybe_upload = upload_template_if_oversized(cfargs)
       cfargs[:template_url] = upload_uri if upload_uri
       maybe_upload
-        .concat(@cfclient.prepare_update(cfargs).map {|change_set| CuffSert::ChangeSet.new(change_set) })
+        .concat(prepare_update(cfargs))
         .flat_map(&method(:on_event))
     end
 
     private
+
+    def prepare_update(cfargs)
+      @cfclient.prepare_update(cfargs)
+        .map do |change_set|
+          CuffSert::ChangeSet.new(change_set)
+        end
+        .merge(
+          @cfclient.get_template(@meta)
+          .map do |template|
+            CuffSert::CurrentTemplate.new(template)
+          end
+        )
+    end
 
     def on_event(event)
       Rx::Observable.concat(
