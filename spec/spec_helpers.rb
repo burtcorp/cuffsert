@@ -1,4 +1,5 @@
 require 'aws-sdk-cloudformation'
+require 'json'
 require 'simplecov'
 
 SimpleCov.start
@@ -73,7 +74,8 @@ shared_context 'metadata' do
 end
 
 shared_context 'templates' do
-  let(:template_json) { '{}' }
+  let(:template_source) { {} }
+  let(:template_json) { JSON.dump(template_source) }
   let :template_body do
     body = Tempfile.new('template_body')
     body.write(template_json)
