@@ -148,7 +148,7 @@ describe CuffSert::UpdateStackAction do
   context 'given confirmation' do
     it 'updates an existing stack' do
       expect(cfmock).to receive(:prepare_update)
-        .with(CuffSert.as_update_change_set(meta))
+        .with(CuffSert.as_update_change_set(meta, stack_complete))
         .and_return(change_set_stream)
       expect(cfmock).to receive(:update_stack)
         .and_return(Rx::Observable.of(r1_done, r2_done))
@@ -160,6 +160,21 @@ describe CuffSert::UpdateStackAction do
         CuffSert::Done.new
       )
     end
+
+    context 'but no template' do
+      let :meta do
+        super().tap do |m|
+          m.stack_uri = nil
+        end
+      end
+
+      it 'says to use the existing template' do
+        expect(subject).to complete
+        expect(cfmock).to have_received(:prepare_update).with(
+          hash_including(:use_previous_template => true)
+        )
+      end
+    end
   end
 
   context 'when change set failed' do
@@ -167,7 +182,7 @@ describe CuffSert::UpdateStackAction do
 
     it 'does not update' do
       expect(cfmock).to receive(:prepare_update)
-        .with(CuffSert.as_update_change_set(meta))
+        .with(CuffSert.as_update_change_set(meta, stack_complete))
         .and_return(change_set_stream)
       expect(cfmock).to receive(:abort_update)
         .and_return(Rx::Observable.empty)
@@ -185,7 +200,7 @@ describe CuffSert::UpdateStackAction do
 
     it 'does not update' do
       expect(cfmock).to receive(:prepare_update)
-        .with(CuffSert.as_update_change_set(meta))
+        .with(CuffSert.as_update_change_set(meta, stack_complete))
         .and_return(change_set_stream)
       expect(cfmock).to receive(:abort_update)
         .and_return(Rx::Observable.empty)

@@ -33,7 +33,13 @@ module CuffSert
       end
     end
 
-    cfargs.merge!(self.template_parameters(meta))
+    if meta.stack_uri
+      cfargs[:use_previous_template] = false
+      cfargs.merge!(self.template_parameters(meta))
+    else
+      cfargs[:use_previous_template] = true
+    end
+    cfargs
   end
 
   def self.as_create_stack_args(meta)
@@ -46,11 +52,26 @@ module CuffSert
     cfargs
   end
 
-  def self.as_update_change_set(meta)
+  def self.as_update_change_set(meta, stack)
     cfargs = self.as_cloudformation_args(meta)
-    cfargs[:use_previous_template] = false
     cfargs[:change_set_name] = meta.stackname
     cfargs[:change_set_type] = 'UPDATE'
+    if cfargs[:use_previous_template]
+      Array(stack[:parameters]).each do |param|
+        key = param[:parameter_key]
+        unless meta.parameters.include?(key)
+          cfargs[:parameters] ||= []
+          cfargs[:parameters] << {:parameter_key => key, :use_previous_value => true}
+        end
+      end
+    end
+    if cfargs[:use_previous_template] && !meta.tags.empty?
+      Array(stack[:tags]).each do |tag|
+        unless meta.tags.include?(tag[:key])
+          cfargs[:tags] << tag
+        end
+      end
+    end
     cfargs
   end
 

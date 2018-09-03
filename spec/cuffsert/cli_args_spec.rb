@@ -118,7 +118,18 @@ describe 'CuffSert#validate_cli_args' do
   end
 
   context 'when no stack path' do
-    let(:cli_args) { super().merge({:stack_path => []}) }
-    it { expect { subject }.to raise_error(/exactly one.*template/i) }
+    let :cli_args do
+      super().tap do |args|
+        args[:overrides][:stackname] = 'some-stack'
+        args[:stack_path] = []
+      end
+    end
+
+    it { expect { subject }.not_to raise_error }
+  end
+
+  context 'with multiple stack paths' do
+    let(:cli_args) { super().merge({:stack_path => ['foo', 'bar']}) }
+    it { expect { subject }.to raise_error(/one.*template/i) }
   end
 end

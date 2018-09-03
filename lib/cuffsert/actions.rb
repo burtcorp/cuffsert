@@ -16,13 +16,21 @@ module CuffSert
     end
 
     def upload_template_if_oversized(cfargs)
-      if cfargs[:template_body].nil? && cfargs[:template_url].nil?
+      if needs_template_upload?(cfargs)
         raise 'Template bigger than 51200; please supply --s3-upload-prefix' unless @s3client
         uri, progress = @s3client.upload(@meta.stack_uri)
         [CuffSert.s3_uri_to_https(uri).to_s, progress]
       else
         [nil, Rx::Observable.empty]
       end
+    end
+
+    private
+
+    def needs_template_upload?(cfargs)
+      cfargs[:template_body].nil? &&
+        cfargs[:template_url].nil? &&
+        !cfargs[:use_previous_template]
     end
   end
 
@@ -49,7 +57,7 @@ module CuffSert
 
   class UpdateStackAction < BaseAction
     def as_observable
-      cfargs = CuffSert.as_update_change_set(@meta)
+      cfargs = CuffSert.as_update_change_set(@meta, @stack)
       upload_uri, maybe_upload = upload_template_if_oversized(cfargs)
       cfargs[:template_url] = upload_uri if upload_uri
       maybe_upload
