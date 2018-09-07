@@ -24,6 +24,12 @@ describe '#as_create_stack_args' do
   context 'when stack uri is an s3 url' do
     it { should include(:template_url => amazonaws_url) }
     it { should_not include(:template_body) }
+    
+    context 'and a region is specified' do
+      let(:meta) { super().tap {|m| m.aws_region = 'rp-north-1' } }
+      
+      it { should include(:template_url => 'https://s3-rp-north-1.amazonaws.com/foo/bar') }
+    end
   end
 
   context 'when stack uri is an amazonaws https uri' do

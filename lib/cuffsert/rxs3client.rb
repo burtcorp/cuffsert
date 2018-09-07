@@ -3,10 +3,10 @@ require 'rx'
 
 module CuffSert
   class RxS3Client
-    def initialize(cli_args, client: nil)
+    def initialize(cli_args, aws_region = nil, client: nil)
       @bucket, @path_prefix = split_prefix(cli_args[:s3_upload_prefix])
       initargs = {retry_limit: 8}
-      initargs[:region] = cli_args[:aws_region] if cli_args[:aws_region]
+      initargs[:region] = aws_region if aws_region
       @client = client || Aws::S3::Client.new(initargs)
     end
 

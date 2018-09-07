@@ -147,6 +147,7 @@ describe CuffSert do
     
     it { should have_attributes(:stack_uri => URI.parse("file://#{template_body.path}")) }
     it { should have_attributes(:parameters => include('from_template' => nil)) }
+    it { should have_attributes(:aws_region => 'us-east-1') }
     
     context 'given a parameter override' do
       let(:overrides) do 
@@ -185,11 +186,30 @@ describe CuffSert do
       it { should have_attributes(:parameters => {}) }
     end
 
+    context 'given environment variable' do
+      before do
+        @old_aws_region = ENV['AWS_REGION']
+        ENV['AWS_REGION'] = 'from-env'
+      end
+      
+      after do
+        ENV['AWS_REGION'] = @old_aws_region
+      end
+      
+      it { should have_attributes(:aws_region => 'from-env') }
+      
+      context 'when overridden by --region cli arg' do
+        let(:cli_args) { super().merge({:aws_region => 'rp-north-1'}) }
+
+        it { should have_attributes(:aws_region => 'rp-north-1') }
+      end
+    end
+
     context 'safe by default' do
       it { should_not have_attributes(:op_mode => :dangerous_ok) }
     end
 
-    context 'given cil arg' do
+    context 'given --yes cli arg' do
       let(:cli_args) { super().merge({:op_mode => :dangerous_ok}) }
 
       it { should have_attributes(:op_mode => :dangerous_ok) }

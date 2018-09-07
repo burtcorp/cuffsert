@@ -3,10 +3,11 @@ require 'yaml'
 
 module CuffSert
   class StackConfig
-    attr_accessor :stackname, :selected_path, :op_mode, :stack_uri
+    attr_accessor :aws_region, :stackname, :selected_path, :op_mode, :stack_uri
     attr_accessor :suffix, :parameters, :tags
 
     def initialize
+      @aws_region = ENV['AWS_REGION'] || ENV['AWS_DEFAULT_REGION'] || 'us-east-1'
       @selected_path = []
       @op_mode = :normal
       @parameters = {}
@@ -105,6 +106,7 @@ module CuffSert
 
   def self.cli_overrides(meta, cli_args)
     meta.update_from(cli_args[:overrides])
+    meta.aws_region = cli_args[:aws_region] || meta.aws_region
     meta.op_mode = cli_args[:op_mode] || meta.op_mode
     if (stack_path = (cli_args[:stack_path] || [])[0])
       meta.stack_uri = CuffSert.validate_and_urlify(stack_path)

@@ -19,7 +19,7 @@ module CuffSert
       if needs_template_upload?(cfargs)
         raise 'Template bigger than 51200; please supply --s3-upload-prefix' unless @s3client
         uri, progress = @s3client.upload(@meta.stack_uri)
-        [CuffSert.s3_uri_to_https(uri).to_s, progress]
+        [CuffSert.s3_uri_to_https(uri, @meta.aws_region).to_s, progress]
       else
         [nil, Rx::Observable.empty]
       end

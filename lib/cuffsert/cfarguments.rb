@@ -76,8 +76,7 @@ module CuffSert
     { :stack_name => stack[:stack_id] }
   end
 
-  def self.s3_uri_to_https(uri)
-    region = ENV['AWS_REGION'] || ENV['AWS_DEFAULT_REGION'] || 'us-east-1'
+  def self.s3_uri_to_https(uri, region)
     bucket = uri.host
     key = uri.path
     host = region == 'us-east-1' ? 's3.amazonaws.com' : "s3-#{region}.amazonaws.com"
@@ -95,7 +94,7 @@ module CuffSert
     template_parameters = {}
 
     if meta.stack_uri.scheme == 's3'
-      template_parameters[:template_url] = self.s3_uri_to_https(meta.stack_uri)
+      template_parameters[:template_url] = self.s3_uri_to_https(meta.stack_uri, meta.aws_region)
     elsif meta.stack_uri.scheme == 'https'
       if meta.stack_uri.host.end_with?('amazonaws.com')
         template_parameters[:template_url] = meta.stack_uri.to_s
