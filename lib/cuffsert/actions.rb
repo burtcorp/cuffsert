@@ -35,6 +35,12 @@ module CuffSert
   end
 
   class CreateStackAction < BaseAction
+    def validate!
+      if @meta.stack_uri.nil?
+        raise "You need to pass a template to create #{@meta.stackname}" # in #{@meta.aws_region}."
+      end
+    end
+
     def as_observable
       cfargs = CuffSert.as_create_stack_args(@meta)
       upload_uri, maybe_upload = upload_template_if_oversized(cfargs)
@@ -56,6 +62,14 @@ module CuffSert
   end
 
   class UpdateStackAction < BaseAction
+    def validate!
+      if @meta.stack_uri.nil?
+        if @meta.parameters.empty? && @meta.tags.empty?
+          raise "Stack update without template needs at least one parameter (-p) or tag (-t)."
+        end
+      end
+    end
+
     def as_observable
       cfargs = CuffSert.as_update_change_set(@meta, @stack)
       upload_uri, maybe_upload = upload_template_if_oversized(cfargs)
@@ -97,6 +111,12 @@ module CuffSert
   end
 
   class RecreateStackAction < BaseAction
+    def validate!
+      if @meta.stack_uri.nil?
+        raise "You need to pass a template to re-create #{@meta.stackname}" # in #{@meta.aws_region}."
+      end
+    end
+
     def as_observable
       crt_args = CuffSert.as_create_stack_args(@meta)
       del_args = CuffSert.as_delete_stack_args(@stack)
