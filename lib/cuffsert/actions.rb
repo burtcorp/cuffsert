@@ -62,11 +62,13 @@ module CuffSert
     def on_event(event)
       Rx::Observable.concat(
         Rx::Observable.just(event),
-        case event
-        when CuffSert::ChangeSet
-          on_changeset(event.message)
-        else
-          Rx::Observable.empty
+        Rx::Observable.defer do
+          case event
+          when CuffSert::ChangeSet
+            on_changeset(event.message)
+          else
+            Rx::Observable.empty
+          end
         end
       )
     end
