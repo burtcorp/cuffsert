@@ -11,7 +11,7 @@ describe '#as_create_stack_args' do
   subject { CuffSert.as_create_stack_args(meta) }
 
   it { should include(:timeout_in_minutes => CuffSert::TIMEOUT) }
-  it { should_not include(:change_set_name) }
+  it { should_not include(:change_set_name, :use_previous_template) }
 
   context 'given tags' do
     let(:meta) { super().tap { |m| m.tags = {'k1' => 'v1', 'k2' => 'v2'} } }
