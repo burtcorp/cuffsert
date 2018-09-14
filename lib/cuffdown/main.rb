@@ -1,8 +1,23 @@
+require 'cuffbase'
 require 'cuffsert/metadata'
 require 'cuffsert/rxcfclient'
+require 'optparse'
 require 'yaml'
 
 module CuffDown
+  def self.parse_cli_args(argv)
+    args = {}
+    parser = OptionParser.new do |opts|
+      opts.banner = 'Output CuffSert-formatted metadata from an existing stack.'
+      opts.separator('')
+      opts.separator('Usage: cuffdown stack-name')
+      CuffBase.shared_cli_args(opts, args)
+    end
+    stackname, _ = parser.parse(argv)
+    args[:stackname] = stackname
+    args
+  end
+
   def self.parameters(stack)
     (stack[:parameters] || []).map do |param|
       {
@@ -31,10 +46,11 @@ module CuffDown
     YAML.dump(result, output)
   end
 
-  def self.run(args, output)
+  def self.run(argv, output)
+    cli_args = self.parse_cli_args(argv)
     meta = CuffSert::StackConfig.new
-    meta.stackname = args[0]
-    client = CuffSert::RxCFClient.new({})
+    meta.stackname = cli_args[:stackname]
+    client = CuffSert::RxCFClient.new(cli_args[:aws_region])
     stack = client.find_stack_blocking(meta)
     unless stack
       STDERR.puts "No such stack #{meta.stackname}"

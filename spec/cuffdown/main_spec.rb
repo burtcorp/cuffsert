@@ -26,5 +26,13 @@ describe CuffDown do
     it 'outputs parameter values for the stack' do
       expect(output.string).to match(/Name: p1.*Value: v1/m)
     end
+
+    context 'when invoked with an explicit region' do
+      let(:cli_args) { ['--region', 'rp-north-1', 'stack-name'] }
+
+      it 'passes region to the ClodFormation client' do
+        expect(Aws::CloudFormation::Client).to have_received(:new).with(hash_including(:region => 'rp-north-1'))
+      end
+    end
   end
 end
