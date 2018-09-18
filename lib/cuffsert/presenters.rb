@@ -2,6 +2,7 @@ require 'aws-sdk-cloudformation'
 require 'colorize'
 require 'cuffsert/cfstates'
 require 'cuffsert/messages'
+require 'hashdiff'
 require 'rx'
 
 # TODO: Animate in-progress states
@@ -291,6 +292,13 @@ module CuffSert
         :color => :white,
         :background => color
       ))
+    end
+
+    def templates(current, pending)
+      @current_template = current
+      @pending_template = pending
+      @template_changes = HashDiff.best_diff(current, pending, array_path: true)
+      @template_changes.each {|c| p c} if ENV['CUFFSERT_EXPERIMENTAL']
     end
 
     def report(event)
