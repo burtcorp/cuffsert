@@ -119,6 +119,12 @@ describe CuffSert do
       it { should have_attributes(:parameters => {'plevel' => 'level2_b'}) }
       it { should have_attributes(:stackname => 'level1_b-level2_b-stack') }
     end
+
+    context 'from "level1_b/level2_b/level3_b"', :path => ['level1_c', 'level2_a', 'level3_a'] do
+      it { should have_attributes(:tags => {'tlevel' => 'top'}) }
+      it { should have_attributes(:parameters => {'plevel' => 'level3_a'}) }
+      it { should have_attributes(:stackname => 'level1_c-level2_a-level3_a') }
+    end
   end
 
   describe '#build_meta' do

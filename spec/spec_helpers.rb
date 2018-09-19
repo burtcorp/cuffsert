@@ -39,6 +39,15 @@ Variants:
        Parameters:
          - Name: plevel
            Value: level2_b
+ level1_c:
+   Variants:
+     level2_a:
+       Variants:
+         level3_a:
+           Parameters:
+             - Name: plevel
+               Value: level3_a
+
 EOF
   end
 
