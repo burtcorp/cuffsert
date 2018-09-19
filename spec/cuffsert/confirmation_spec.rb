@@ -40,7 +40,24 @@ describe 'CuffSert#need_confirmation' do
     let(:change_set_changes) { [r3_delete] }
     it { should be(true) }
   end
-  
+
+  context 'given always_ask' do
+    let :local_meta do
+      meta.op_mode = :always_ask
+      meta
+    end
+
+    context 'with adds' do
+      let(:change_set_changes) { [r2_add] }
+      it { should be(true) }
+    end
+
+    context 'with non-replace modify' do
+      let(:change_set_changes) { [r1_modify] }
+      it { should be(true) }
+    end
+  end
+
   context 'given dangerous_ok' do
     let :local_meta do
       meta.op_mode = :dangerous_ok

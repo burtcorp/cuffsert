@@ -33,6 +33,7 @@ describe 'CuffSert#parse_cli_args' do
   it ['-v', '-v'] { should include(:verbosity => 3) }
   it ['--quiet'] { should include(:verbosity => 0) }
   it ['--replace'] { should include(:force_replace => true) }
+  it ['--ask'] { should include(:op_mode => :always_ask) }
   it ['--yes'] { should include(:op_mode => :dangerous_ok) }
   it ['--dry-run'] { should include(:op_mode => :dry_run) }
 
@@ -60,8 +61,12 @@ describe 'CuffSert#parse_cli_args' do
     expect { subject }.to raise_error(/--name.*\*foo/)
   end
 
+  it 'rejects --ask --dry-run', :argv => ['--ask', '--dry-run'] do
+    expect { subject }.to raise_error(/--yes.* --dry-run/)
+  end
+
   it 'rejects --yes --dry-run', :argv => ['--yes', '--dry-run'] do
-    expect { subject }.to raise_error(/--yes and --dry-run/)
+    expect { subject }.to raise_error(/--ask.* --dry-run/)
   end
 
   it 'rejects s3 upload prefix not starting with s3:', :argv => ['--s3-upload-prefix', 'foobar'] do
