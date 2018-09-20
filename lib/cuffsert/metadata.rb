@@ -57,7 +57,7 @@ module CuffSert
 
   def self.meta_for_path(metadata, path, target = StackConfig.new)
     target.update_from(metadata)
-    candidate, path = path
+    candidate, *path = path
     key = candidate || metadata[:defaultpath]
     variants = metadata[:variants]
     if key.nil?
