@@ -91,13 +91,18 @@ module CuffSert
         args[:force_replace] = true
       end
 
+      opts.on('--ask', 'Always ask for confirmation') do
+        raise 'You can only use one of --yes, --ask and --dry-run' if args[:op_mode]
+        args[:op_mode] = :always_ask
+      end
+
       opts.on('--yes', '-y', 'Don\'t ask to replace and delete stack resources') do
-        raise 'You cannot do --yes and --dry-run at the same time' if args[:op_mode]
+        raise 'You can only use one of --yes, --ask and --dry-run' if args[:op_mode]
         args[:op_mode] = :dangerous_ok
       end
 
       opts.on('--dry-run', 'Describe what would be done') do
-        raise 'You cannot do --yes and --dry-run at the same time' if args[:op_mode]
+        raise 'You can only use one of --yes, --ask and --dry-run' if args[:op_mode]
         args[:op_mode] = :dry_run
       end
 

@@ -2,6 +2,7 @@ require 'termios'
 
 module CuffSert
   def self.need_confirmation(meta, action, desc)
+    return true if meta.op_mode == :always_ask
     return false if meta.op_mode == :dangerous_ok
     case action
     when :create
