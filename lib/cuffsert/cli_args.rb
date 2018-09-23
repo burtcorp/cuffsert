@@ -1,4 +1,5 @@
 require 'optparse'
+require 'cuffbase'
 require 'cuffsert/version'
 
 module CuffSert
@@ -23,6 +24,9 @@ module CuffSert
       opts.separator('  cuffsert --name <stackname> {--parameter Name=Value | --tag Name=Value}... [stack.json]')
       opts.separator('  cuffsert --metadata <metadata.json> --selector <path/in/metadata> stack.json')
       opts.separator('  cuffsert --metadata <metadata.json> --selector <path/in/metadata> {--parameter Name=Value | --tag Name=Value}... [stack.json]')
+
+      CuffBase.shared_cli_args(opts, args)
+
       opts.on('--metadata path', '-m path', 'Yaml file to read stack metadata from') do |path|
         path = '/dev/stdin' if path == '-'
         unless File.exist?(path)
@@ -62,10 +66,6 @@ module CuffSert
           raise "cli args include duplicate tag #{key}"
         end
         args[:overrides][:tags][key] = val
-      end
-
-      opts.on('--region=aws_region', 'AWS region, overrides env variable AWS_REGION') do |region|
-        args[:aws_region] = region
       end
 
       opts.on('--s3-upload-prefix=prefix', 'Templates > 51200 bytes are uploaded here. Format: s3://bucket-name/[pre/fix]') do |prefix|

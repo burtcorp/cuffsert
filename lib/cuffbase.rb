@@ -1,6 +1,12 @@
 require 'yaml'
 
 module CuffBase
+  def self.shared_cli_args(opts, args)
+    opts.on('--region=aws_region', 'AWS region, overrides env variable AWS_REGION') do |region|
+      args[:aws_region] = region
+    end
+  end
+
   def self.empty_from_template(io)
     self.template_parameters(io) {|_| nil }
   end
