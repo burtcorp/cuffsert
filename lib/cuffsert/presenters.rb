@@ -57,8 +57,8 @@ module CuffSert
       case event
       when Aws::CloudFormation::Types::StackEvent
         on_stack_event(event)
-      when Aws::CloudFormation::Types::DescribeChangeSetOutput
-        on_change_set(event)
+      when ::CuffSert::ChangeSet
+        on_change_set(event.message)
       # when [:recreate, Aws::CloudFormation::Types::Stack]
       when Array
         on_stack(*event)

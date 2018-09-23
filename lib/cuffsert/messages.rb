@@ -23,4 +23,5 @@ module CuffSert
       super('Done.')
     end
   end
+  class ChangeSet < Message ; end
 end

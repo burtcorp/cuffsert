@@ -53,34 +53,38 @@ module CuffSert
       upload_uri, maybe_upload = upload_template_if_oversized(cfargs)
       cfargs[:template_url] = upload_uri if upload_uri
       maybe_upload
-        .concat(@cfclient.prepare_update(cfargs))
-        .flat_map do |change_set|
-          if change_set.is_a? Aws::CloudFormation::Types::DescribeChangeSetOutput
-            Rx::Observable.concat(
-              Rx::Observable.of(change_set),
-              Rx::Observable.defer {
-                if change_set[:status] == 'FAILED'
-                  Rx::Observable.concat(
-                    @cfclient.abort_update(change_set[:change_set_id]),
-                    Abort.new("Update failed: #{change_set[:status_reason]}").as_observable
-                  )
-                elsif @confirmation.call(@meta, :update, change_set)
-                  Rx::Observable.concat(
-                    @cfclient.update_stack(change_set[:stack_id], change_set[:change_set_id]),
-                    Done.new.as_observable
-                  )
-                else
-                  Rx::Observable.concat(
-                    @cfclient.abort_update(change_set[:change_set_id]),
-                    Abort.new('User abort!').as_observable
-                  )
-                end
-              }
-            )
+        .concat(@cfclient.prepare_update(cfargs).map {|change_set| CuffSert::ChangeSet.new(change_set) })
+        .flat_map(&method(:on_event))
+    end
+
+    private
+
+    def on_event(event)
+      Rx::Observable.concat(
+        Rx::Observable.just(event),
+        Rx::Observable.defer do
+          case event
+          when CuffSert::ChangeSet
+            on_changeset(event.message)
           else
-            Rx::Observable.just(change_set)
+            Rx::Observable.empty
           end
         end
+      )
+    end
+
+    def on_changeset(change_set)
+      if change_set[:status] == 'FAILED'
+        message = "Update failed: #{change_set[:status_reason]}"
+        @cfclient.abort_update(change_set[:change_set_id])
+          .concat(Abort.new(message).as_observable)
+      elsif @confirmation.call(@meta, :update, change_set)
+        @cfclient.update_stack(change_set[:stack_id], change_set[:change_set_id])
+          .concat(Done.new.as_observable)
+      else
+        @cfclient.abort_update(change_set[:change_set_id])
+          .concat(Abort.new('User abort!').as_observable)
+      end
     end
   end
 
