@@ -21,7 +21,7 @@ shared_context 'action setup' do
     action.cfclient = cfmock
     action.s3client = s3mock
     action.confirmation = confirm_update
-    action.as_observable
+    action
   end
 end
 
@@ -39,7 +39,7 @@ shared_examples 'uploading' do
       end
 
       it 'uploads template' do
-        expect(subject).to complete
+        expect(subject.as_observable).to complete
         expect(s3mock).to have_received(:upload).with(stack_path)
       end
     end
@@ -48,7 +48,7 @@ shared_examples 'uploading' do
       let(:s3mock) { nil }
 
       it 'raise error if we received no S3 client' do
-        expect { subject }.to raise_error(RuntimeError, /supply.*--s3-upload-prefix/i)
+        expect { subject.as_observable }.to raise_error(RuntimeError, /supply.*--s3-upload-prefix/i)
       end
     end
   end
@@ -58,6 +58,20 @@ describe CuffSert::CreateStackAction do
   include_context 'action setup'
 
   let(:stack) { nil }
+
+  describe '#validate!' do
+    it 'raises no error when all conditions are met' do
+      expect { subject.validate! }.not_to raise_error
+    end
+    
+    context 'given no template' do
+      let(:meta) { super().tap {|m| m.stack_uri = nil } }
+      
+      it 'raises an error' do
+        expect { subject.validate! }.to raise_error(RuntimeError, /template to create/)
+      end
+    end
+  end
 
   before do
     allow(cfmock).to receive(:create_stack).and_return(Rx::Observable.empty)
@@ -69,7 +83,7 @@ describe CuffSert::CreateStackAction do
     expect(cfmock).to receive(:create_stack)
       .with(CuffSert.as_create_stack_args(meta))
       .and_return(Rx::Observable.of(r1_done, r2_done))
-    expect(subject).to emit_exactly(
+    expect(subject.as_observable).to emit_exactly(
       [:create, stack_name],
       r1_done,
       r2_done,
@@ -81,7 +95,7 @@ describe CuffSert::CreateStackAction do
     let(:confirm_update) { lambda { |*_| false } }
 
     it 'takes no action' do
-      expect(subject).to emit_exactly(
+      expect(subject.as_observable).to emit_exactly(
         [:create, stack_name],
         CuffSert::Abort.new(/.*/)
       )
@@ -93,6 +107,20 @@ describe CuffSert::RecreateStackAction do
   include_context 'action setup'
 
   let(:stack) { stack_rolled_back }
+
+  describe '#validate!' do
+    it 'raises no error when all conditions are met' do
+      expect { subject.validate! }.not_to raise_error
+    end
+    
+    context 'given no template' do
+      let(:meta) { super().tap {|m| m.stack_uri = nil } }
+      
+      it 'raises an error' do
+        expect { subject.validate! }.to raise_error(RuntimeError, /template to re-create/)
+      end
+    end
+  end
 
   before do
     allow(cfmock).to receive(:delete_stack).and_return(Rx::Observable.empty)
@@ -108,7 +136,7 @@ describe CuffSert::RecreateStackAction do
     expect(cfmock).to receive(:create_stack)
       .with(CuffSert.as_create_stack_args(meta))
       .and_return(Rx::Observable.of(r1_done, r2_done))
-    expect(subject).to emit_exactly(
+    expect(subject.as_observable).to emit_exactly(
       [:recreate, stack_rolled_back],
       r1_deleted,
       r2_deleted,
@@ -124,7 +152,7 @@ describe CuffSert::RecreateStackAction do
     it 'aborts with neither deletion nor creation' do
       expect(cfmock).not_to receive(:delete_stack)
       expect(cfmock).not_to receive(:create_stack)
-      expect(subject).to emit_exactly(
+      expect(subject.as_observable).to emit_exactly(
         [:recreate, stack_rolled_back],
         CuffSert::Abort.new(/.*/)
       )
@@ -138,6 +166,33 @@ describe CuffSert::UpdateStackAction do
   let(:stack) { stack_complete }
   let(:change_set_stream) { Rx::Observable.of(change_set_ready) }
 
+  describe '#validate!' do
+    it 'raises no error when all conditions are met' do
+      expect { subject.validate! }.not_to raise_error
+    end
+    
+    context 'given no template' do
+      let(:meta) do
+        super().tap do |m|
+          m.stack_uri = nil
+          m.tags = {'t' => 'v'}
+        end
+      end
+
+      it 'raises no error since there are tags' do
+        expect { subject.validate! }.not_to raise_error
+      end
+
+      context 'and no tags or parameters' do
+        let(:meta) { super().tap {|m| m.tags = {} } }
+
+        it 'raises an error' do
+          expect { subject.validate! }.to raise_error(RuntimeError, /update without template/)
+        end
+      end
+    end
+  end
+
   before do
     allow(cfmock).to receive(:prepare_update).and_return(change_set_stream)
     allow(cfmock).to receive(:update_stack).and_return(Rx::Observable.empty)
@@ -148,17 +203,32 @@ describe CuffSert::UpdateStackAction do
   context 'given confirmation' do
     it 'updates an existing stack' do
       expect(cfmock).to receive(:prepare_update)
-        .with(CuffSert.as_update_change_set(meta))
+        .with(CuffSert.as_update_change_set(meta, stack))
         .and_return(change_set_stream)
       expect(cfmock).to receive(:update_stack)
         .and_return(Rx::Observable.of(r1_done, r2_done))
 
-      expect(subject).to emit_exactly(
+      expect(subject.as_observable).to emit_exactly(
         CuffSert::ChangeSet.new(change_set_ready), 
         r1_done, 
         r2_done, 
         CuffSert::Done.new
       )
+    end
+
+    context 'but no template' do
+      let :meta do
+        super().tap do |m|
+          m.stack_uri = nil
+        end
+      end
+
+      it 'says to use the existing template' do
+        expect(subject.as_observable).to complete
+        expect(cfmock).to have_received(:prepare_update).with(
+          hash_including(:use_previous_template => true)
+        )
+      end
     end
   end
 
@@ -167,13 +237,13 @@ describe CuffSert::UpdateStackAction do
 
     it 'does not update' do
       expect(cfmock).to receive(:prepare_update)
-        .with(CuffSert.as_update_change_set(meta))
+        .with(CuffSert.as_update_change_set(meta, stack))
         .and_return(change_set_stream)
       expect(cfmock).to receive(:abort_update)
         .and_return(Rx::Observable.empty)
       expect(cfmock).not_to receive(:update_stack)
 
-      expect(subject).to emit_exactly(
+      expect(subject.as_observable).to emit_exactly(
         CuffSert::ChangeSet.new(change_set_failed), 
         CuffSert::Abort.new(/update failed:.*didn't contain/i)
       )
@@ -185,13 +255,13 @@ describe CuffSert::UpdateStackAction do
 
     it 'does not update' do
       expect(cfmock).to receive(:prepare_update)
-        .with(CuffSert.as_update_change_set(meta))
+        .with(CuffSert.as_update_change_set(meta, stack))
         .and_return(change_set_stream)
       expect(cfmock).to receive(:abort_update)
         .and_return(Rx::Observable.empty)
       expect(cfmock).not_to receive(:update_stack)
 
-      expect(subject).to emit_exactly(
+      expect(subject.as_observable).to emit_exactly(
         CuffSert::ChangeSet.new(change_set_ready), 
         CuffSert::Abort.new(/.*/)
       )

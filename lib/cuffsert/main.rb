@@ -47,6 +47,7 @@ module CuffSert
       a.s3client = RxS3Client.new(cli_args) if cli_args[:s3_upload_prefix]
       a.cfclient = cfclient
     end
+    action.validate!
     renderer = CuffSert.make_renderer(cli_args)
     RendererPresenter.new(action.as_observable, renderer)
   end

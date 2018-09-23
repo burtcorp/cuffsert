@@ -99,6 +99,7 @@ describe 'CuffSert#main' do
       allow(action).to receive(:confirmation=)
       allow(action).to receive(:s3client=)
       allow(action).to receive(:cfclient=)
+      allow(action).to receive(:validate!)
     end
   end
 
@@ -110,10 +111,11 @@ describe 'CuffSert#main' do
 
   subject! { CuffSert.run(cli_args) }
 
-  it 'works' do
+  it 'prepares the action', :aggregate_failures do
     expect(action).to have_received(:confirmation=)
     expect(action).not_to have_received(:s3client=)
     expect(action).to have_received(:cfclient=)
+    expect(action).to have_received(:validate!)
   end
 
   context 'given --region' do

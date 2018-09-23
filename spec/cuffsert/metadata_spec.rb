@@ -179,6 +179,12 @@ describe CuffSert do
       end
     end
 
+    context 'given no stack path' do
+      let(:cli_args) { super().merge(:stack_path => nil) }
+      it { should have_attributes(:stack_uri => nil) }
+      it { should have_attributes(:parameters => {}) }
+    end
+
     context 'safe by default' do
       it { should_not have_attributes(:op_mode => :dangerous_ok) }
     end

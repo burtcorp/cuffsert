@@ -18,7 +18,11 @@ module CuffSert
     parser = OptionParser.new do |opts|
       opts.banner = "Upsert a CloudFormation template, reading creation options and metadata from a yaml file. Currently, parameter values, stack name and stack tags are read from metadata file. Version #{CuffSert::VERSION}."
       opts.separator('')
-      opts.separator('Usage: cuffsert --selector production/us stack.json')
+      opts.separator('Usage:')
+      opts.separator('  cuffsert --name <stackname> stack.json')
+      opts.separator('  cuffsert --name <stackname> {--parameter Name=Value | --tag Name=Value}... [stack.json]')
+      opts.separator('  cuffsert --metadata <metadata.json> --selector <path/in/metadata> stack.json')
+      opts.separator('  cuffsert --metadata <metadata.json> --selector <path/in/metadata> {--parameter Name=Value | --tag Name=Value}... [stack.json]')
       opts.on('--metadata path', '-m path', 'Yaml file to read stack metadata from') do |path|
         path = '/dev/stdin' if path == '-'
         unless File.exist?(path)
@@ -109,21 +113,21 @@ module CuffSert
       args
     end
   end
-  
+
   def self.validate_cli_args(cli_args)
     errors = []
-    if cli_args[:stack_path].nil? || cli_args[:stack_path].size != 1
-      errors << 'Requires exactly one template'
+    if cli_args[:stack_path] != nil && cli_args[:stack_path].size > 1
+      errors << 'Require at most one template'
     end
 
     if cli_args[:metadata].nil? && cli_args[:overrides][:stackname].nil?
       errors << 'Without --metadata, you must supply --name to identify stack to update'
     end
-    
+
     if cli_args[:selector] && cli_args[:metadata].nil?
       errors << 'You cannot use --selector without --metadata'
     end
-    
+
     raise errors.join(', ') unless errors.empty?
   end
 end

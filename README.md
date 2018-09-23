@@ -14,7 +14,11 @@ If `./my-template.json` has no parameters the above command would create the sta
 
 If you also want to provide a value for a stack parameter (whether on creation or update), you can use `-p key=value` to pass parameters. For all other parameters, cuffsert will tell CloudFormation to use the existing value.
 
-Cuffsert can not (yet) be executed without a template in order to only change parameters.
+Cuffsert can also be executed by naming an existing stack and no template in order to only change parameters, e.g.
+
+```bash
+cuffsert -n my-stack -p MyDesiredCapacity=8
+```
 
 ## Parameters under version control
 

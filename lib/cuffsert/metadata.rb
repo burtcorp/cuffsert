@@ -82,8 +82,9 @@ module CuffSert
   private_class_method
 
   def self.meta_defaults(cli_args)
-    if File.exists?(cli_args[:stack_path][0])
-      nil_params = CuffBase.empty_from_template(open(cli_args[:stack_path][0]))
+    stack_path = (cli_args[:stack_path] || [])[0]
+    if stack_path && File.exists?(stack_path)
+      nil_params = CuffBase.empty_from_template(open(stack_path))
     else
       nil_params = {}
     end
@@ -105,8 +106,9 @@ module CuffSert
   def self.cli_overrides(meta, cli_args)
     meta.update_from(cli_args[:overrides])
     meta.op_mode = cli_args[:op_mode] || meta.op_mode
-    stack_path = cli_args[:stack_path][0]
-    meta.stack_uri = CuffSert.validate_and_urlify(stack_path)
+    if (stack_path = (cli_args[:stack_path] || [])[0])
+      meta.stack_uri = CuffSert.validate_and_urlify(stack_path)
+    end
     meta
   end
 

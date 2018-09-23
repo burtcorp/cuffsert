@@ -16,7 +16,7 @@ module CuffSert
     end
 
     def upload_template_if_oversized(cfargs)
-      if cfargs[:template_body].nil? && cfargs[:template_url].nil?
+      if needs_template_upload?(cfargs)
         raise 'Template bigger than 51200; please supply --s3-upload-prefix' unless @s3client
         uri, progress = @s3client.upload(@meta.stack_uri)
         [CuffSert.s3_uri_to_https(uri).to_s, progress]
@@ -24,9 +24,23 @@ module CuffSert
         [nil, Rx::Observable.empty]
       end
     end
+
+    private
+
+    def needs_template_upload?(cfargs)
+      cfargs[:template_body].nil? &&
+        cfargs[:template_url].nil? &&
+        !cfargs[:use_previous_template]
+    end
   end
 
   class CreateStackAction < BaseAction
+    def validate!
+      if @meta.stack_uri.nil?
+        raise "You need to pass a template to create #{@meta.stackname}" # in #{@meta.aws_region}."
+      end
+    end
+
     def as_observable
       cfargs = CuffSert.as_create_stack_args(@meta)
       upload_uri, maybe_upload = upload_template_if_oversized(cfargs)
@@ -48,8 +62,16 @@ module CuffSert
   end
 
   class UpdateStackAction < BaseAction
+    def validate!
+      if @meta.stack_uri.nil?
+        if @meta.parameters.empty? && @meta.tags.empty?
+          raise "Stack update without template needs at least one parameter (-p) or tag (-t)."
+        end
+      end
+    end
+
     def as_observable
-      cfargs = CuffSert.as_update_change_set(@meta)
+      cfargs = CuffSert.as_update_change_set(@meta, @stack)
       upload_uri, maybe_upload = upload_template_if_oversized(cfargs)
       cfargs[:template_url] = upload_uri if upload_uri
       maybe_upload
@@ -89,6 +111,12 @@ module CuffSert
   end
 
   class RecreateStackAction < BaseAction
+    def validate!
+      if @meta.stack_uri.nil?
+        raise "You need to pass a template to re-create #{@meta.stackname}" # in #{@meta.aws_region}."
+      end
+    end
+
     def as_observable
       crt_args = CuffSert.as_create_stack_args(@meta)
       del_args = CuffSert.as_delete_stack_args(@stack)
