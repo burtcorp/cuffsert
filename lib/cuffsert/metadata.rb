@@ -2,6 +2,8 @@ require 'cuffbase'
 require 'yaml'
 
 module CuffSert
+  class MetadataError < StandardError ; end
+
   class StackConfig
     attr_accessor :stackname, :selected_path, :op_mode, :stack_uri
     attr_accessor :suffix, :parameters, :tags
@@ -36,22 +38,22 @@ module CuffSert
     else
       normalized = File.expand_path(stack_path)
       unless File.exist?(normalized)
-        raise "Local file #{normalized} does not exist"
+        raise CuffBase::InvokationError, "Local file #{normalized} does not exist"
       end
       stack_uri = URI.join('file:///', normalized)
     end
     unless ['s3', 'file'].include?(stack_uri.scheme)
-      raise "Uri #{stack_uri.scheme} is not supported"
+      raise CuffBase::InvokationError, "Uri #{stack_uri.scheme} is not supported"
     end
     stack_uri
   end
 
   def self.load_config(io)
     config = YAML.load(io)
-    raise 'config does not seem to be a YAML hash?' unless config.is_a?(Hash)
+    raise MetadataError, 'config does not seem to be a YAML hash?' unless config.is_a?(Hash)
     config = symbolize_keys(config)
     format = config.delete(:format)
-    raise 'Please include Format: v1' if format.nil? || format.downcase != 'v1'
+    raise MetadataError, 'Please include Format: v1' if format.nil? || format.downcase != 'v1'
     config
   end
 
@@ -61,14 +63,14 @@ module CuffSert
     key = candidate || metadata[:defaultpath]
     variants = metadata[:variants]
     if key.nil?
-      raise "No DefaultPath found for #{variants.keys}" unless variants.nil?
+      raise CuffBase::InvokationError, "No DefaultPath found for #{variants.keys}" unless variants.nil?
       return target
     end
     target.append_path(key)
 
-    raise "Missing variants section as expected by #{key}" if variants.nil?
+    raise CuffBade::InvokationError, "Missing variants section as expected by #{key}" if variants.nil?
     new_meta = variants[key.to_sym]
-    raise "#{key.inspect} not found in variants" if new_meta.nil?
+    raise CuffBase::InvokationError, "#{key.inspect} not found in variants" if new_meta.nil?
     self.meta_for_path(new_meta, path, target)
   end
 

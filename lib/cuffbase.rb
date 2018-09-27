@@ -1,6 +1,8 @@
 require 'yaml'
 
 module CuffBase
+  class InvokationError < StandardError ; end
+
   def self.empty_from_template(io)
     self.template_parameters(io) {|_| nil }
   end

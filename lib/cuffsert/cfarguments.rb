@@ -1,3 +1,4 @@
+require 'cuffbase'
 require 'open-uri'
 require 'yaml'
 
@@ -38,7 +39,7 @@ module CuffSert
 
   def self.as_create_stack_args(meta)
     no_value = meta.parameters.select {|_, v| v.nil? }.keys
-    raise "Supply value for #{no_value.join(', ')}" unless no_value.empty?
+    raise CuffBase::InvokationError, "Pealse supply value for #{no_value.join(', ')}" unless no_value.empty?
 
     cfargs = self.as_cloudformation_args(meta)
     cfargs[:timeout_in_minutes] = TIMEOUT
@@ -82,7 +83,7 @@ module CuffSert
       if meta.stack_uri.host.end_with?('amazonaws.com')
         template_parameters[:template_url] = meta.stack_uri.to_s
       else
-        raise 'Only HTTPS URLs pointing to amazonaws.com supported.'
+        raise CuffBase::InvokationError, 'Only HTTPS URLs pointing to amazonaws.com supported.'
       end
     elsif meta.stack_uri.scheme == 'file'
       file = meta.stack_uri.to_s.sub(/^file:\/+/, '/')
@@ -91,7 +92,7 @@ module CuffSert
         template_parameters[:template_body] = template
       end
     else
-      raise "Unsupported scheme #{meta.stack_uri.scheme}"
+      raise CuffBase::InvokationError, "Unsupported scheme #{meta.stack_uri.scheme}"
     end
 
     template_parameters

@@ -55,13 +55,13 @@ describe 'CuffSert.validate_and_urlify' do
   it 'borks on non-existent local files' do
     expect {
       CuffSert.validate_and_urlify('/no/such/file')
-    }.to raise_error(/local.*not exist/i)
+    }.to raise_error(CuffBase::InvokationError, /local.*not exist/i)
   end
 
   it 'borks on unkown schemas' do
     expect {
       CuffSert.validate_and_urlify(httpurl)
-    }.to raise_error(/.*http.*not supported/)
+    }.to raise_error(CuffBase::InvokationError, /.*http.*not supported/)
   end
 end
 
@@ -83,11 +83,11 @@ describe CuffSert do
     subject { |example| CuffSert.load_config(example.metadata[:io]) }
 
     it 'no data', :io => StringIO.new('') do
-      expect { subject }.to raise_error(/hash/)
+      expect { subject }.to raise_error(CuffSert::MetadataError, /hash/)
     end
 
     it 'unknown version', :io => StringIO.new('Format: foo') do
-      expect { subject }.to raise_error(/Format: v1/)
+      expect { subject }.to raise_error(CuffSert::MetadataError, /Format: v1/)
     end
   end
 
@@ -99,7 +99,7 @@ describe CuffSert do
     end
 
     it 'from empty path', :path => [] do
-      expect { subject }.to raise_error(/no.defaultpath.*level1_a/i)
+      expect { subject }.to raise_error(CuffBase::InvokationError, /no.defaultpath.*level1_a/i)
     end
 
     context 'from "level1_a"', :path => ['level1_a'] do

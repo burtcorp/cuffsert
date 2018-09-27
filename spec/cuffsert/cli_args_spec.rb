@@ -41,31 +41,31 @@ describe 'CuffSert#parse_cli_args' do
   end
 
   it 'rejects unparseable tag', :argv => ['-t', 'asdf'] do
-    expect { subject }.to raise_error(/--tag.*asdf/)
+    expect { subject }.to raise_error(CuffBase::InvokationError, /--tag.*asdf/)
   end
 
   it 'rejects duplicate tag', :argv => ['-t', 'foo=bar', '-t', 'foo=baz'] do
-    expect { subject }.to raise_error(/duplicate.*foo/)
+    expect { subject }.to raise_error(CuffBase::InvokationError, /duplicate.*foo/)
   end
 
   it 'rejects unparseable parameter', :argv => ['-p', 'asdf']  do
-    expect { subject }.to raise_error(/--parameter.*asdf/)
+    expect { subject }.to raise_error(CuffBase::InvokationError, /--parameter.*asdf/)
   end
 
   it 'rejects duplicate parameter', :argv => ['-p', 'foo=bar', '-p', 'foo=baz'] do
-    expect { subject }.to raise_error(/duplicate.*foo/)
+    expect { subject }.to raise_error(CuffBase::InvokationError, /duplicate.*foo/)
   end
 
   it 'rejects bad stackname', :argv => ['-n', '*foo'] do
-    expect { subject }.to raise_error(/--name.*\*foo/)
+    expect { subject }.to raise_error(CuffBase::InvokationError, /--name.*\*foo/)
   end
 
   it 'rejects --yes --dry-run', :argv => ['--yes', '--dry-run'] do
-    expect { subject }.to raise_error(/--yes and --dry-run/)
+    expect { subject }.to raise_error(CuffBase::InvokationError, /--yes and --dry-run/)
   end
 
   it 'rejects s3 upload prefix not starting with s3:', :argv => ['--s3-upload-prefix', 'foobar'] do
-    expect { subject }.to raise_error(/foobar.*s3:/)
+    expect { subject }.to raise_error(CuffBase::InvokationError, /foobar.*s3:/)
   end
 
   context '--help exit code' do
@@ -109,16 +109,16 @@ describe 'CuffSert#validate_cli_args' do
   subject { CuffSert.validate_cli_args(cli_args) }
 
   context 'when no --metadata and no --name' do
-    it { expect { subject }.to raise_error(/supply --name/i) }
+    it { expect { subject }.to raise_error(CuffBase::InvokationError, /supply --name/i) }
   end
   
   context 'when no --metadata and --selector' do
     let(:cli_args) { super().merge({:selector => '/foo'}) }
-    it { expect { subject }.to raise_error(/cannot use --selector.*without --metadata/i) }
+    it { expect { subject }.to raise_error(CuffBase::InvokationError, /cannot use --selector.*without --metadata/i) }
   end
 
   context 'when no stack path' do
     let(:cli_args) { super().merge({:stack_path => []}) }
-    it { expect { subject }.to raise_error(/exactly one.*template/i) }
+    it { expect { subject }.to raise_error(CuffBase::InvokationError, /exactly one.*template/i) }
   end
 end

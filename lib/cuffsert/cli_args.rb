@@ -1,4 +1,5 @@
 require 'optparse'
+require 'cuffbase'
 require 'cuffsert/version'
 
 module CuffSert
@@ -22,7 +23,7 @@ module CuffSert
       opts.on('--metadata path', '-m path', 'Yaml file to read stack metadata from') do |path|
         path = '/dev/stdin' if path == '-'
         unless File.exist?(path)
-          raise "--metadata #{path} does not exist"
+          raise CuffBase::InvokationError, "--metadata #{path} does not exist"
         end
         args[:metadata] = path
       end
@@ -33,7 +34,7 @@ module CuffSert
 
       opts.on('--name stackname', '-n name', 'Alternative stackname (default is to construct the name from the selector)') do |stackname|
         unless stackname =~ STACKNAME_RE
-          raise "--name #{stackname} is expected to be #{STACKNAME_RE.inspect}"
+          raise CuffBase::InvokationError, "--name #{stackname} is expected to be #{STACKNAME_RE.inspect}"
         end
         args[:overrides][:stackname] = stackname
       end
@@ -41,10 +42,10 @@ module CuffSert
       opts.on('--parameter k=v', '-p k=v', 'Set the value of a particular parameter, overriding any file metadata') do |kv|
         key, val = kv.split(/=/, 2)
         if val.nil?
-          raise "--parameter #{kv} should be key=value"
+          raise CuffBase::InvokationError, "--parameter #{kv} should be key=value"
         end
         if args[:overrides][:parameters].include?(key)
-          raise "cli args include duplicate parameter #{key}"
+          raise CuffBase::InvokationError, "cli args include duplicate parameter #{key}"
         end
         args[:overrides][:parameters][key] = val
       end
@@ -52,10 +53,10 @@ module CuffSert
       opts.on('--tag k=v', '-t k=v', 'Set a stack tag, overriding any file metadata') do |kv|
         key, val = kv.split(/=/, 2)
         if val.nil?
-          raise "--tag #{kv} should be key=value"
+          raise CuffBase::InvokationError, "--tag #{kv} should be key=value"
         end
         if args[:overrides][:tags].include?(key)
-          raise "cli args include duplicate tag #{key}"
+          raise CuffBase::InvokationError, "cli args include duplicate tag #{key}"
         end
         args[:overrides][:tags][key] = val
       end
@@ -66,7 +67,7 @@ module CuffSert
 
       opts.on('--s3-upload-prefix=prefix', 'Templates > 51200 bytes are uploaded here. Format: s3://bucket-name/[pre/fix]') do |prefix|
         unless prefix.start_with?('s3://')
-          raise "Upload prefix #{prefix} must start with s3://"
+          raise CuffBase::InvokationError, "Upload prefix #{prefix} must start with s3://"
         end
         args[:s3_upload_prefix] = prefix
       end
@@ -88,12 +89,12 @@ module CuffSert
       end
 
       opts.on('--yes', '-y', 'Don\'t ask to replace and delete stack resources') do
-        raise 'You cannot do --yes and --dry-run at the same time' if args[:op_mode]
+        raise CuffBase::InvokationError, 'You cannot do --yes and --dry-run at the same time' if args[:op_mode]
         args[:op_mode] = :dangerous_ok
       end
 
       opts.on('--dry-run', 'Describe what would be done') do
-        raise 'You cannot do --yes and --dry-run at the same time' if args[:op_mode]
+        raise CuffBase::InvokationError, 'You cannot do --yes and --dry-run at the same time' if args[:op_mode]
         args[:op_mode] = :dry_run
       end
 
@@ -123,7 +124,9 @@ module CuffSert
     if cli_args[:selector] && cli_args[:metadata].nil?
       errors << 'You cannot use --selector without --metadata'
     end
-    
-    raise errors.join(', ') unless errors.empty?
+
+    unless errors.empty?
+      raise CuffBase::InvokationError, errors.join(', ')
+    end
   end
 end

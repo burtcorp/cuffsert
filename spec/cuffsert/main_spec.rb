@@ -116,6 +116,34 @@ describe 'CuffSert#main' do
     expect(action).to have_received(:cfclient=)
   end
 
+  context 'given bad invokation' do
+    let :action do
+      super().tap do |a|
+        allow(a).to receive(:as_observable)
+          .and_raise(CuffBase::InvokationError, 'badness')
+      end
+    end
+    
+    subject do
+      begin
+        CuffSert.run(cli_args)
+      rescue SystemExit => e
+        e.status
+      end
+    end
+
+    it { should eq(1) }
+
+    xit 'outputs the error message' do
+      expect do
+        begin
+          subject
+        rescue SystemExit
+        end
+      end.to output(/badness/).to_stderr
+    end
+  end
+
   context 'given --region' do
     let(:cli_args) { super() + ['--region', 'eu-west-1'] }
 

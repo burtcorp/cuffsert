@@ -1,3 +1,4 @@
+require 'cuffbase'
 require 'cuffsert/actions'
 require 'cuffsert/cfarguments'
 require 'cuffsert/messages'
@@ -17,7 +18,7 @@ module CuffSert
 
     def upload_template_if_oversized(cfargs)
       if cfargs[:template_body].nil? && cfargs[:template_url].nil?
-        raise 'Template bigger than 51200; please supply --s3-upload-prefix' unless @s3client
+        raise CuffBase::InvokationError, 'Template bigger than 51200; please supply --s3-upload-prefix' unless @s3client
         uri, progress = @s3client.upload(@meta.stack_uri)
         [CuffSert.s3_uri_to_https(uri).to_s, progress]
       else

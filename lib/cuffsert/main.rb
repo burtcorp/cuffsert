@@ -1,3 +1,4 @@
+require 'cuffbase'
 require 'cuffsert/actions'
 require 'cuffsert/cfstates'
 require 'cuffsert/cli_args'
@@ -49,5 +50,7 @@ module CuffSert
     end
     renderer = CuffSert.make_renderer(cli_args)
     RendererPresenter.new(action.as_observable, renderer)
+  rescue MetadataError, CuffBase::InvokationError => e
+    abort(e.message)
   end
 end

@@ -32,7 +32,7 @@ describe '#as_create_stack_args' do
 
   context 'when stack uri is some other https uri' do
     let(:meta) { super().tap { |meta| meta.stack_uri = URI.parse('https://www.google.com') } }
-    it { expect { subject }.to raise_error(/amazonaws.com/) }
+    it { expect { subject }.to raise_error(CuffBase::InvokationError, /amazonaws.com/) }
   end
 
   context 'when stack uri scheme is file:' do
@@ -64,7 +64,7 @@ describe '#as_create_stack_args' do
     end
 
     it do
-      expect { subject }.to raise_error(/supply value for.*ze-key/i)
+      expect { subject }.to raise_error(CuffBase::InvokationError, /supply value for.*ze-key/i)
     end
   end
 

@@ -48,7 +48,7 @@ shared_examples 'uploading' do
       let(:s3mock) { nil }
 
       it 'raise error if we received no S3 client' do
-        expect { subject }.to raise_error(RuntimeError, /supply.*--s3-upload-prefix/i)
+        expect { subject }.to raise_error(CuffBase::InvokationError, /supply.*--s3-upload-prefix/i)
       end
     end
   end
