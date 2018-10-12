@@ -55,6 +55,8 @@ module CuffSert
 
     def on_event(event)
       case event
+      when ::CuffSert::Templates
+        @renderer.templates(*event.message)
       when Aws::CloudFormation::Types::StackEvent
         on_stack_event(event)
       when ::CuffSert::ChangeSet
@@ -134,6 +136,7 @@ module CuffSert
       @verbosity = options[:verbosity] || 1
     end
 
+    def templates(current, pending) ; end
     def change_set(change_set) ; end
     def event(event, resource) ; end
     def clear ; end
@@ -144,6 +147,13 @@ module CuffSert
   end
 
   class JsonRenderer < BaseRenderer
+    def templates(current, pending)
+      if @verbosity >= 1
+        @output.write(current.to_json)
+        @output.write(pending.to_json)
+      end
+    end
+
     def change_set(change_set)
       @output.write(change_set.to_h.to_json) unless @verbosity < 1
     end

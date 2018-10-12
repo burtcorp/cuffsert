@@ -23,6 +23,6 @@ module CuffSert
       super('Done.')
     end
   end
-  class CurrentTemplate < Message ; end
+  class Templates < Message ; end
   class ChangeSet < Message ; end
 end

@@ -1,6 +1,7 @@
 require 'cuffsert/actions'
 require 'cuffsert/cfarguments'
 require 'cuffsert/messages'
+require 'yaml'
 require 'rx'
 
 module CuffSert
@@ -82,16 +83,20 @@ module CuffSert
     private
 
     def prepare_update(cfargs)
-      @cfclient.prepare_update(cfargs)
+      @cfclient.get_template(@meta)
+      .map do |current_template|
+        pending_template = if cfargs[:template_body]
+          YAML.load(cfargs[:template_body])
+        else
+          current_template
+        end
+        CuffSert::Templates.new([current_template, pending_template])
+      end.merge(
+        @cfclient.prepare_update(cfargs)
         .map do |change_set|
           CuffSert::ChangeSet.new(change_set)
         end
-        .merge(
-          @cfclient.get_template(@meta)
-          .map do |template|
-            CuffSert::CurrentTemplate.new(template)
-          end
-        )
+      )
     end
 
     def on_event(event)
