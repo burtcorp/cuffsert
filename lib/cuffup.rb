@@ -7,7 +7,10 @@ module CuffUp
       :output => '/dev/stdout'
     }
     parser = OptionParser.new do |opts|
-      opts.on('--output metadata', '-o metadata', 'File to write metadata file to; decaults to stdout') do |f|
+      opts.banner = 'Output CuffSert-formatted metadata defaults based on a stack template.'
+      opts.separator('')
+      opts.separator('Usage: cuffup <template.json>')
+      opts.on('--output metadata', '-o metadata', 'File to write metadata file to; defaults to stdout') do |f|
         args[:output] = f
       end
 
