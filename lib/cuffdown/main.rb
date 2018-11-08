@@ -10,7 +10,7 @@ module CuffDown
     parser = OptionParser.new do |opts|
       opts.banner = 'Output CuffSert-formatted metadata from an existing stack.'
       opts.separator('')
-      opts.separator('Usage: cuffdown stack-name')
+      opts.separator('Usage: cuffdown <stack-name>')
       CuffBase.shared_cli_args(opts, args)
     end
     stackname, _ = parser.parse(argv)
