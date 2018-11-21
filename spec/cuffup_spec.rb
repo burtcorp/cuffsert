@@ -6,10 +6,10 @@ describe 'CuffUp.parse_cli_args' do
     CuffUp.parse_cli_args(argv)
   end
 
-  it [] { should include(:output => '/dev/stdout') }
+  it([]) { should include(:output => '/dev/stdout') }
 
-  it ['--selector', 'foo'] { should include(:selector => ['foo']) }
-  it ['--output', '/some/file'] { should include(:output => '/some/file') }
+  it (['--selector', 'foo']) { should include(:selector => ['foo']) }
+  it (['--output', '/some/file']) { should include(:output => '/some/file') }
 end
 
 describe 'CuffUp.run' do
