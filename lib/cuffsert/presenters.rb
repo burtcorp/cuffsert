@@ -57,6 +57,8 @@ module CuffSert
       case event
       when Aws::CloudFormation::Types::StackEvent
         on_stack_event(event)
+      when ::CuffSert::BlockingChangeSet
+        on_blocking_change_set(event.message)
       when ::CuffSert::ChangeSet
         on_change_set(event.message)
       # when [:recreate, Aws::CloudFormation::Types::Stack]
@@ -77,6 +79,10 @@ module CuffSert
     end
 
     private
+
+    def on_blocking_change_set(change_set)
+      @renderer.blocking_change_set(change_set.to_h)
+    end
 
     def on_change_set(change_set)
       @renderer.change_set(change_set.to_h)
@@ -135,6 +141,7 @@ module CuffSert
     end
 
     def change_set(change_set) ; end
+    def blocking_change_set(change_set) ; end
     def event(event, resource) ; end
     def clear ; end
     def resource(resource) ; end
@@ -168,6 +175,11 @@ module CuffSert
   ACTION_ORDER = ['Add', 'Modify', 'Replace?', 'Replace!', 'Remove']
 
   class ProgressbarRenderer < BaseRenderer
+    def blocking_change_set(change_set)
+      return if @verbosity == 0
+      @output.write("Deleting unexecuted change set #{change_set[:change_set_name]}\n".colorize(:red))
+    end
+
     def change_set(change_set)
       @output.write(sprintf("Updating stack %s\n", change_set[:stack_name]))
       change_set[:changes].sort do |l, r|

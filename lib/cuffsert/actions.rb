@@ -62,6 +62,11 @@ module CuffSert
   end
 
   class UpdateStackAction < BaseAction
+    def initialize(meta, stack, change_set)
+      super(meta, stack)
+      @change_set = change_set
+    end
+
     def validate!
       if @meta.stack_uri.nil?
         if @meta.parameters.empty? && @meta.tags.empty?
@@ -75,6 +80,7 @@ module CuffSert
       upload_uri, maybe_upload = upload_template_if_oversized(cfargs)
       cfargs[:template_url] = upload_uri if upload_uri
       maybe_upload
+        .concat(handle_blocking_change_set)
         .concat(@cfclient.prepare_update(cfargs).map {|change_set| CuffSert::ChangeSet.new(change_set) })
         .flat_map(&method(:on_event))
     end
@@ -93,6 +99,18 @@ module CuffSert
           end
         end
       )
+    end
+
+    def handle_blocking_change_set
+      if @change_set.nil?
+        Rx::Observable.empty
+      else
+        Rx::Observable.concat(
+          BlockingChangeSet.new(@change_set)
+            .as_observable,
+          @cfclient.abort_update(@change_set[:change_set_id])
+        )
+      end
     end
 
     def on_changeset(change_set)

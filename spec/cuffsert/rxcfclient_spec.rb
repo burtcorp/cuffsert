@@ -26,16 +26,35 @@ describe CuffSert::RxCFClient do
   describe '#find_stack_blocking' do
     context 'finds a stack' do
       let :aws_mock do
-        mock = double(:aws_mock)
-        expect(mock).to receive(:describe_stacks)
-          .with(:stack_name => stack_name)
-          .and_return(stack_complete_describe)
-        mock
+        double(:aws_mock).tap do |m|
+          allow(m).to receive(:describe_stacks)
+            .and_return(stack_complete_describe)
+          allow(m).to receive(:list_change_sets)
+            .and_return(change_sets)
+        end
       end
 
       subject { described_class.new(cli_args, aws_cf: aws_mock, pause: 0).find_stack_blocking(meta) }
 
-      it { should include(:stack_name => stack_name) }
+      context 'with no unexecuted change set' do
+        let(:change_sets) { no_change_set }
+
+        it { should contain_exactly(include(:stack_name => stack_name), nil) }
+
+        it 'calls CloudFormation API' do
+          subject
+          expect(aws_mock).to have_received(:describe_stacks)
+          .with(:stack_name => stack_name)
+        expect(aws_mock).to have_received(:list_change_sets)
+          .with(:stack_name => stack_name)
+        end
+      end
+
+      context 'with a unexecuted change set' do
+        let(:change_sets) { change_set_list }
+
+        it { should contain_exactly(anything, include(:stack_name => stack_name)) }
+      end
     end
 
     context 'finds nothing' do
@@ -54,7 +73,7 @@ describe CuffSert::RxCFClient do
 
       subject { described_class.new(cli_args, aws_cf: aws_mock, pause: 0).find_stack_blocking(meta) }
 
-      it { should be(nil) }
+      it { should eq([nil, nil]) }
     end
   end
 

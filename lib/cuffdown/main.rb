@@ -56,7 +56,7 @@ module CuffDown
       STDERR.puts "No such stack #{meta.stackname}"
       exit(1)
     end
-    stack = stack.to_h
+    stack = stack[0].to_h
     self.dump(
       stack[:stack_name],
       self.parameters(stack),

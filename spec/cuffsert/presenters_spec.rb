@@ -238,6 +238,7 @@ end
 describe CuffSert::ProgressbarRenderer do
   include_context 'stack states'
   include_context 'stack events'
+  include_context 'changesets'
 
   let(:resource) do
     event.to_h.merge!(
@@ -334,6 +335,25 @@ describe CuffSert::ProgressbarRenderer do
     context 'given bad :states' do
       let(:resource) { r2_progress.to_h.merge({:states => []}) }
       it { expect { subject }.to raise_error(/:states/) }
+    end
+  end
+
+  describe '#blocking_change_set' do
+    let(:message) { change_set_summary.to_h }
+    let(:output) { StringIO.new }
+    let(:error) { StringIO.new }
+
+    subject do |example|
+      described_class.new(output, error, example.metadata).blocking_change_set(message)
+      output.string
+    end
+
+    context 'when silent', :verbosity => 0 do
+      it { should be_empty }
+    end
+
+    context 'when default verbosity' do
+      it { should include('Deleting') }
     end
   end
 

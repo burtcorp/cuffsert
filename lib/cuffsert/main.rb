@@ -12,17 +12,17 @@ require 'uri'
 
 module CuffSert
   def self.determine_action(meta, cfclient, force_replace: false)
-    found = cfclient.find_stack_blocking(meta)
+    stack, change_set = cfclient.find_stack_blocking(meta)
 
-    if found && INPROGRESS_STATES.include?(found[:stack_status])
+    if stack && INPROGRESS_STATES.include?(stack[:stack_status])
       action = Abort.new('Stack operation already in progress')
     else
-      if found.nil?
+      if stack.nil?
         action = CreateStackAction.new(meta, nil)
-      elsif found[:stack_status] == 'ROLLBACK_COMPLETE' || force_replace
-        action = RecreateStackAction.new(meta, found)
+      elsif stack[:stack_status] == 'ROLLBACK_COMPLETE' || force_replace
+        action = RecreateStackAction.new(meta, stack)
       else
-        action = UpdateStackAction.new(meta, found)
+        action = UpdateStackAction.new(meta, stack, change_set)
       end
       yield action
     end

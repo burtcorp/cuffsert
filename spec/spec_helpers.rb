@@ -91,6 +91,25 @@ shared_context 'changesets' do
     { :id => change_set_id, :stack_id => 'ze-stack' }
   end
 
+  let :change_set_summary do
+    Aws::CloudFormation::Types::ChangeSetSummary.new({
+      :change_set_id => change_set_id,
+      :change_set_name => 'ze-change-set-name',
+    })
+  end
+
+  let :no_change_set do
+    Aws::CloudFormation::Types::ListChangeSetsOutput.new({
+      :summaries => []
+    })
+  end
+  
+  let :change_set_list do
+    Aws::CloudFormation::Types::ListChangeSetsOutput.new({
+      :summaries => [change_set_summary]
+    })
+  end
+
   let :change_set_in_progress do
     Aws::CloudFormation::Types::DescribeChangeSetOutput.new({
       :change_set_id => change_set_id,

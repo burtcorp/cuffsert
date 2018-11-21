@@ -3,6 +3,7 @@ require 'spec_helpers'
 
 describe CuffDown do
   include_context 'stack states'
+  include_context 'changesets'
 
   describe '.run' do
     let(:cli_args) { ['some-stack'] }
@@ -20,6 +21,7 @@ describe CuffDown do
     before do
       allow(Aws::CloudFormation::Client).to receive(:new).and_return(cfmock)
       allow(cfmock).to receive(:describe_stacks).and_return(stack_complete_describe)
+      allow(cfmock).to receive(:list_change_sets).and_return(no_change_set)
       CuffDown.run(cli_args, output)
     end
 

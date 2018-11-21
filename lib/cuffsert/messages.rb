@@ -24,4 +24,5 @@ module CuffSert
     end
   end
   class ChangeSet < Message ; end
+  class BlockingChangeSet < Message ; end
 end

@@ -21,7 +21,7 @@ describe 'CuffSert#determine_action' do
   before do
     allow(cfmock).to receive(:find_stack_blocking)
       .with(meta)
-      .and_return(stack)
+      .and_return([stack, nil])
   end
 
   subject do

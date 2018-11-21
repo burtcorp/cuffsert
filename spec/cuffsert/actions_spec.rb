@@ -16,12 +16,15 @@ shared_context 'action setup' do
   let(:s3mock) { double(:s3client) }
   let(:confirm_update) { lambda { |*_| true } }
 
-  subject do
-    action = described_class.new(meta, stack)
+  def instrument_action(action)
     action.cfclient = cfmock
     action.s3client = s3mock
     action.confirmation = confirm_update
     action
+  end
+
+  subject do
+    instrument_action(described_class.new(meta, stack))
   end
 end
 
@@ -164,7 +167,12 @@ describe CuffSert::UpdateStackAction do
   include_context 'action setup'
 
   let(:stack) { stack_complete }
+  let(:change_set) { nil }
   let(:change_set_stream) { Rx::Observable.of(change_set_ready) }
+
+  subject do
+    instrument_action(described_class.new(meta, stack, change_set))
+  end
 
   describe '#validate!' do
     it 'raises no error when all conditions are met' do
@@ -196,6 +204,7 @@ describe CuffSert::UpdateStackAction do
   before do
     allow(cfmock).to receive(:prepare_update).and_return(change_set_stream)
     allow(cfmock).to receive(:update_stack).and_return(Rx::Observable.empty)
+    allow(cfmock).to receive(:abort_update).and_return(Rx::Observable.empty)
   end
 
   include_examples 'uploading'
@@ -229,6 +238,21 @@ describe CuffSert::UpdateStackAction do
           hash_including(:use_previous_template => true)
         )
       end
+    end
+  end
+
+  context 'with a blocking change set' do
+    let(:change_set) { change_set_summary }
+
+    it 'emits an event for the blocking change set' do
+      expect(subject.as_observable).to emit_include(
+        CuffSert::BlockingChangeSet.new(change_set)
+      )
+    end
+
+    it 'deletes the blocking changeset' do
+      expect(subject.as_observable).to complete
+      expect(cfmock).to have_received(:abort_update).with(change_set_id)
     end
   end
 

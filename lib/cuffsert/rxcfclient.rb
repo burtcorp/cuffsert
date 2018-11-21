@@ -14,9 +14,12 @@ module CuffSert
 
     def find_stack_blocking(meta)
       name = meta.stackname
-      @cf.describe_stacks(stack_name: name)[:stacks][0]
+      [
+        @cf.describe_stacks(stack_name: name)[:stacks][0],
+        @cf.list_change_sets(stack_name: name)[:summaries].first
+      ]
     rescue Aws::CloudFormation::Errors::ValidationError
-      nil
+      [nil, nil]
     end
 
     def create_stack(cfargs)
