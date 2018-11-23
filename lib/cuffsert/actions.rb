@@ -25,12 +25,25 @@ module CuffSert
       end
     end
 
+    def validate!
+    end
+
     private
 
     def needs_template_upload?(cfargs)
       cfargs[:template_body].nil? &&
         cfargs[:template_url].nil? &&
         !cfargs[:use_previous_template]
+    end
+  end
+
+  class MessageAction
+    def initialize(message)
+      @message = message
+    end
+    
+    def as_observable
+      @message.as_observable
     end
   end
 
