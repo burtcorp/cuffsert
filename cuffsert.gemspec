@@ -18,6 +18,7 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'aws-sdk-cloudformation', '~> 1.3.0'
   spec.add_runtime_dependency 'aws-sdk-s3', '~> 1.8.0'
   spec.add_runtime_dependency 'colorize'
+  spec.add_runtime_dependency 'hashdiff'
   spec.add_runtime_dependency 'ruby-termios'
   spec.add_runtime_dependency 'rx'
 

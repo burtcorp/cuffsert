@@ -1,5 +1,6 @@
 require 'aws-sdk-cloudformation'
 require 'cuffsert/cfstates'
+require 'yaml'
 require 'rx'
 
 module CuffSert
@@ -17,6 +18,14 @@ module CuffSert
       @cf.describe_stacks(stack_name: name)[:stacks][0]
     rescue Aws::CloudFormation::Errors::ValidationError
       nil
+    end
+
+    def get_template(meta)
+      Rx::Observable.create do |observer|
+        template = @cf.get_template(:stack_name => meta.stackname)
+        observer.on_next(YAML.load(template[:template_body]))
+        observer.on_completed
+      end
     end
 
     def create_stack(cfargs)

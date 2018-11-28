@@ -2,6 +2,7 @@ require 'aws-sdk-cloudformation'
 require 'colorize'
 require 'cuffsert/cfstates'
 require 'cuffsert/messages'
+require 'hashdiff'
 require 'rx'
 
 # TODO: Animate in-progress states
@@ -55,6 +56,8 @@ module CuffSert
 
     def on_event(event)
       case event
+      when ::CuffSert::Templates
+        @renderer.templates(*event.message)
       when Aws::CloudFormation::Types::StackEvent
         on_stack_event(event)
       when ::CuffSert::ChangeSet
@@ -134,6 +137,7 @@ module CuffSert
       @verbosity = options[:verbosity] || 1
     end
 
+    def templates(current, pending) ; end
     def change_set(change_set) ; end
     def event(event, resource) ; end
     def clear ; end
@@ -144,6 +148,13 @@ module CuffSert
   end
 
   class JsonRenderer < BaseRenderer
+    def templates(current, pending)
+      if @verbosity >= 1
+        @output.write(current.to_json)
+        @output.write(pending.to_json)
+      end
+    end
+
     def change_set(change_set)
       @output.write(change_set.to_h.to_json) unless @verbosity < 1
     end
@@ -283,6 +294,16 @@ module CuffSert
       ))
     end
 
+    def templates(current, pending)
+      @current_template = current
+      @pending_template = pending
+      @template_changes = HashDiff.best_diff(current, pending, array_path: true)
+      @template_changes.each {|c| p c} if ENV['CUFFSERT_EXPERIMENTAL']
+      present_changes(extract_changes(@template_changes, 'Conditions'), 'Conditions')
+      present_changes(extract_changes(@template_changes, 'Parameters'), 'Parameters')
+      present_changes(extract_changes(@template_changes, 'Outputs'), 'Outputs')
+    end
+
     def report(event)
       @output.write(event.message.colorize(:white) + "\n") unless @verbosity < 2
     end
@@ -296,6 +317,36 @@ module CuffSert
     end
 
     private
+
+    def extract_changes(changes, type)
+      changes
+        .select {|(_, path, _)| path[0] == type }
+        .map {|(ch, path, *rest)| [ch, path[1..5], *rest] }
+    end
+
+    def present_changes(changes, type)
+      return unless changes.size > 0
+      @output.write("#{type}:\n")
+      changes.each do |(ch, path, l, r)|
+        message = sprintf("%s %s: %s\n",
+          change_color(ch),
+          path.join('/'),
+          ch == '~' ? "#{l} -> #{r}" : l,
+        )
+        @output.write(message)
+      end
+    end
+
+    def change_color(ch)
+      ch.colorize(
+        case ch
+        when '-' then :red
+        when '+' then :green
+        when '~' then :yellow
+        else :white
+        end
+      )
+    end
 
     def interpret_states(resource)
       case resource[:states]

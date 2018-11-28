@@ -1,6 +1,7 @@
 require 'cuffsert/actions'
 require 'cuffsert/cfarguments'
 require 'cuffsert/messages'
+require 'yaml'
 require 'rx'
 
 module CuffSert
@@ -75,11 +76,28 @@ module CuffSert
       upload_uri, maybe_upload = upload_template_if_oversized(cfargs)
       cfargs[:template_url] = upload_uri if upload_uri
       maybe_upload
-        .concat(@cfclient.prepare_update(cfargs).map {|change_set| CuffSert::ChangeSet.new(change_set) })
+        .concat(prepare_update(cfargs))
         .flat_map(&method(:on_event))
     end
 
     private
+
+    def prepare_update(cfargs)
+      @cfclient.get_template(@meta)
+      .map do |current_template|
+        pending_template = if cfargs[:template_body]
+          YAML.load(cfargs[:template_body])
+        else
+          current_template
+        end
+        CuffSert::Templates.new([current_template, pending_template])
+      end.merge(
+        @cfclient.prepare_update(cfargs)
+        .map do |change_set|
+          CuffSert::ChangeSet.new(change_set)
+        end
+      )
+    end
 
     def on_event(event)
       Rx::Observable.concat(

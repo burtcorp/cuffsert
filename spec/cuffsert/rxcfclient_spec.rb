@@ -58,6 +58,22 @@ describe CuffSert::RxCFClient do
     end
   end
 
+  describe '#get_template' do
+    include_context 'templates'
+
+    let :aws_mock do
+      mock = double(:aws_mock)
+      expect(mock).to receive(:get_template)
+        .with(:stack_name => stack_name)
+        .and_return(:template_body => template_json)
+      mock
+    end
+
+    subject { described_class.new(cli_args, aws_cf: aws_mock, pause: 0).get_template(meta) }
+
+    it { expect(subject).to emit_exactly(template_source) }
+  end
+
   describe '#create_stack' do
     let(:create_reply) { {:stack_id => stack_id} }
 
@@ -160,9 +176,9 @@ describe CuffSert::RxCFClient do
         .and_return(nil)
       mock
     end
-    
+
     subject { described_class.new(cli_args, aws_cf: aws_mock, pause: 0).abort_update(change_set_id) }
-    
+
     it 'returns observable which completes on change-set deletion' do
       should emit_exactly()
     end

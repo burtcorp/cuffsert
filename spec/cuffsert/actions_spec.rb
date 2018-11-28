@@ -8,13 +8,20 @@ require 'spec_helpers'
 
 shared_context 'action setup' do
   include_context 'changesets'
-  include_context 'metadata'
   include_context 'stack events'
   include_context 'stack states'
+  include_context 'templates'
 
   let(:cfmock) { double(:cfclient) }
   let(:s3mock) { double(:s3client) }
   let(:confirm_update) { lambda { |*_| true } }
+  let(:stack_path) { URI.join('file:///', template_body.path) }
+  let :meta do
+    meta = CuffSert::StackConfig.new
+    meta.selected_path = [stack_name.split(/-/)]
+    meta.stack_uri = stack_path
+    meta
+  end
 
   subject do
     action = described_class.new(meta, stack)
@@ -27,10 +34,6 @@ end
 
 shared_examples 'uploading' do
   context 'when the template is large' do
-    include_context 'templates'
-
-    let(:stack_path) { URI.join('file:///', template_body.path) }
-    let(:meta) { super().tap { |meta| meta.stack_uri = stack_path } }
     let(:template_json) { format('{"key": "%s"}', '*' * 51201) }
 
     context 'and is given an s3 client (i.e. with --s3-upload-prefix)' do
@@ -195,6 +198,7 @@ describe CuffSert::UpdateStackAction do
 
   before do
     allow(cfmock).to receive(:prepare_update).and_return(change_set_stream)
+    allow(cfmock).to receive(:get_template).and_return(Rx::Observable.just(template_source))
     allow(cfmock).to receive(:update_stack).and_return(Rx::Observable.empty)
   end
 
@@ -209,11 +213,14 @@ describe CuffSert::UpdateStackAction do
         .and_return(Rx::Observable.of(r1_done, r2_done))
 
       expect(subject.as_observable).to emit_exactly(
-        CuffSert::ChangeSet.new(change_set_ready), 
-        r1_done, 
-        r2_done, 
+        CuffSert::Templates.new([template_source, template_source]),
+        CuffSert::ChangeSet.new(change_set_ready),
+        r1_done,
+        r2_done,
         CuffSert::Done.new
       )
+      expect(cfmock).to have_received(:get_template)
+        .with(meta)
     end
 
     context 'but no template' do
@@ -224,7 +231,9 @@ describe CuffSert::UpdateStackAction do
       end
 
       it 'says to use the existing template' do
-        expect(subject.as_observable).to complete
+        expect(subject.as_observable).to emit_include(
+          CuffSert::Templates.new([template_source, template_source]),
+        )
         expect(cfmock).to have_received(:prepare_update).with(
           hash_including(:use_previous_template => true)
         )
@@ -244,7 +253,8 @@ describe CuffSert::UpdateStackAction do
       expect(cfmock).not_to receive(:update_stack)
 
       expect(subject.as_observable).to emit_exactly(
-        CuffSert::ChangeSet.new(change_set_failed), 
+        CuffSert::Templates.new([template_source, template_source]),
+        CuffSert::ChangeSet.new(change_set_failed),
         CuffSert::Abort.new(/update failed:.*didn't contain/i)
       )
     end
@@ -262,7 +272,8 @@ describe CuffSert::UpdateStackAction do
       expect(cfmock).not_to receive(:update_stack)
 
       expect(subject.as_observable).to emit_exactly(
-        CuffSert::ChangeSet.new(change_set_ready), 
+        CuffSert::Templates.new([template_source, template_source]),
+        CuffSert::ChangeSet.new(change_set_ready),
         CuffSert::Abort.new(/.*/)
       )
     end

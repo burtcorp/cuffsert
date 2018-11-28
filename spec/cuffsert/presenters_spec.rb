@@ -13,6 +13,10 @@ describe CuffSert::RendererPresenter do
       @rendered = []
     end
 
+    def templates(current, pending)
+      @rendered << [:templates, current, pending]
+    end
+
     def event(event, resource)
       @rendered << :error if resource[:states][-1] == :bad
     end
@@ -48,6 +52,12 @@ describe CuffSert::RendererPresenter do
   before { CuffSert::RendererPresenter.new(stream, renderer) }
 
   subject { renderer.rendered }
+
+  context 'given the involved templates' do
+    let(:events) { [CuffSert::Templates.new([:current, :pending])] }
+
+    it { should eq([[:templates, :current, :pending]]) }
+  end
 
   context 'given successful stack events' do
     let (:events) { [r1_done, r2_progress, r2_done] }
@@ -125,6 +135,24 @@ describe CuffSert::JsonRenderer do
 
   let(:output) { StringIO.new }
   let(:error) { StringIO.new }
+
+  describe '#templates' do
+    let(:current_template) { 'current_template' }
+    let(:pending_template) { 'pending_template' }
+
+    subject do |example|
+      described_class.new(output, error, example.metadata).templates(current_template, pending_template)
+      output.string
+    end
+
+    context 'when silent', :verbosity => 0 do
+      it { should be_empty }
+    end
+
+    context 'when default verbosity' do
+      it { should match(/current.*pending/) }
+    end
+  end
 
   describe '#change_set' do
     let(:changeset) { change_set_ready }
