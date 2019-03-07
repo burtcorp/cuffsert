@@ -165,6 +165,22 @@ describe CuffSert::RxCFClient do
     subject { described_class.new(cli_args, aws_cf: aws_mock, pause: 0).update_stack(stack_id, change_set_id) }
 
     it { expect(subject).to emit_exactly(r1_done, r2_progress, r2_done, s1_done) }
+
+    context 'when the update ends with failure' do
+      let :aws_mock do
+        mock = double(:aws_mock)
+
+        expect(mock).to receive(:execute_change_set)
+          .with(include(:change_set_name => change_set_id))
+          .and_return(nil)
+        expect(mock).to receive(:describe_stack_events)
+          .with(including(:stack_name => stack_id))
+          .and_return([stack_update_rolled_back])
+        mock
+      end
+
+      it { expect(subject).to emit_error(CuffSert::RxCFError, /ze-stack.*UPDATE_ROLLBACK_COMPLETE/) }
+    end
   end
 
   describe '#abort_update' do

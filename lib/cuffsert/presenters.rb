@@ -1,6 +1,7 @@
 require 'aws-sdk-cloudformation'
 require 'colorize'
 require 'cuffsert/cfstates'
+require 'cuffsert/errors'
 require 'cuffsert/messages'
 require 'hashdiff'
 require 'rx'
@@ -76,6 +77,16 @@ module CuffSert
       end
     end
 
+    def on_error(err)
+      case err
+      when CuffSertError
+        @renderer.abort(err)
+      else
+        super(err)
+      end
+      exit(1)
+    end
+
     def on_complete
     end
 
@@ -90,7 +101,7 @@ module CuffSert
       update_resource_states(resource, event)
       @renderer.event(event, resource)
       @renderer.clear
-      @resources.each { |resource| @renderer.resource(resource) }
+      @resources.each { |r| @renderer.resource(r) }
       clear_resources if is_completed_stack_event(event)
     end
 
@@ -309,7 +320,7 @@ module CuffSert
     end
 
     def abort(event)
-      @error.write(event.message.colorize(:red) + "\n") unless @verbosity < 1
+      @error.write("\n" + event.message.colorize(:red) + "\n") unless @verbosity < 1
     end
 
     def done(event)

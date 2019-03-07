@@ -1,5 +1,6 @@
 require 'aws-sdk-cloudformation'
 require 'cuffsert/cfstates'
+require 'cuffsert/errors'
 require 'yaml'
 require 'rx'
 
@@ -57,8 +58,12 @@ module CuffSert
       Rx::Observable.create do |observer|
         start_time = record_start_time
         @cf.execute_change_set(change_set_name: change_set_id)
-        stack_events(stack_id, start_time) do |event|
-          observer.on_next(event)
+        begin
+          stack_events(stack_id, start_time) do |event|
+            observer.on_next(event)
+          end
+        rescue => e
+          observer.on_error(e)
         end
         observer.on_completed
       end
@@ -94,8 +99,15 @@ module CuffSert
     end
 
     def stack_finished?(stack_id, event)
-      event[:physical_resource_id] == stack_id &&
-        FINAL_STATES.include?(event[:resource_status])
+      return false unless event[:physical_resource_id] == stack_id
+      case CuffSert.state_category(event[:resource_status])
+      when :bad
+        raise RxCFError, "Stack #{event.logical_resource_id} finished in state #{event.resource_status}"
+      when :good
+        true
+      else
+        false
+      end
     end
 
     def flatten_events(stack_id)
