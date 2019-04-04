@@ -179,7 +179,7 @@ describe CuffSert::RxCFClient do
         mock
       end
 
-      it { expect(subject).to emit_error(CuffSert::RxCFError, /ze-stack.*UPDATE_ROLLBACK_COMPLETE/) }
+      it { expect(subject.skip(1)).to emit_error(CuffSert::RxCFError, /ze-stack.*UPDATE_ROLLBACK_COMPLETE/) }
     end
   end
 

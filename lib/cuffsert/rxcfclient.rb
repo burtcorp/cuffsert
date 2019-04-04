@@ -98,16 +98,8 @@ module CuffSert
       DateTime.now - 5.0 / 86400
     end
 
-    def stack_finished?(stack_id, event)
-      return false unless event[:physical_resource_id] == stack_id
-      case CuffSert.state_category(event[:resource_status])
-      when :bad
-        raise RxCFError, "Stack #{event.logical_resource_id} finished in state #{event.resource_status}"
-      when :good
-        true
-      else
-        false
-      end
+    def terminal_event?(stack_id, event)
+      event[:physical_resource_id] == stack_id && CuffSert.state_category(event[:resource_status]) != :progress
     end
 
     def flatten_events(stack_id)
@@ -122,16 +114,22 @@ module CuffSert
       eventid_cache = Set.new
       loop do
         events = []
-        done = false
+        terminal_event = nil
         flatten_events(stack_id) do |event|
           break if event[:timestamp].to_datetime < start_time
           next unless eventid_cache.add?(event[:event_id])
           events.unshift(event)
-          done = true if stack_finished?(stack_id, event)
+          terminal_event ||= event if terminal_event?(stack_id, event)
         end
         events.each { |event| yield event }
-        break if done
-        sleep(@pause)
+        case terminal_event && CuffSert.state_category(terminal_event[:resource_status])
+        when :good
+          break
+        when :bad
+          raise RxCFError, "Stack #{terminal_event.logical_resource_id} finished in state #{terminal_event.resource_status}"
+        else
+          sleep(@pause)
+        end
       end
     end
   end
