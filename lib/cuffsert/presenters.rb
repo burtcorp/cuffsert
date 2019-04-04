@@ -101,7 +101,7 @@ module CuffSert
       update_resource_states(resource, event)
       @renderer.event(event, resource)
       @renderer.clear
-      @resources.each { |r| @renderer.resource(r) }
+      @resources.each { |resource| @renderer.resource(resource) }
       clear_resources if is_completed_stack_event(event)
     end
 
