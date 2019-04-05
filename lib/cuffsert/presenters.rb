@@ -1,6 +1,7 @@
 require 'aws-sdk-cloudformation'
 require 'colorize'
 require 'cuffsert/cfstates'
+require 'cuffsert/errors'
 require 'cuffsert/messages'
 require 'hashdiff'
 require 'rx'
@@ -74,6 +75,16 @@ module CuffSert
       else
         puts event
       end
+    end
+
+    def on_error(err)
+      case err
+      when CuffSertError
+        @renderer.abort(err)
+      else
+        super(err)
+      end
+      exit(1)
     end
 
     def on_complete
@@ -309,7 +320,7 @@ module CuffSert
     end
 
     def abort(event)
-      @error.write(event.message.colorize(:red) + "\n") unless @verbosity < 1
+      @error.write("\n" + event.message.colorize(:red) + "\n") unless @verbosity < 1
     end
 
     def done(event)

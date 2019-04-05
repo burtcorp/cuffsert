@@ -392,6 +392,18 @@ shared_context 'stack events' do
     })
   end
 
+  let :s1_failed do
+    Aws::CloudFormation::Types::StackEvent.new({
+      :event_id => 's1_done',
+      :stack_id => stack_id,
+      :logical_resource_id => stack_name,
+      :physical_resource_id => stack_id,
+      :resource_type => 'AWS::CloudFormation::Stack',
+      :resource_status => 'UPDATE_ROLLBACK_COMPLETE',
+      :timestamp => DateTime.rfc3339('2013-08-23T01:02:38.534Z').to_time,
+    })
+  end
+
   let :s1_rolled do
     Aws::CloudFormation::Types::StackEvent.new({
       :event_id => 's1_rolled',
@@ -426,6 +438,10 @@ shared_context 'stack events' do
 
   let :stack_complete_events do
     { :stack_events => [s1_done, r2_done, r1_done] }
+  end
+
+  let :stack_update_rolled_back do
+    { :stack_events => [s1_failed] }
   end
 
   let :stack_rolled_back_events do

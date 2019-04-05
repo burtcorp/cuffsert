@@ -1,5 +1,6 @@
 require 'aws-sdk-cloudformation'
 require 'cuffsert/cfstates'
+require 'cuffsert/errors'
 require 'yaml'
 require 'rx'
 
@@ -57,8 +58,12 @@ module CuffSert
       Rx::Observable.create do |observer|
         start_time = record_start_time
         @cf.execute_change_set(change_set_name: change_set_id)
-        stack_events(stack_id, start_time) do |event|
-          observer.on_next(event)
+        begin
+          stack_events(stack_id, start_time) do |event|
+            observer.on_next(event)
+          end
+        rescue => e
+          observer.on_error(e)
         end
         observer.on_completed
       end
@@ -93,9 +98,8 @@ module CuffSert
       DateTime.now - 5.0 / 86400
     end
 
-    def stack_finished?(stack_id, event)
-      event[:physical_resource_id] == stack_id &&
-        FINAL_STATES.include?(event[:resource_status])
+    def terminal_event?(stack_id, event)
+      event[:physical_resource_id] == stack_id && CuffSert.state_category(event[:resource_status]) != :progress
     end
 
     def flatten_events(stack_id)
@@ -110,16 +114,22 @@ module CuffSert
       eventid_cache = Set.new
       loop do
         events = []
-        done = false
+        terminal_event = nil
         flatten_events(stack_id) do |event|
           break if event[:timestamp].to_datetime < start_time
           next unless eventid_cache.add?(event[:event_id])
           events.unshift(event)
-          done = true if stack_finished?(stack_id, event)
+          terminal_event ||= event if terminal_event?(stack_id, event)
         end
         events.each { |event| yield event }
-        break if done
-        sleep(@pause)
+        case terminal_event && CuffSert.state_category(terminal_event[:resource_status])
+        when :good
+          break
+        when :bad
+          raise RxCFError, "Stack #{terminal_event.logical_resource_id} finished in state #{terminal_event.resource_status}"
+        else
+          sleep(@pause)
+        end
       end
     end
   end

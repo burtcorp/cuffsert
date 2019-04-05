@@ -49,9 +49,10 @@ describe CuffSert::RendererPresenter do
   let(:renderer) { RecordingRenderer.new }
   let(:stream) { Rx::Observable.from(events) }
 
-  before { CuffSert::RendererPresenter.new(stream, renderer) }
-
-  subject { renderer.rendered }
+  subject do
+    CuffSert::RendererPresenter.new(stream, renderer)
+    renderer.rendered
+  end
 
   context 'given the involved templates' do
     let(:events) { [CuffSert::Templates.new([:current, :pending])] }
@@ -102,8 +103,6 @@ describe CuffSert::RendererPresenter do
       [[:recreate, stack_rolled_back], r1_done, s1_deleted, r1_done, s1_done]
     end
 
-    subject { renderer.rendered }
-
     it 'pass it to renderer' do
       should eq([
         [:recreate, stack_rolled_back],
@@ -125,6 +124,15 @@ describe CuffSert::RendererPresenter do
     let(:events) { [CuffSert::Abort.new('badness')] }
 
     it { should eq(events) }
+  end
+
+  context 'given an exception' do
+    let(:stream) { Rx::Observable.raise_error(CuffSert::CuffSertError.new('badness')) }
+
+    it do
+      expect { subject }.to raise_exception(SystemExit)
+      expect(renderer.rendered).to contain_exactly(have_attributes(message: 'badness'))
+    end
   end
 end
 
@@ -457,6 +465,18 @@ describe CuffSert::ProgressbarRenderer do
       end
 
       context 'whenn default verbosity' do
+        it { should include('badness'.colorize(:red)) }
+      end
+    end
+
+    context 'when given an exception' do
+      let(:message) { RuntimeError.new('badness') }
+
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
+
+      context 'when default verbosity' do
         it { should include('badness'.colorize(:red)) }
       end
     end
