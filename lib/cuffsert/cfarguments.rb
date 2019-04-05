@@ -83,12 +83,12 @@ module CuffSert
     "https://#{host}/#{bucket}#{key}"
   end
 
-  private_class_method
-
-  def self.load_minified_template(file)
-    template = open(file).read
-    YAML.load(template).to_json
+  def self.load_template(stack_uri)
+    file = stack_uri.to_s.sub(/^file:\/+/, '/')
+    YAML.load(open(file).read)
   end
+
+  private_class_method
 
   def self.template_parameters(meta)
     template_parameters = {}
@@ -102,8 +102,7 @@ module CuffSert
         raise 'Only HTTPS URLs pointing to amazonaws.com supported.'
       end
     elsif meta.stack_uri.scheme == 'file'
-      file = meta.stack_uri.to_s.sub(/^file:\/+/, '/')
-      template = self.load_minified_template(file)
+      template = CuffSert.load_template(meta.stack_uri).to_json
       if template.size <= 51200
         template_parameters[:template_body] = template
       end

@@ -87,6 +87,8 @@ module CuffSert
       .map do |current_template|
         pending_template = if cfargs[:template_body]
           YAML.load(cfargs[:template_body])
+        elsif @meta.stack_uri && @meta.stack_uri.scheme == 'file'
+          CuffSert.load_template(@meta.stack_uri)
         else
           current_template
         end
