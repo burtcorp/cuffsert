@@ -275,6 +275,14 @@ describe CuffSert::ProgressbarRenderer do
   include_context 'stack states'
   include_context 'stack events'
 
+  let :current_template do
+    {}
+  end
+
+  let :pending_template do
+    {}
+  end
+
   let(:resource) do
     event.to_h.merge!(
       :states => [CuffSert.state_category(event[:resource_status])]
@@ -370,6 +378,54 @@ describe CuffSert::ProgressbarRenderer do
     context 'given bad :states' do
       let(:resource) { r2_progress.to_h.merge({:states => []}) }
       it { expect { subject }.to raise_error(/:states/) }
+    end
+  end
+
+  describe '#templates' do
+    subject do |example|
+      output = StringIO.new
+      error = StringIO.new
+      presenter = described_class.new(output, error, example.metadata)
+      presenter.templates(current_template, pending_template)
+      output.string
+    end
+
+    it { should be_empty }
+
+    context 'given an added condition' do
+      let :pending_template do
+        {'Conditions' => { 'ACondition' => {'Fn::Equals' => ['yes', 'no']}}}
+      end
+
+      it { should match(/\+.*ACondition/) }
+
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
+    end
+
+    context 'given an added parameter' do
+      let :pending_template do
+        {'Parameters' => {'AParam' => {'Type' => 'String'}}}
+      end
+
+      it { should match(/\+.*AParam.*Type.*String/) }
+
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
+    end
+
+    context 'given an added output' do
+      let :pending_template do
+        {'Outputs' => {'AnOutput' => {'Value' => 'foo'}}}
+      end
+
+      it { should match(/\+.*AnOutput.*Value.*foo/) }
+
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
     end
   end
 

@@ -310,9 +310,9 @@ module CuffSert
       @pending_template = pending
       @template_changes = HashDiff.best_diff(current, pending, array_path: true)
       @template_changes.each {|c| p c} if ENV['CUFFSERT_EXPERIMENTAL']
-      present_changes(extract_changes(@template_changes, 'Conditions'), 'Conditions')
-      present_changes(extract_changes(@template_changes, 'Parameters'), 'Parameters')
-      present_changes(extract_changes(@template_changes, 'Outputs'), 'Outputs')
+      present_changes(extract_changes(@template_changes, 'Conditions'), 'Conditions') unless @verbosity < 1
+      present_changes(extract_changes(@template_changes, 'Parameters'), 'Parameters') unless @verbosity < 1
+      present_changes(extract_changes(@template_changes, 'Outputs'), 'Outputs') unless @verbosity < 1
     end
 
     def report(event)
