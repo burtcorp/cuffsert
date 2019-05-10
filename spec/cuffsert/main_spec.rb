@@ -66,7 +66,7 @@ describe 'CuffSert#determine_action' do
     let(:stack) { stack_in_progress }
 
     it 'it aborts' do
-      expect(subject).to be_a(CuffSert::Abort)
+      expect(subject).to be_a(CuffSert::MessageAction)
     end
   end
 end
