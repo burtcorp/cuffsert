@@ -8,7 +8,11 @@ module YAML
   end
 
   add_domain_type('cuffsert', 'GetAtt') do |_, value|
-    {'Fn::GetAtt' => value.to_s.split('.')}
+    if value.is_a? String
+      {'Fn::GetAtt' => value.split('.')}
+    else
+      {'Fn::GetAtt' => value}
+    end
   end
 
   %w[

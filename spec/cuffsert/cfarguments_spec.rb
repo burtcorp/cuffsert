@@ -224,4 +224,20 @@ describe '#load_template' do
       expect(subject).to eq({'Fn::GetAtt' => ['foo', 'bar']})
     end
   end
+
+  context 'when input is a YAML with a !GetAtt tag with a sequence value' do
+    let(:template_json) { "Name: !GetAtt\n  - Distribution\n  - DomainName" }
+
+    it 'retains the value part as-is' do
+      expect(subject).to eq({'Name' => {'Fn::GetAtt' => ['Distribution', 'DomainName']}})
+    end
+  end
+
+  context 'when input is a YAML with nested tags' do
+    let(:template_json) { "Name: !Sub\n - www.${Domain}\n - { Domain: !Ref RootDomainName }" }
+
+    it 'retains the value part as-is' do
+      expect(subject).to eq({'Name' => {'Fn::Sub' => ['www.${Domain}', {'Domain' => {'Ref' => 'RootDomainName'}}]}})
+    end
+  end
 end
