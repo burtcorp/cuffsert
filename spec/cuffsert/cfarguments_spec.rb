@@ -191,3 +191,37 @@ describe '#as_delete_stack_args' do
 
   it { should include(:stack_name => stack_id) }
 end
+
+describe '#load_template' do
+  include_context 'templates'
+
+  subject do
+    CuffSert.load_template("file://#{template_body.path}")
+  end
+
+  it { should eq({}) }
+
+  context 'when input is a YAML file with a known CF tag' do
+    let(:template_json) { "!Equals ['foo', 'bar']" }
+
+    it 'converts the tag into a Fn:: scalar' do
+      expect(subject).to eq({'Fn::Equals' => ['foo', 'bar']})
+    end
+  end
+
+  context 'when input is a YAML file with a !Ref tag' do
+    let(:template_json) { "!Ref foo" }
+
+    it 'outputs Ref' do
+      expect(subject).to eq({'Ref' => 'foo'})
+    end
+  end
+
+  context 'when input is a YAML file with a !GetAtt tag' do
+    let(:template_json) { "!GetAtt foo.bar" }
+
+    it 'converts the dot-separated argument into a sequence' do
+      expect(subject).to eq({'Fn::GetAtt' => ['foo', 'bar']})
+    end
+  end
+end
