@@ -35,6 +35,20 @@ module CuffSert
     end
   end
 
+  class MessageAction < BaseAction
+    def initialize(message)
+      super(nil, nil)
+      @message = message
+    end
+
+    def validate!
+    end
+
+    def as_observable
+      @message.as_observable
+    end
+  end
+
   class CreateStackAction < BaseAction
     def validate!
       if @meta.stack_uri.nil?

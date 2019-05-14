@@ -15,7 +15,8 @@ module CuffSert
     found = cfclient.find_stack_blocking(meta)
 
     if found && INPROGRESS_STATES.include?(found[:stack_status])
-      action = Abort.new('Stack operation already in progress')
+      message = Abort.new('Stack operation already in progress')
+      action = MessageAction.new(message)
     else
       if found.nil?
         action = CreateStackAction.new(meta, nil)

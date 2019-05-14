@@ -57,6 +57,20 @@ shared_examples 'uploading' do
   end
 end
 
+describe CuffSert::MessageAction do
+  let :message do
+    CuffSert::Message.new('A message')
+  end
+
+  subject do
+    described_class.new(message)
+  end
+
+  it 'emits the message' do
+    expect(subject.as_observable).to emit_exactly(message)
+  end
+end
+
 describe CuffSert::CreateStackAction do
   include_context 'action setup'
 
