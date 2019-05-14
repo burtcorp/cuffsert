@@ -191,3 +191,53 @@ describe '#as_delete_stack_args' do
 
   it { should include(:stack_name => stack_id) }
 end
+
+describe '#load_template' do
+  include_context 'templates'
+
+  subject do
+    CuffSert.load_template("file://#{template_body.path}")
+  end
+
+  it { should eq({}) }
+
+  context 'when input is a YAML file with a known CF tag' do
+    let(:template_json) { "!Equals ['foo', 'bar']" }
+
+    it 'converts the tag into a Fn:: scalar' do
+      expect(subject).to eq({'Fn::Equals' => ['foo', 'bar']})
+    end
+  end
+
+  context 'when input is a YAML file with a !Ref tag' do
+    let(:template_json) { "!Ref foo" }
+
+    it 'outputs Ref' do
+      expect(subject).to eq({'Ref' => 'foo'})
+    end
+  end
+
+  context 'when input is a YAML file with a !GetAtt tag' do
+    let(:template_json) { "!GetAtt foo.bar" }
+
+    it 'converts the dot-separated argument into a sequence' do
+      expect(subject).to eq({'Fn::GetAtt' => ['foo', 'bar']})
+    end
+  end
+
+  context 'when input is a YAML with a !GetAtt tag with a sequence value' do
+    let(:template_json) { "Name: !GetAtt\n  - Distribution\n  - DomainName" }
+
+    it 'retains the value part as-is' do
+      expect(subject).to eq({'Name' => {'Fn::GetAtt' => ['Distribution', 'DomainName']}})
+    end
+  end
+
+  context 'when input is a YAML with nested tags' do
+    let(:template_json) { "Name: !Sub\n - www.${Domain}\n - { Domain: !Ref RootDomainName }" }
+
+    it 'retains the value part as-is' do
+      expect(subject).to eq({'Name' => {'Fn::Sub' => ['www.${Domain}', {'Domain' => {'Ref' => 'RootDomainName'}}]}})
+    end
+  end
+end

@@ -1,5 +1,6 @@
 require 'open-uri'
 require 'yaml'
+require 'cuffsert/yaml-ext'
 
 # TODO:
 # - propagate timeout here (from config?)
