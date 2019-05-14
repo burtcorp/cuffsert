@@ -204,11 +204,12 @@ module CuffSert
         ]
       end.map do |change|
         rc = change[:resource_change]
-        sprintf("%s[%s] %-10s %s\n",
+        sprintf("%s[%s] %-10s %s\n%s",
           rc[:logical_resource_id],
           rc[:resource_type],
           action_color(action(rc)),
-          scope_desc(rc)
+          scope_desc(rc),
+          change_details(rc)
         )
       end.each { |row| @output.write(row) }
     end
@@ -310,9 +311,9 @@ module CuffSert
       @pending_template = pending
       @template_changes = HashDiff.best_diff(current, pending, array_path: true)
       @template_changes.each {|c| p c} if ENV['CUFFSERT_EXPERIMENTAL']
-      present_changes(extract_changes(@template_changes, 'Conditions'), 'Conditions')
-      present_changes(extract_changes(@template_changes, 'Parameters'), 'Parameters')
-      present_changes(extract_changes(@template_changes, 'Outputs'), 'Outputs')
+      present_changes(extract_changes(@template_changes, 'Conditions'), 'Conditions') unless @verbosity < 1
+      present_changes(extract_changes(@template_changes, 'Parameters'), 'Parameters') unless @verbosity < 1
+      present_changes(extract_changes(@template_changes, 'Outputs'), 'Outputs') unless @verbosity < 1
     end
 
     def report(event)
@@ -329,23 +330,44 @@ module CuffSert
 
     private
 
-    def extract_changes(changes, type)
+    def change_details(rc)
+      (rc[:details] || []).flat_map do |detail|
+        target_path = case detail[:target][:attribute]
+        when 'Properties'
+          [rc[:logical_resource_id], detail[:target][:attribute], detail[:target][:name]]
+        when 'Tags'
+          [rc[:logical_resource_id], 'Properties', detail[:target][:attribute]]
+        else
+          nil
+        end
+        extract_changes(@template_changes, 'Resources', *target_path)
+      end
+      .map do |(ch, path, l, r)|
+        format_change(ch, path[3..-1], l, r)
+      end
+      .join
+    end
+
+    def extract_changes(changes, type, *target_path)
       changes
-        .select {|(_, path, _)| path[0] == type }
-        .map {|(ch, path, *rest)| [ch, path[1..5], *rest] }
+        .select {|(_, path, _)| path[0..target_path.size] == [type, *target_path] }
+        .map {|(ch, path, *rest)| [ch, path, *rest] }
     end
 
     def present_changes(changes, type)
       return unless changes.size > 0
       @output.write("#{type}:\n")
       changes.each do |(ch, path, l, r)|
-        message = sprintf("%s %s: %s\n",
-          change_color(ch),
-          path.join('/'),
-          ch == '~' ? "#{l} -> #{r}" : l,
-        )
-        @output.write(message)
+        @output.write(format_change(ch, path, l, r))
       end
+    end
+
+    def format_change(ch, path, l, r = nil)
+      sprintf("%s %s: %s\n",
+        change_color(ch),
+        path.join('/'),
+        ch == '~' ? "#{l} -> #{r}" : l,
+      )
     end
 
     def change_color(ch)

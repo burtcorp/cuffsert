@@ -146,6 +146,23 @@ shared_context 'changesets' do
     })
   end
 
+  let :r1_modify_tag do
+    Aws::CloudFormation::Types::ResourceChange.new({
+      :action => 'Modify',
+      :replacement => 'Never',
+      :logical_resource_id => 'resource1_id',
+      :resource_type => 'AWS::EC2::VPC',
+      :scope => ['Tags'],
+      :details => [
+        {
+          :target => {
+            :attribute => 'Tags',
+          },
+        }
+      ],
+    })
+  end
+
   let :r1_replace do
     Aws::CloudFormation::Types::ResourceChange.new({
       :action => 'Modify',
@@ -170,6 +187,15 @@ shared_context 'changesets' do
       :replacement => 'False',
       :logical_resource_id => 'resource2_id',
       :resource_type => 'AWS::EC2::VPC',
+      :scope => ['Properties'],
+      :details => [
+        {
+          :target => {
+            :attribute => 'Properties',
+            :name => 'prip',
+          },
+        }
+      ],
     })
   end
 

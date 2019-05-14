@@ -275,6 +275,14 @@ describe CuffSert::ProgressbarRenderer do
   include_context 'stack states'
   include_context 'stack events'
 
+  let :current_template do
+    {}
+  end
+
+  let :pending_template do
+    {}
+  end
+
   let(:resource) do
     event.to_h.merge!(
       :states => [CuffSert.state_category(event[:resource_status])]
@@ -373,27 +381,131 @@ describe CuffSert::ProgressbarRenderer do
     end
   end
 
+  describe '#templates' do
+    subject do |example|
+      output = StringIO.new
+      error = StringIO.new
+      presenter = described_class.new(output, error, example.metadata)
+      presenter.templates(current_template, pending_template)
+      output.string
+    end
+
+    it { should be_empty }
+
+    context 'given an added condition' do
+      let :pending_template do
+        {'Conditions' => { 'ACondition' => {'Fn::Equals' => ['yes', 'no']}}}
+      end
+
+      it { should match(/\+.*ACondition/) }
+
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
+    end
+
+    context 'given an added parameter' do
+      let :pending_template do
+        {'Parameters' => {'AParam' => {'Type' => 'String'}}}
+      end
+
+      it { should match(/\+.*AParam.*Type.*String/) }
+
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
+    end
+
+    context 'given an added output' do
+      let :pending_template do
+        {'Outputs' => {'AnOutput' => {'Value' => 'foo'}}}
+      end
+
+      it { should match(/\+.*AnOutput.*Value.*foo/) }
+
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
+    end
+  end
+
   describe '#change_set' do
     include_context 'changesets'
 
+    let :current_template do
+      {'Resources' => {}}
+    end
+
     subject do
       output = StringIO.new
-      described_class.new(output).change_set(changeset)
+      presenter = described_class.new(output)
+      presenter.templates(current_template, pending_template)
+      presenter.change_set(changeset)
       output.string
     end
 
     context 'given an update changeset' do
       let(:changeset) { change_set_ready }
-      let(:change_set_changes) { [r2_add] }
 
-      it { should match(/Updating.*ze-stack/) }
-      it { should include('resource2_id') }
+      context 'with an addition' do
+        let(:change_set_changes) { [r2_add] }
+
+        let :pending_template do
+          {'Resources' => {'resource2_id' => {'Properties' => {'Foo' => 'Bar'}}}}
+        end
+
+        it { should match(/Updating.*ze-stack/) }
+        it { should include('resource2_id') }
+        it { should_not match(/\+/) }
+      end
 
       context 'with a non-replacing changeset' do
         let(:change_set_changes) { [r1_modify] }
 
+        let :current_template do
+          {'Resources' => {'resource1_id' => {'Properties' => {'Foo' => 'Bar'}}}}
+        end
+
+        let :pending_template do
+          {'Resources' => {'resource1_id' => {'Properties' => {'Foo' => 'Baz'}}}}
+        end
+
         it { should include('Modify'.colorize(:yellow)) }
         it { should match(/Properties.*Foo/)}
+        it { should match(/~.*Foo:.*Bar.*Baz/)}
+      end
+
+      context 'when a tag is modified' do
+        let(:change_set_changes) { [r1_modify_tag] }
+
+        let :change_set_changes do
+          [
+            Aws::CloudFormation::Types::ResourceChange.new({
+              :action => 'Modify',
+              :replacement => 'Never',
+              :logical_resource_id => 'resource1_id',
+              :resource_type => 'AWS::EC2::VPC',
+              :scope => ['Tags'],
+              :details => [
+                {
+                  :target => {
+                    :attribute => 'Tags',
+                  },
+                }
+              ],
+            })
+          ]
+        end
+
+        let :current_template do
+          {'Resources' => {'resource1_id' => {'Properties' => {'Tags' => {'Foo' => 'Bar'}}}}}
+        end
+
+        let :pending_template do
+          {'Resources' => {'resource1_id' => {'Properties' => {'Tags' => {'Foo' => 'Baz'}}}}}
+        end
+
+        it { should match(/~.*Foo:.*Bar.*Baz/)}
       end
 
       context 'with an unconditional replacement' do
