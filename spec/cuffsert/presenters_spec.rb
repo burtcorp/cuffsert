@@ -416,6 +416,18 @@ describe CuffSert::ProgressbarRenderer do
       end
     end
 
+    context 'given an added mapping' do
+      let :pending_template do
+        {'Mappings' => {'AMapping' => {'Value' => 'foo'}}}
+      end
+
+      it { should match(/\+.*AMapping.*Value.*foo/) }
+
+      context 'when silent', :verbosity => 0 do
+        it { should be_empty }
+      end
+    end
+
     context 'given an added output' do
       let :pending_template do
         {'Outputs' => {'AnOutput' => {'Value' => 'foo'}}}
