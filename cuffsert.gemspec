@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.license     = 'MIT'
 
   spec.executables = ['cuffsert', 'cuffup', 'cuffdown']
-  spec.files       = `git ls-files -z`.split("\x0").reject { |f| f.match(/^spec/) }
+  spec.files       = Dir['lib/**/*']
 
   spec.required_ruby_version = '>= 2.0.0'
 
