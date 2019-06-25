@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: 2010-09-09
+Resources:
+  ImapServer:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: imap-server
+      LaunchConfigurationName: !Ref ImapConfig
+      MinSize: 0
+      MaxSize: 1
+      VPCZoneIdentifier:
+        - subnet-f8597791
+  ImapConfig:
+    Type: AWS::AutoScaling::LaunchConfiguration
+    Properties:
+      ImageId: ami-0c6b1d09930fac512
+      SecurityGroups:
+        - !Ref ImapSG
+      InstanceType: t2.nano
+  ImapSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: vpc-fc702695
+      GroupDescription: Global IMAPS access
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 993
+          ToPort: 993
