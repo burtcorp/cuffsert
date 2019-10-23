@@ -119,6 +119,17 @@ shared_context 'changesets' do
       :stack_id => stack_id,
       :stack_name => stack_name,
       :status => 'FAILED',
+      :status_reason => 'The update failed for an unknown reason.',
+      :changes => change_set_changes.map { |c| {:resource_change => c} },
+    })
+  end
+
+  let :change_set_no_changes do
+    Aws::CloudFormation::Types::DescribeChangeSetOutput.new({
+      :change_set_id => change_set_id,
+      :stack_id => stack_id,
+      :stack_name => stack_name,
+      :status => 'FAILED',
       :status_reason => 'The submitted information didn\'t contain changes. Submit different information to create a change set.',
       :changes => change_set_changes.map { |c| {:resource_change => c} },
     })

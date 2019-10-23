@@ -23,6 +23,11 @@ module CuffSert
       super('Done.')
     end
   end
+  class NoChanges < Message
+    def initialize
+      super('No changes.')
+    end
+  end
   class Templates < Message ; end
   class ChangeSet < Message ; end
 end

@@ -131,9 +131,14 @@ module CuffSert
 
     def on_changeset(change_set)
       if change_set[:status] == 'FAILED'
-        message = "Update failed: #{change_set[:status_reason]}"
+        if change_set[:status_reason].include?('didn\'t contain changes')
+          next_action = NoChanges.new.as_observable
+        else
+          message = "Update failed: #{change_set[:status_reason]}"
+          next_action = Abort.new(message).as_observable
+        end
         @cfclient.abort_update(change_set[:change_set_id])
-          .concat(Abort.new(message).as_observable)
+          .concat(next_action)
       elsif @confirmation.call(@meta, :update, change_set)
         @cfclient.update_stack(change_set[:stack_id], change_set[:change_set_id])
           .concat(Done.new.as_observable)

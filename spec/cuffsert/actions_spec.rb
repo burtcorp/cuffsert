@@ -292,8 +292,34 @@ describe CuffSert::UpdateStackAction do
       expect(subject.as_observable).to emit_exactly(
         CuffSert::Templates.new([prev_template_source, template_source]),
         CuffSert::ChangeSet.new(change_set_failed),
-        CuffSert::Abort.new(/update failed:.*didn't contain/i)
+        CuffSert::Abort.new(/update failed:.*unknown reason/i)
       )
+    end
+  end
+
+  context 'when change set contains no changes' do
+    let(:change_set_stream) { Rx::Observable.of(change_set_no_changes) }
+
+    let :cfmock do
+      super().tap do |m|
+        allow(cfmock).to receive(:prepare_update)
+          .with(CuffSert.as_update_change_set(meta, stack))
+          .and_return(change_set_stream)
+        allow(cfmock).to receive(:abort_update).and_return(Rx::Observable.empty)
+      end
+    end
+
+    it 'ends with a NoChanges action' do
+      expect(subject.as_observable).to emit_exactly(
+        CuffSert::Templates.new([prev_template_source, template_source]),
+        CuffSert::ChangeSet.new(change_set_no_changes),
+        CuffSert::NoChanges.new
+      )
+    end
+
+    it 'does not update' do
+      expect(subject.as_observable).to complete
+      expect(cfmock).to_not have_received(:update_stack)
     end
   end
 
