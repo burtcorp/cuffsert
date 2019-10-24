@@ -72,6 +72,8 @@ module CuffSert
         @renderer.abort(event)
       when ::CuffSert::Done
         @renderer.done(event)
+      when ::CuffSert::Message
+        puts event.message
       else
         puts event
       end
