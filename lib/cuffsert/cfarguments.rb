@@ -13,6 +13,7 @@ module CuffSert
     cfargs = {
       :stack_name => meta.stackname,
       :capabilities => %w[
+        CAPABILITY_AUTO_EXPAND
         CAPABILITY_IAM
         CAPABILITY_NAMED_IAM
       ],
