@@ -1,4 +1,5 @@
 require 'cuffsert/confirmation'
+require 'cuffsert/metadata'
 require 'spec_helpers'
 require 'stringio'
 

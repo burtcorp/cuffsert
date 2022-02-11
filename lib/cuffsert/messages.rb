@@ -1,3 +1,5 @@
+require 'rx'
+
 module CuffSert
   class Message
     attr_reader :message
