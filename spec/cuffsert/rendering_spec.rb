@@ -508,3 +508,67 @@ describe CuffSert::ProgressbarRenderer do
 		it { should include('re-creating') }
 	end
 end
+
+describe CuffSert::DiffWithContext do
+	let(:left) { [] }
+	let(:right) { [] }
+
+	subject do
+		differ = CuffSert::DiffWithContext.new
+		differ.generate_for(left, right)
+	end
+
+	context 'nothing changed' do
+		let(:left) { '12'.chars }
+		let(:right) { '12'.chars }
+		it { should eq "" }
+	end
+
+	context 'when a line is added' do
+		let(:left) { '1'.chars }
+		let(:right) { '12'.chars }
+		it { should eq "  1 1\n+   2\n" }
+	end
+
+	context 'when a line is removed' do
+		let(:left) { '12'.chars }
+		let(:right) { '1'.chars }
+		it { should eq "  1 1\n- 2 2\n" }
+	end
+
+	context 'when a line is changed' do
+		let(:left) { '12'.chars }
+		let(:right) { '13'.chars }
+		it { should eq "  1 1\n- 2 2\n+   3\n" }
+	end
+
+	context 'when change is well into the file' do
+		let(:left) { '12345'.chars }
+		let(:right) { '1234'.chars }
+		it { should eq "  2 2\n  3 3\n  4 4\n- 5 5\n" }
+	end
+
+	context 'when two changes are far apart' do
+		let(:left) { '123456789'.chars }
+		let(:right) { '023456780'.chars }
+		it { should eq "- 1 1\n+   0\n  2 2\n  3 3\n  4 4\n...\n  6 6\n\  7 7\n  8 8\n- 9 9\n+   0\n" }
+	end
+
+	context 'when two changes are separated by little context' do
+		let(:left) { '1234'.chars }
+		let(:right) { '0230'.chars }
+		it { should eq "- 1 1\n+   0\n  2 2\n  3 3\n- 4 4\n+   0\n" }
+	end
+
+	context 'when two changes are close together' do
+		let(:left) { '12345'.chars }
+		let(:right) { '02340'.chars }
+		it { should eq "- 1 1\n+   0\n  2 2\n  3 3\n  4 4\n- 5 5\n+   0\n" }
+	end
+
+	context 'line numbering is spaced to fit largest number' do
+		let(:left) { 'abcdefghijklmnopq'.chars }
+		let(:right) { 'bcdefghijklmnopq'.chars }
+		it { should start_with "-  1 a\n" }
+	end
+end

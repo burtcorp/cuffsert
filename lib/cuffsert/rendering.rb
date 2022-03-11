@@ -230,7 +230,7 @@ module CuffSert
       sprintf("%s %s: %s\n",
         change_color(ch),
         path.join('/'),
-        ch == '~' ? "#{l} -> #{r}" : l,
+        format_changed_value(ch, l, r),
       )
     end
 
@@ -243,6 +243,25 @@ module CuffSert
         else :white
         end
       )
+    end
+
+    def format_changed_value(ch, l, r)
+      if ch == '~'
+        if l.is_a?(String) and r.is_a?(String)
+          l_lines = l.each_line(chomp: true).to_a
+          r_lines = r.each_line(chomp: true).to_a
+          if l_lines.size > 1 or r_lines.size > 1
+            differ = DiffWithContext.new(color: true)
+            return sprintf(
+              "String diff:\n%s",
+              differ.generate_for(l_lines, r_lines)
+            )
+          end
+        end
+        "#{l} -> #{r}"
+      else
+        l
+      end
     end
 
     def interpret_states(resource)
@@ -263,6 +282,67 @@ module CuffSert
         [:red, :qmark]
       else
         raise "Unexpected :states in #{resource.inspect}"
+      end
+    end
+  end
+
+  class DiffWithContext
+    def initialize(ctx_size: 3, color: false)
+      @ctx_size = ctx_size
+      @color = color
+    end
+
+    def generate_for(left, right)
+      buf = StringIO.new
+      lineno_size = left.size.to_s.size
+      diff = Hashdiff.best_diff(left, right, array_path: true)
+      with_context(diff, left) do |ch, lineno, line|
+        if ch == '!'
+          change = "...\n"
+        elsif ch == '-'
+          change = sprintf("%s %#{lineno_size}d %s\n", ch, lineno, line)
+          change = change.colorize(:red) if @color
+        elsif ch == '+'
+          change = sprintf("%s #{' ' * lineno_size} %s\n", ch, line)
+          change = change.colorize(:green) if @color
+        else
+          change = sprintf("  %#{lineno_size}d %s\n", lineno, line)
+        end
+        buf << change
+      end
+      buf.string
+    end
+
+    private
+
+    def with_context(diff, left)
+      current_lineno = 0
+      diff.chain([[nil, [left.size], nil]]).each_cons(2) do |(ch, path_this, line), (_, path_next, _)|
+        lineno_this = path_this[0]
+        lineno_next = path_next[0]
+        # skip forward
+        if lineno_this - @ctx_size > current_lineno
+          if current_lineno > 0
+            yield '!', nil, nil
+          end
+          current_lineno = lineno_this - @ctx_size
+        end
+        # emit context before
+        left[current_lineno...lineno_this].each do |c|
+          current_lineno += 1
+          yield nil, current_lineno, c
+        end
+        # emit change
+        if ch != '+'
+          current_lineno += 1
+        end
+        yield ch, current_lineno, line
+        # emit context after
+        last_ctx_lineno = [current_lineno + @ctx_size, lineno_next].min
+        left[current_lineno...last_ctx_lineno].each do |c|
+          current_lineno += 1
+          yield nil, current_lineno, c
+        end
       end
     end
   end
