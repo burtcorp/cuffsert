@@ -15,14 +15,15 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '>= 2.0.0'
 
-  spec.add_runtime_dependency 'aws-sdk-cloudformation', '~> 1.3.0'
-  spec.add_runtime_dependency 'aws-sdk-s3', '~> 1.8.0'
+  spec.add_runtime_dependency 'aws-sdk-cloudformation', '~> 1.67.0'
+  spec.add_runtime_dependency 'aws-sdk-s3', '~> 1.112.0'
   spec.add_runtime_dependency 'colorize'
   spec.add_runtime_dependency 'hashdiff', '~> 1.0'
+  spec.add_runtime_dependency 'nokogiri'
   spec.add_runtime_dependency 'ruby-termios'
   spec.add_runtime_dependency 'rx'
 
-  spec.add_development_dependency 'bundler', '~> 1.12'
+  spec.add_development_dependency 'bundler', '~> 2.3'
   spec.add_development_dependency 'byebug'
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'rx-rspec', '~> 0.4.3'

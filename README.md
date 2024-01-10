@@ -2,6 +2,8 @@
 
 The primary goal of cuffsert is to provide a quick "up-arrow-enter" loading of a CloudFormation stack with good feedback, removing the need to click through three pesky screens each time. It figures out whether the stack needs to be created or rolled-back and whether it needs to be deleted first.
 
+![Create and update stack](cuffsert.gif)
+
 ## Getting started
 
 Update a stack from a provided template without changing any parameters on the stack:

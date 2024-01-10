@@ -1,4 +1,5 @@
 require 'aws-sdk-s3'
+require 'cuffsert/messages'
 require 'rx'
 
 module CuffSert
