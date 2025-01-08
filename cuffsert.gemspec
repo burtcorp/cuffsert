@@ -23,8 +23,10 @@ Gem::Specification.new do |spec|
   spec.add_runtime_dependency 'ruby-termios'
   spec.add_runtime_dependency 'rx'
 
+  spec.add_development_dependency 'base64'
   spec.add_development_dependency 'bundler', '~> 2.3'
   spec.add_development_dependency 'byebug'
+  spec.add_development_dependency 'logger'
   spec.add_development_dependency 'rspec', '~> 3.0'
   spec.add_development_dependency 'rx-rspec', '~> 0.4.3'
   spec.add_development_dependency 'simplecov'
