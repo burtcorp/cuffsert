@@ -15,8 +15,8 @@ Gem::Specification.new do |spec|
 
   spec.required_ruby_version = '>= 2.0.0'
 
-  spec.add_runtime_dependency 'aws-sdk-cloudformation', '~> 1.67.0'
-  spec.add_runtime_dependency 'aws-sdk-s3', '~> 1.112.0'
+  spec.add_runtime_dependency 'aws-sdk-cloudformation', '~> 1.67'
+  spec.add_runtime_dependency 'aws-sdk-s3', '~> 1.112'
   spec.add_runtime_dependency 'colorize'
   spec.add_runtime_dependency 'hashdiff', '~> 1.0'
   spec.add_runtime_dependency 'nokogiri'
