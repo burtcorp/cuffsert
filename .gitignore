@@ -3,3 +3,4 @@ vendor/
 coverage/
 cuffsert-*.gem
 .byebug_history
+Gemfile.lock
