@@ -84,7 +84,7 @@ module CuffSert
 
   def self.meta_defaults(cli_args)
     stack_path = (cli_args[:stack_path] || [])[0]
-    if stack_path && File.exists?(stack_path)
+    if stack_path && File.exist?(stack_path)
       nil_params = CuffBase.empty_from_template(open(stack_path))
     else
       nil_params = {}
